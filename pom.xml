@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- z-boot 是 z-opc-foundation 的版本权威 (BOM) 自给自足, 不依赖任何 z-opc 业务模块 -->
+    <groupId>com.zifang</groupId>
+    <artifactId>z-boot</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>z-boot (Starter Parent + BOM Authority)</name>
+    <description>z-opc-foundation 的 Spring Boot Starter 聚合 + 第三方依赖版本权威 (BOM)</description>
+    <url>https://github.com/z-opc-foundation/z-boot</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>yuku123</id>
+            <name>yuku123</name>
+            <email>1340947819@qq.com</email>
+            <organization>z-team</organization>
+            <organizationUrl>https://github.com/yuku123</organizationUrl>
+            <timezone>+08:00</timezone>
+            <roles>
+                <role>owner</role>
+            </roles>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:git://github.com/z-opc-foundation/z-boot.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/z-opc-foundation/z-boot.git</developerConnection>
+        <url>https://github.com/z-opc-foundation/z-boot</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <modules>
+        <module>z-boot-starter</module>
+        <module>z-boot-dependencies</module>
+        <module>z-boot-integration-starters</module>
+    </modules>
+
+    <!--
+      z-boot 子模块的 dependencyManagement 在各子 pom 自己声明 (import z-boot-dependencies BOM).
+      z-opc 等消费者通过 import z-boot-dependencies BOM 也能拿到版本约束.
+      这里不放 import 是为了避免与子模块自身继承形成 cycle.
+    -->
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+</project>
