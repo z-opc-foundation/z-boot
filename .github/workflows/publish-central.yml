@@ -1,0 +1,73 @@
+name: publish-maven-central
+
+on:
+  push:
+    tags:
+      - 'v*'   # 任何 v* 标签触发: v1.0.11, v1.0.12 ...
+  workflow_dispatch:    # 手动触发(可选)
+
+permissions:
+  contents: read
+  id-token: write       # OIDC token for Sonatype Central publishing
+
+env:
+  JAVA_VERSION: '8'
+
+jobs:
+  publish:
+    name: Build + Sign + Deploy to Maven Central
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Import GPG private key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Resolve revision from tag
+        id: rev
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="${TAG#v}"
+          echo "revision=${VER}" >> "$GITHUB_OUTPUT"
+          echo "Resolved revision from tag ${TAG}: ${VER}"
+
+      - name: Set Maven Central Token (User Token from https://central.sonatype.com/account)
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+            <servers>
+              <server>
+                <id>central</id>
+                <username>${CENTRAL_USERNAME}</username>
+                <password>${CENTRAL_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+          echo "✅ ~/.m2/settings.xml 已生成"
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+
+      - name: mvn deploy -Pcentral
+        run: |
+          mvn -B deploy -Pcentral -DskipTests \
+              -Dgpg.passphrase="${{ secrets.GPG_PASSPHRASE }}" \
+              -Drevision="${{ steps.rev.outputs.revision }}"
+
+      - name: Verify deployment
+        if: success()
+        run: |
+          echo "✅ Published. Verify at: https://central.sonatype.com/artifact/io.github.yuku123/z-boot-msg-starter"

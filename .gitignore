@@ -1,0 +1,119 @@
+# ============================================================
+# z-boot .gitignore
+# 与 z-cache / z-mq 等兄弟仓保持一致 (基于 .qoder/canvas 实战验证)
+# ============================================================
+
+# ---------- 编译产物 ----------
+# Java 字节码
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven 构建产物
+# 使用 **/ 而非 */ 是为了匹配任意深度（含子模块的 target/）
+/target/
+/target/**
+**/target/
+**/target/**
+/build/
+**/build/
+*.flattened-pom.xml
+.flattened-pom.xml
+
+# IDE 临时目录
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+.springBeans
+.sts4-cache/
+bin/
+
+# VS Code / Cursor
+.vscode/
+.cursor/
+*.code-workspace
+
+# macOS
+.DS_Store
+*/.DS_Store
+**/.DS_Store
+
+# 日志
+*.log
+logs/
+/logs/
+**/logs/
+*.lst
+
+# Hive metastore_db (本地调试 z-hive 时可能产生)
+metastore_db/
+**/metastore_db/
+
+# ---------- Maven Central 发布相关 (与 lead/004_重要秘钥 配合) ----------
+# 发布凭证 — 必须 .gitignore 排除，凭证应存在 .env (本地)
+.env
+.env.*
+!.env.example
+
+# GPG 密钥环 — 用 ./deploy_maven_center.sh gpg-init 生成
+.gnupg/
+.gnupg/**
+
+# Maven Docker build context (含本地 m2 仓库缓存)
+.build-context/
+
+# 中央 staging/publishing 临时目录 (deploy_maven_center.sh 自动清理)
+target/central-staging/
+target/central-publishing/
+target/central-deferred/
+**/target/central-staging/
+**/target/central-publishing/
+**/target/central-deferred/
+
+# ---------- IDE / 编辑器备份 ----------
+*~
+*.bak
+*.swp
+*.swo
+.DS_Store
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/caches
+.idea/libraries
+.idea/shelf
+
+# ---------- 测试报告 ----------
+test-output/
+surefire-reports/
+failsafe-reports/
+**/test-output/
+**/surefire-reports/
+**/failsafe-reports/
+
+# ---------- Node / 前端 (如未来加 UI 时用) ----------
+node_modules/
+dist/
+.parcel-cache/
+.next/
+.nuxt/
+
+# ---------- Misc ----------
+*.pid
+*.seed
+*.pid.lock
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===== Git 本地备份目录 (历史塌缩用) =====
+.git.bak.*/

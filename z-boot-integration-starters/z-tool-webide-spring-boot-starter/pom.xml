@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-boot-integration-starters</artifactId>
+        <version>1.0.1</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <groupId>io.github.yuku123</groupId>
+    <version>1.0.1</version>
+
+    <artifactId>z-tool-webide-spring-boot-starter</artifactId>
+
+    <description>
+        自动装配入口。
+        - 通过 META-INF/spring.factories 暴露 ZWebIdeAutoConfiguration
+        - @ConditionalOnMissingBean 注入 Docker 实现（用户可覆盖）    </description>
+    <url>https://github.com/yuku123/z-boot</url>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>yuku123</id>
+            <name>yuku123</name>
+            <email>1340947819@qq.com</email>
+            <organization>z-team</organization>
+            <organizationUrl>https://github.com/yuku123</organizationUrl>
+            <timezone>+08:00</timezone>
+            <roles>
+                <role>owner</role>
+            </roles>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:https://github.com/yuku123/z-boot.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/yuku123/z-boot.git</developerConnection>
+        <url>https://github.com/yuku123/z-boot</url>
+        <tag>HEAD</tag>
+    </scm>
+
+
+
+        <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.zifang</groupId>
+                <artifactId>z-boot-dependencies</artifactId>
+                <version>${project.parent.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.zifang</groupId>
+            <artifactId>z-tool-webide-docker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.zifang</groupId>
+            <artifactId>z-tool-webide-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.zifang</groupId>
+            <artifactId>z-tool-webide-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

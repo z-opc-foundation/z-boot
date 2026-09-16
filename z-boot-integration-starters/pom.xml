@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-boot</artifactId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+
+    <artifactId>z-boot-integration-starters</artifactId>
+    <packaging>pom</packaging>
+    <name>z-boot-integration-starters (Aggregator)</name>
+    <description>
+        集成型 Spring Boot Starter 聚合 — 包装 z-opc L3 中间件 (z-config / z-cache / z-mq /
+        z-gw / z-kb / z-vector / z-graph / z-rpc / z-oss) + z-opc 内部 client SDK, 供 z-opc
+        业务模块一行 import 即可拿到对应中间件能力, 也供外部应用快速集成已发布的 z-* 服务。
+    </description>
+
+    <modules>
+        <!-- L3 中间件聚合 starter: 每个 z-boot-* 封装对应 L3 的 spring-boot-starter,
+             业务模块只需引入 z-boot-cache-starter 等就能拿到 z-cache 客户端等。 -->
+        <module>z-boot-config-starter</module>
+        <module>z-boot-cache-starter</module>
+        <module>z-boot-mq-starter</module>
+        <module>z-boot-gw-starter</module>
+        <module>z-boot-kb-starter</module>
+        <module>z-boot-vector-starter</module>
+        <module>z-boot-graph-starter</module>
+        <module>z-boot-rpc-starter</module>
+        <module>z-boot-oss-starter</module>
+        <module>z-boot-schedule-starter</module>
+        <module>z-boot-msg-starter</module>
+
+        <!-- 集成型 starter: 包装 z-opc 自身 client SDK (z-config / z-ctc / z-ext /
+             z-lc / z-mist / z-rpc-client / z-webide)。业务模块可单独引入。 -->
+        <module>z-boot-jackson-starter</module>
+        <module>z-boot-ctc-starter</module>
+        <!-- 临时排除 z-tool-webide-spring-boot-starter（依赖 monorepo 内部 z-webide，
+             Central 发布时无法 resolve；等 z-webide 也发布到 Central 后再加回来） -->
+        <!-- <module>z-tool-webide-spring-boot-starter</module> -->
+    </modules>
+
+    <!-- 7 个 starter 内部聚合的子模块版本 — 原本由各原 z-* 父 POM 的 dependencyManagement 提供,
+         迁移后需在此集中登记,供 7 个 starter 子模块继承。 -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- L3 中间件 -spring-boot-starter: 由 z-boot-* 聚合 starter 依赖 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-config-spring-boot-starter</artifactId>
+                <version>${z-config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-config-client</artifactId>
+                <version>${z-config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-config-common</artifactId>
+                <version>${z-config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-cache-spring-boot-starter</artifactId>
+                <version>${z-cache.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mq-spring-boot-starter</artifactId>
+                <version>${z-mq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-gw-spring-boot-starter</artifactId>
+                <version>${z-gw.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-kb-spring-boot-starter</artifactId>
+                <version>${z-kb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-vector-spring-boot-starter</artifactId>
+                <version>${z-vector.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-spring-boot-starter</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-rpc-spring-boot-starter</artifactId>
+                <version>${z-rpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-oss-common</artifactId>
+                <version>1.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-schedule-spring-boot-starter</artifactId>
+                <version>${z-schedule.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-msg-web</artifactId>
+                <version>${z-msg.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-msg-core</artifactId>
+                <version>${z-msg.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-msg-api</artifactId>
+                <version>${z-msg.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ctc-sso</artifactId>
+                <version>${z-ctc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ctc-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ext-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-lc-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-lc-sdk</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-lc-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-lc-design</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-lc-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mist-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mist-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mist-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-tool-webide-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-tool-webide-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-tool-webide-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-tool-webide-docker</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- z-boot-* 内部 starter:由 z-ctc 等 starter 间接引用 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-datasource-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-web-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+</project>

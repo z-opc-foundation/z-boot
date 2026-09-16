@@ -1,0 +1,980 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-boot</artifactId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    
+
+    <artifactId>z-boot-dependencies</artifactId>
+    <packaging>pom</packaging>
+    <name>z-boot-dependencies (BOM)</name>
+    <description>
+        z-opc-foundation 的第三方依赖版本权威 (BOM) — 统一锁 spring-boot / jackson / netty /
+        log4j2 / druid / mybatis-plus / rocketmq / oss-client / elasticsearch 等 130+ 个
+        第三方组件版本号。其他 z-* 中间件只需 import 这个 BOM 即可继承全部版本约束。
+    </description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <zifang-boot.version>1.0.0</zifang-boot.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <maven-plugin.version>3.0.0-M5</maven-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
+        <lombok.version>1.18.20</lombok.version>
+        <spring-boot.version>2.7.12</spring-boot.version>
+        <spring-cloud.version>2.2.6.RELEASE</spring-cloud.version>
+        <groovy.version>3.0.9</groovy.version>
+        <knife4j.version>3.0.3</knife4j.version>
+        <swagger.v3.version>2.1.2</swagger.v3.version>
+        <springfox-oas.version>3.0.0</springfox-oas.version>
+        <springfox-swagger2.version>3.0.0</springfox-swagger2.version>
+        <swagger.version>1.6.2</swagger.version>
+        <skywalking.version>8.5.0</skywalking.version>
+        <dubbo.version>2.7.21</dubbo.version>
+        <dom4j.version>2.1.3</dom4j.version>
+        <ognl.version>3.2.20</ognl.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <commons-io.version>2.14.0</commons-io.version>
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
+        <commons-text.version>1.10.0</commons-text.version>
+        <commons-collections.version>3.2.2</commons-collections.version>
+        <commons-collections4.version>4.4</commons-collections4.version>
+        <commons-logging.version>1.2</commons-logging.version>
+        <log4j2.version>2.25.4</log4j2.version>
+        <log4j2-ttl-thread-context-map.version>1.3.3</log4j2-ttl-thread-context-map.version>
+        <commons-pool2.version>2.10.0</commons-pool2.version>
+        <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+        <nacos-client.version>2.0.4</nacos-client.version>
+        <simpleclient.version>0.8.1</simpleclient.version>
+        <mysql.version>8.4.0</mysql.version>
+        <druid.version>1.2.23</druid.version>
+
+        <mybatis.version>3.5.16</mybatis.version>
+        <mybatis-spring.version>2.0.6</mybatis-spring.version>
+        <mybatis-spring-boot-starter.version>2.1.4</mybatis-spring-boot-starter.version>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
+        <mybatis-plus-generator.version>3.5.7</mybatis-plus-generator.version>
+        <dynamic-datasource-spring-boot-starter.version>3.5.7</dynamic-datasource-spring-boot-starter.version>
+        <jsqlparser.version>4.9</jsqlparser.version>
+
+        <pagehelper.version>6.1.1</pagehelper.version>
+        <sharding-jdbc.version>4.1.1</sharding-jdbc.version>
+        <mapstruct.version>1.4.2.Final</mapstruct.version>
+
+        <guava.version>32.0.0-jre</guava.version>
+        <spring-cloud-starter-alibaba-nacos-config.version>2.2.6.RELEASE
+        </spring-cloud-starter-alibaba-nacos-config.version>
+        <spring-context-support.version>1.0.11</spring-context-support.version>
+        <freemarker.version>2.3.31</freemarker.version>
+        <xxl-job.version>3.2.0</xxl-job.version>
+        <schedulerx2-spring-boot-starter.version>1.6.0</schedulerx2-spring-boot-starter.version>
+        <aliyun-java-sdk-schedulerx2.version>1.1.2</aliyun-java-sdk-schedulerx2.version>
+        <redisson.version>3.17.3</redisson.version>
+        <rocketmq-spring-boot-starter.version>2.2.0</rocketmq-spring-boot-starter.version>
+        <rocketmq.version>4.8.0</rocketmq.version>
+        <aliyun-sdk-oss.version>3.17.4</aliyun-sdk-oss.version>
+        <esdk-obs-java.version>3.20.6.1</esdk-obs-java.version>
+        <qiniu-java-sdk.version>7.4.0</qiniu-java-sdk.version>
+        <cos_api.version>5.6.38</cos_api.version>
+        <bce-java-sdk.version>0.10.162</bce-java-sdk.version>
+        <java-sdk.version>4.2.2</java-sdk.version>
+        <minio.version>8.6.0</minio.version>
+        <aws-java-sdk-s3.version>1.12.261</aws-java-sdk-s3.version>
+        <elasticsearch-rest-high-level-client.version>8.19.8</elasticsearch-rest-high-level-client.version>
+        <spring-data-elasticsearch.version>4.0.5.RELEASE</spring-data-elasticsearch.version>
+        <HdrHistogram.version>2.1.12</HdrHistogram.version>
+        <javassist.version>3.24.1-GA</javassist.version>
+        <jetcache.version>2.6.0</jetcache.version>
+        <fastjson.version>1.2.83</fastjson.version>
+        <jackson-databind.version>2.18.6</jackson-databind.version>
+        <jackson.version>2.18.6</jackson.version>
+        <transmittable-thread-local.version>2.12.2</transmittable-thread-local.version>
+        <objenesis.version>2.6</objenesis.version>
+        <checker-qual.version>3.7.0</checker-qual.version>
+        <error_prone_annotations.version>2.4.0</error_prone_annotations.version>
+        <hutool.version>5.8.22</hutool.version>
+        <canal.version>1.1.4</canal.version>
+        <aspectjweaver.version>1.9.6</aspectjweaver.version>
+        <compileflow.version>1.1.0</compileflow.version>
+        <thumbnailator.version>0.4.13</thumbnailator.version>
+        <asm.version>9.2</asm.version>
+        <zookeeper.version>3.8.6</zookeeper.version>
+        <protobuf-java.version>3.25.5</protobuf-java.version>
+        <liquibase-core.version>5.0.3</liquibase-core.version>
+        <flowable-spring-boot-starter-process.version>6.6.0
+        </flowable-spring-boot-starter-process.version>
+        <mvel2.version>2.4.7.Final</mvel2.version>
+        <sentinel-datasource-nacos.version>1.7.1</sentinel-datasource-nacos.version>
+        <sentinel-adapter.version>1.8.2</sentinel-adapter.version>
+        <QLExpress.version>3.2.7</QLExpress.version>
+        <bouncycastle.version>1.70</bouncycastle.version>
+        <reflectasm.version>1.11.9</reflectasm.version>
+        <ehcache.version>2.10.8</ehcache.version>
+        <javaparser.version>3.23.1</javaparser.version>
+        <okio.version>3.9.0</okio.version>
+        <okhttp.version>4.12.0</okhttp.version>
+        <caffeine.version>2.9.3</caffeine.version>
+        <json-path.version>2.9.0</json-path.version>
+        <json-smart.version>2.4.9</json-smart.version>
+        <zstd.version>1.5.2-5</zstd.version>
+        <commons-compress.version>1.26.0</commons-compress.version>
+        <knife4j-openapi3-spring-boot-starter>4.1.0</knife4j-openapi3-spring-boot-starter>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-to-slf4j</artifactId>
+                <!-- 2026-09 Dependabot 修复：原硬写 2.18.0 与 properties 中 log4j2.version 2.25.4 不一致，
+                     现统一走 2.25.4。XMLLayout CVE 等 2.25.3+ 已修复。 -->
+                <version>${log4j2.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.7.12</version>
+                <scope>import</scope>
+                <type>pom</type>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.logging.log4j</groupId>
+                        <artifactId>log4j-to-slf4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- 2026-09-04 fix：在 spring-boot-dependencies 之后显式导入 jackson-bom 2.18.6，
+                 因为 Maven dependencyManagement 中「先声明者获胜」，
+                 Spring Boot 2.7.12 BOM 会把 jackson-annotations 拉成 2.13.x，
+                 与本地升级的 jackson-databind 2.18.6 不兼容，导致 Netty JSON 反序列化
+                 抛 NoSuchFieldError: JsonFormat$Feature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE。
+                 jackson-bom 必须出现在 spring-boot-dependencies 之后才能覆盖其中的 Jackson 版本。 -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>2.18.6</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-configuration-processor</artifactId>
+                <version>2.7.12</version>
+                <optional>true</optional>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+                <version>4.1.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy</artifactId>
+                <version>3.0.9</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-jsr223</artifactId>
+                <version>3.0.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>2.7.12</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>junit-vintage-engine</artifactId>
+                        <groupId>org.junit.vintage</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.7</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.7.12</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>4.0.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.skywalking</groupId>
+                <artifactId>apm-toolkit-trace</artifactId>
+                <version>8.5.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.skywalking</groupId>
+                <artifactId>apm-agent-core</artifactId>
+                <version>8.5.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.skywalking</groupId>
+                <artifactId>apm-util</artifactId>
+                <version>8.5.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.skywalking</groupId>
+                <artifactId>apm-test-tools</artifactId>
+                <version>8.5.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.skywalking</groupId>
+                <artifactId>apm-toolkit-logging-common</artifactId>
+                <version>8.5.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.skywalking</groupId>
+                <artifactId>apm-toolkit-log4j-2.x</artifactId>
+                <version>8.5.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-logging</artifactId>
+                <version>2.7.12</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>2.25.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-jul</artifactId>
+                <version>2.25.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>2.25.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>2.25.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>log4j2-ttl-thread-context-map</artifactId>
+                <version>1.3.3</version>
+            </dependency>
+
+            <dependency>
+                <artifactId>dubbo</artifactId>
+                <groupId>org.apache.dubbo</groupId>
+                <version>2.7.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-spring-boot-starter</artifactId>
+                <version>2.7.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-registry-nacos</artifactId>
+                <version>2.7.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-spring-boot-actuator</artifactId>
+                <version>2.7.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-spring-boot-autoconfigure</artifactId>
+                <version>2.7.21</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.dom4j</groupId>
+                <artifactId>dom4j</artifactId>
+                <version>2.1.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>ognl</groupId>
+                <artifactId>ognl</artifactId>
+                <version>3.2.20</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.18.0</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.14.0</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>1.11.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>1.10.0</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>3.2.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.4</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+                <version>2.2.6.RELEASE
+        </version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.nacos</groupId>
+                <artifactId>nacos-client</artifactId>
+                <version>2.0.4</version>
+            </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient</artifactId>
+                <version>0.8.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.shardingsphere</groupId>
+                <artifactId>sharding-jdbc-spring-boot-starter</artifactId>
+                <version>4.1.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-extension</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-core</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-generator</artifactId>
+                <version>${mybatis-plus-generator.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>mybatis-plus-extension</artifactId>
+                        <groupId>com.baomidou</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+                <version>${dynamic-datasource-spring-boot-starter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jsqlparser</groupId>
+                <artifactId>jsqlparser</artifactId>
+                <version>${jsqlparser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.pagehelper</groupId>
+                <artifactId>pagehelper</artifactId>
+                <version>6.1.1</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>8.4.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle.database.jdbc</groupId>
+                <artifactId>ojdbc6</artifactId>
+                <version>${oracle6.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>1.2.23</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid</artifactId>
+                <version>1.2.23</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis-spring-boot-starter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis-spring</artifactId>
+                <version>${mybatis-spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                <version>${mybatis.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-jdk8</artifactId>
+                <version>1.4.2.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>1.4.2.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>1.4.2.Final</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>32.0.0-jre</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.spring</groupId>
+                <artifactId>spring-context-support</artifactId>
+                <version>1.0.11</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>2.3.31</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>3.2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aliyun.schedulerx</groupId>
+                <artifactId>schedulerx2-plugin-xxljob</artifactId>
+                <version>3.2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aliyun.schedulerx</groupId>
+                <artifactId>schedulerx2-spring-boot-starter</artifactId>
+                <version>1.6.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>aliyun-java-sdk-schedulerx2</artifactId>
+                <version>1.1.2</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>3.17.3</version>
+                <!--依赖的redisson-spring-data-27是适配spring-boot的2.7.x版本 排除掉-->
+                <exclusions>
+                    <exclusion>
+                        <artifactId>redisson-spring-data-27</artifactId>
+                        <groupId>org.redisson</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <!--
+            redisson-spring-data-23为适配spring-boot的2.3.x版本
+            详见https://github.com/redisson/redisson/blob/master/redisson-spring-data/README.md
+            springboot版本升级时需要跟着升级
+            -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-data-23</artifactId>
+                <version>3.17.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>2.2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-tools</artifactId>
+                <version>4.8.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>ch.qos.logback</groupId>
+                        <artifactId>logback-classic</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ch.qos.logback</groupId>
+                        <artifactId>logback-core</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client</artifactId>
+                <version>4.8.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-acl</artifactId>
+                <version>4.8.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>3.17.4</version>
+            </dependency>
+            <dependency>
+                <groupId>com.huaweicloud</groupId>
+                <artifactId>esdk-obs-java</artifactId>
+                <version>3.20.6.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qiniu</groupId>
+                <artifactId>qiniu-java-sdk</artifactId>
+                <version>7.4.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qcloud</groupId>
+                <artifactId>cos_api</artifactId>
+                <version>5.6.38</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baidubce</groupId>
+                <artifactId>bce-java-sdk</artifactId>
+                <version>0.10.162</version>
+            </dependency>
+            <dependency>
+                <groupId>com.upyun</groupId>
+                <artifactId>java-sdk</artifactId>
+                <version>4.2.2</version>
+            </dependency>
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>8.6.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-java-sdk-s3</artifactId>
+                <version>1.12.261</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-pool2</artifactId>
+                <version>2.10.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-high-level-client</artifactId>
+                <version>8.19.8</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsearch</groupId>
+                <artifactId>elasticsearch</artifactId>
+                <version>8.19.8</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-client</artifactId>
+                <version>8.19.8</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-elasticsearch</artifactId>
+                <version>4.0.5.RELEASE</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>transport</artifactId>
+                        <groupId>org.elasticsearch.client</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>transport-netty4-client</artifactId>
+                        <groupId>org.elasticsearch.plugin</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hdrhistogram</groupId>
+                <artifactId>HdrHistogram</artifactId>
+                <version>2.1.12</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>*</artifactId>
+                        <groupId>*</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>3.24.1-GA</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alicp.jetcache</groupId>
+                <artifactId>jetcache-starter-redis-lettuce</artifactId>
+                <version>2.6.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <!-- 2026-09-04 fix：jackson-annotations 缺少显式版本会被 Spring Boot 2.7.12 BOM 拉成 2.13.x，
+                     而 jackson-databind 升级到 2.18.6 后调用 2.18 才加入的
+                     JsonFormat$Feature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE 导致
+                     NoSuchFieldError（z-mist Netty JSON 反序列化全员炸）。
+                     这里统一拉到与 databind/core 一致的 2.18.6。 -->
+                <version>2.18.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.18.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.18.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>transmittable-thread-local</artifactId>
+                <version>2.12.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.objenesis</groupId>
+                <artifactId>objenesis</artifactId>
+                <version>2.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>3.7.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>2.4.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>5.8.22</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-core</artifactId>
+                <version>5.8.22</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.coobird</groupId>
+                <artifactId>thumbnailator</artifactId>
+                <version>0.4.13</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.otter</groupId>
+                <artifactId>canal.client</artifactId>
+                <version>1.1.4</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>logback-classic</artifactId>
+                        <groupId>ch.qos.logback</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>logback-core</artifactId>
+                        <groupId>ch.qos.logback</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjweaver</artifactId>
+                <version>1.9.6</version>
+            </dependency>
+
+            <dependency>
+                <artifactId>compileflow</artifactId>
+                <groupId>com.alibaba.compileflow</groupId>
+                <version>1.1.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>9.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>3.8.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>3.25.5</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-core</artifactId>
+                <version>5.0.3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flowable</groupId>
+                <artifactId>flowable-spring-boot-starter-process</artifactId>
+                <version>6.6.0
+        </version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mvel</groupId>
+                <artifactId>mvel2</artifactId>
+                <version>2.4.7.Final</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+                <version>2.2.6.RELEASE</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.csp</groupId>
+                <artifactId>sentinel-datasource-nacos</artifactId>
+                <version>1.7.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.csp</groupId>
+                <artifactId>sentinel-datasource-extension</artifactId>
+                <version>1.7.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.csp</groupId>
+                <artifactId>sentinel-apache-dubbo-adapter</artifactId>
+                <version>1.8.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.csp</groupId>
+                <artifactId>sentinel-core</artifactId>
+                <version>1.8.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>QLExpress</artifactId>
+                <version>3.2.7</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>1.70</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <version>1.70</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>reflectasm</artifactId>
+                <version>1.11.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.ehcache</groupId>
+                <artifactId>ehcache</artifactId>
+                <version>2.10.8</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-core</artifactId>
+                <version>3.23.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-symbol-solver-core</artifactId>
+                <version>3.23.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio</artifactId>
+                <version>3.9.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>4.12.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-sse</artifactId>
+                <version>4.12.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>2.9.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+                <version>2.9.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>2.4.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.26.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.luben</groupId>
+                <artifactId>zstd-jni</artifactId>
+                <version>1.5.2-5</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!--
+        BOM artifact 必须用 resolveCiFriendliesOnly 而非 oss:
+        oss 模式会把 dependencyManagement 全部剥掉, 造成子模块无法从 BOM 解析第三方版本
+        (例: spring-boot-autoconfigure 缺失 version → Central 校验失败)。
+        resolveCiFriendliesOnly 只解析 ${revision}/${sha1}/${changelist}/${tag},
+        保留 BOM transitive imports, 业务模块继续用 oss 模式产出 self-contained POM。
+    -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <configuration>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
