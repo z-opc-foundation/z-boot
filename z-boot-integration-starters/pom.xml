@@ -40,6 +40,7 @@
              z-lc / z-mist / z-rpc-client / z-webide)。业务模块可单独引入。 -->
         <module>z-boot-jackson-starter</module>
         <module>z-boot-ctc-starter</module>
+        <module>z-boot-script-starter</module>
         <!-- 临时排除 z-tool-webide-spring-boot-starter（依赖 monorepo 内部 z-webide，
              Central 发布时无法 resolve；等 z-webide 也发布到 Central 后再加回来） -->
         <!-- <module>z-tool-webide-spring-boot-starter</module> -->
@@ -135,6 +136,12 @@
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-ctc-web</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-script-web</artifactId>
+                <version>${z-script.version}</version>
             </dependency>
 
             <dependency>

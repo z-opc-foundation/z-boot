@@ -79,6 +79,7 @@
         <z-oss.version>1.0.2</z-oss.version>
         <z-schedule.version>1.0.0</z-schedule.version>
         <z-msg.version>1.0.0</z-msg.version>
+        <z-script.version>1.0.0</z-script.version>
 
         <!-- Maven 插件版本 -->
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
