@@ -131,6 +131,15 @@
         <zstd.version>1.5.2-5</zstd.version>
         <commons-compress.version>1.26.0</commons-compress.version>
         <knife4j-openapi3-spring-boot-starter>4.1.0</knife4j-openapi3-spring-boot-starter>
+
+        <!-- FEATURE066: L3 Agent/AI 7 仓版本, 由 z-boot 聚合 starter 引用 -->
+        <z-agent-kernel.version>0.1.0</z-agent-kernel.version>
+        <z-llm.version>0.1.0</z-llm.version>
+        <z-mcp.version>0.1.0</z-mcp.version>
+        <z-skill.version>0.1.0</z-skill.version>
+        <z-agent.version>0.1.0</z-agent.version>
+        <z-bot.version>0.1.0</z-bot.version>
+        <z-agent-proxy.version>0.1.0</z-agent-proxy.version>
     </properties>
 
     <dependencyManagement>

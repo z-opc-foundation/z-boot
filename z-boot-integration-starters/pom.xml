@@ -44,6 +44,14 @@
         <!-- 临时排除 z-tool-webide-spring-boot-starter（依赖 monorepo 内部 z-webide，
              Central 发布时无法 resolve；等 z-webide 也发布到 Central 后再加回来） -->
         <!-- <module>z-tool-webide-spring-boot-starter</module> -->
+
+        <!-- FEATURE066: L3 Agent/AI 7 仓聚合 starter -->
+        <module>z-boot-llm-starter</module>
+        <module>z-boot-mcp-starter</module>
+        <module>z-boot-skill-starter</module>
+        <module>z-boot-agent-starter</module>
+        <module>z-boot-bot-starter</module>
+        <module>z-boot-agent-proxy-starter</module>
     </modules>
 
     <!-- 7 个 starter 内部聚合的子模块版本 — 原本由各原 z-* 父 POM 的 dependencyManagement 提供,
@@ -223,6 +231,38 @@
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-web-starter</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <!-- FEATURE066: L3 Agent/AI 7 仓 starter 依赖 (每仓只暴露 starter 子模块) -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-llm-starter</artifactId>
+                <version>${z-llm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mcp-starter</artifactId>
+                <version>${z-mcp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-skill-starter</artifactId>
+                <version>${z-skill.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-starter</artifactId>
+                <version>${z-agent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-bot-core</artifactId>
+                <version>${z-bot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-proxy</artifactId>
+                <version>${z-agent-proxy.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
