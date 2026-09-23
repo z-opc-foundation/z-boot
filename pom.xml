@@ -95,7 +95,7 @@
         <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
-        <central-publishing-plugin.version>0.7.0</central-publishing-plugin.version>
+        <central-publishing-plugin.version>0.8.0</central-publishing-plugin.version>
         <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
     </properties>
 
