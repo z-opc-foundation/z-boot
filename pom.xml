@@ -59,30 +59,31 @@
 
     <properties>
         <!-- 项目自身版本（CI-friendly versions 根，发版改这一处即可） -->
-        <revision>1.0.11</revision>
+        <revision>1.0.12</revision>
 
         <!-- JDK / 编译 -->
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- z-opc-foundation 生态版本（消费者也通过 properties 引用） -->
-        <z-config.version>1.0.1</z-config.version>
+        <!-- z-opc-foundation 生态版本（消费者也通过 properties 引用）；对账基准 = Maven Central latest (2026-09-23) -->
+        <z-config.version>1.0.7</z-config.version>
         <z-ctc.version>1.0.1</z-ctc.version>
-        <z-cache.version>1.0.2</z-cache.version>
-        <z-mq.version>1.0.2</z-mq.version>
+        <z-cache.version>1.3.1</z-cache.version>
+        <z-mq.version>1.2.0</z-mq.version>
         <z-gw.version>1.0.1</z-gw.version>
-        <z-kb.version>1.0.1</z-kb.version>
+        <z-kb.version>1.0.2</z-kb.version>
         <z-vector.version>1.0.1</z-vector.version>
         <z-graph.version>1.0.1</z-graph.version>
         <z-rpc.version>1.0.2</z-rpc.version>
         <z-oss.version>1.0.2</z-oss.version>
-        <z-schedule.version>1.0.0</z-schedule.version>
+        <z-schedule.version>1.0.2</z-schedule.version>
         <z-msg.version>1.0.0</z-msg.version>
+        <!-- z-script 从未发布 Central (repo1 404, 2026-09-23 实测), 仅 depMgmt 占位无消费者解析 -->
         <z-script.version>1.0.0</z-script.version>
 
         <!-- L3 Agent/AI 生态版本 (FEATURE066 7 仓矩阵) -->
-        <z-agent-kernel.version>0.1.0</z-agent-kernel.version>
+        <z-agent-kernel.version>0.1.1</z-agent-kernel.version>
         <z-llm.version>0.1.2</z-llm.version>
         <z-mcp.version>0.1.2</z-mcp.version>
         <z-skill.version>0.1.2</z-skill.version>

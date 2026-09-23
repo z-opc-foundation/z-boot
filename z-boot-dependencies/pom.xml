@@ -133,7 +133,7 @@
         <knife4j-openapi3-spring-boot-starter>4.1.0</knife4j-openapi3-spring-boot-starter>
 
         <!-- FEATURE066: L3 Agent/AI 7 仓版本, 由 z-boot 聚合 starter 引用 -->
-        <z-agent-kernel.version>0.1.0</z-agent-kernel.version>
+        <z-agent-kernel.version>0.1.1</z-agent-kernel.version>
         <z-llm.version>0.1.2</z-llm.version>
         <z-mcp.version>0.1.2</z-mcp.version>
         <z-skill.version>0.1.2</z-skill.version>
