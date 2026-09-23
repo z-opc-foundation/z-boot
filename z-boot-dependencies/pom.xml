@@ -135,8 +135,8 @@
         <!-- FEATURE066: L3 Agent/AI 7 仓版本, 由 z-boot 聚合 starter 引用 -->
         <z-agent-kernel.version>0.1.0</z-agent-kernel.version>
         <z-llm.version>0.1.1</z-llm.version>
-        <z-mcp.version>0.1.0</z-mcp.version>
-        <z-skill.version>0.1.0</z-skill.version>
+        <z-mcp.version>0.1.1</z-mcp.version>
+        <z-skill.version>0.1.1</z-skill.version>
         <z-agent.version>0.1.1</z-agent.version>
         <z-bot.version>0.1.0</z-bot.version>
         <z-agent-proxy.version>0.1.0</z-agent-proxy.version>
