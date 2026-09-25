@@ -84,7 +84,7 @@
 
         <!-- L3 Agent/AI 生态版本 (FEATURE066 7 仓矩阵) -->
         <z-agent-kernel.version>0.1.1</z-agent-kernel.version>
-        <z-llm.version>0.1.2</z-llm.version>
+        <z-llm.version>0.1.3</z-llm.version>
         <z-mcp.version>0.1.2</z-mcp.version>
         <z-skill.version>0.1.2</z-skill.version>
         <z-agent.version>0.1.2</z-agent.version>
