@@ -78,7 +78,10 @@
         <z-rpc.version>1.0.2</z-rpc.version>
         <z-oss.version>1.0.2</z-oss.version>
         <z-schedule.version>1.0.4</z-schedule.version>
-        <z-msg.version>1.1.0</z-msg.version>
+        <z-msg.version>1.2.0</z-msg.version>
+        <!-- z-msg 1.2.0 已发 Central（2026-09-26 20:09 repo1 实测 api/core/web/channels/ws/im 六件 jar+pom 全 200）。
+             相比 1.1.0 的两处行为变更都在这条 pin 可达的范围内或紧邻：core 的 RealtimeTicketService 票一次性消费
+             （web 侧只有 javadoc 变更），im 的 /history 改成带 nextSinceSeq/hasMore/headSeq/minVisibleSeq 的对象。 -->
         <!-- z-script 1.0.0 实测已在 Central：repo1 的 z-script/{z-script-web,z-script-core,z-script-engine}
              pom+jar 均 200，且空仓 `dependency:resolve io.github.yuku123:z-script-web:1.0.0` BUILD SUCCESS
              （落地 16 个 io.github.yuku123 jar）。此前这里写的"从未发布 (repo1 404)"是 2026-09-23 的旧口径。 -->

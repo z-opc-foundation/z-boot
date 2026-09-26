@@ -150,7 +150,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 | `z-boot-rpc-starter` | z-rpc-spring-boot-starter | `${z-rpc.version}` = 1.0.2 | `z.rpc.enabled`，`matchIfMissing=true` ⇒ 默认开 |
 | `z-boot-oss-starter` | z-oss-common | `${z-oss.version}` = 1.0.2 | 按 **`oss.provider`** 分支（`local` 为 matchIfMissing），没有 enabled 开关 |
 | `z-boot-schedule-starter` | z-schedule-spring-boot-starter | `${z-schedule.version}` = 1.0.4 | 按 **`z.base.db.schedule.disabled=false`** 反向开关，没有 `z.schedule.enabled` |
-| `z-boot-msg-starter` | z-msg-web | `${z-msg.version}` = 1.1.0 | **`z-msg.enabled`**（连字符不是点），默认开 |
+| `z-boot-msg-starter` | z-msg-web | `${z-msg.version}` = 1.2.0（**仓内 property**；repo1 的 1.0.15 发布件实测仍是 1.1.0，见下方注） | **`z-msg.enabled`**（连字符不是点），默认开 |
 | `z-boot-ctc-starter` | z-ctc-sso | `${z-ctc.version}` = 1.0.1 | **`z.boot.ctc.enabled=true`**（开关在 z-boot 这层，不在 L3；`ZBootCtcAutoConfiguration:27`），默认关 |
 | `z-boot-llm-starter` | z-llm-starter | `${z-llm.version}` = 0.1.4 | `z.llm.enabled=true`，默认关 |
 | `z-boot-mcp-starter` | z-mcp-starter | `${z-mcp.version}` = 0.1.2 | `z.mcp.enabled=true`，`matchIfMissing=false` ⇒ 默认关 |
@@ -166,10 +166,19 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 > （量具：`~/.cache/zboot-1015/published-aggregate-table.sh`）。上一版这条对不上的是 `z-msg`
 > （property 抬了但 1.0.14 发布件里还是 1.0.0）和 `z-llm`——两处都在 1.0.15 兑现了。
 >
-> ⚠ **反向的账：19 个 pin 里有 6 个落后于 Central 的 `<latest>`**（2026-09-26 逐个读
+> ⚠ **这条"表格 == 发布件"的等式现在对 z-msg 一格重新失效，且是故意的**：2026-09-26 21:11 把根 pom 的
+> `<z-msg.version>` 抬到 1.2.0 后，实测是 **18/19 一致 + 1 格已知分叉** —— repo1 的
+> `z-boot-msg-starter-1.0.15.pom` 仍写 `z-msg-web:1.1.0`（21:12 curl，`1.0.16` 404，
+> `maven-metadata.xml` 的 `<version>` 列表停在 1.0.15）。仓内这一侧量过：`mvn -o -pl
+> z-boot-integration-starters/z-boot-msg-starter -am package` 生成的 `.flattened-pom.xml` 里是字面量
+> `1.2.0`，`dependency:tree` 解析出 `z-msg-web:jar:1.2.0 → z-msg-core:jar:1.2.0 → z-msg-api:jar:1.2.0`。
+> 所以分叉只能靠**发 1.0.16** 收掉，改表格文字收不掉它。
+>
+> ⚠ **反向的账：19 个 pin 里原本有 6 个落后于 Central 的 `<latest>`**（2026-09-26 逐个读
 > `<artifact>/maven-metadata.xml`，13 个 SAME / 6 个 LAG / 0 个读不到）：
 > z-config 1.0.7→**1.0.8**、z-cache 1.3.1→**1.3.5**、z-mq 1.2.0→**1.2.1**、
 > z-gw 1.0.1→**1.0.3**、z-vector 1.0.1→**1.0.3**、z-msg 1.1.0→**1.2.0**。
+> 其中 `z-msg` 那一格已在 09-26 21:11 抬到 1.2.0（仓内），所以这份清单只剩 5 格待判。
 > "落后"不等于"该抬"——每个 L3 的新版是否可用要按各仓的回归判，别照 `<latest>` 盲抬；
 > 但这张表从此有了一个能自动跑的对账尺，抬号前拿它量一遍就行。
 
