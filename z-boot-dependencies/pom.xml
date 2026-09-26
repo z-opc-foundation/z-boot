@@ -1004,6 +1004,9 @@
                 <artifactId>flatten-maven-plugin</artifactId>
                 <configuration>
                     <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <pomElements>
+                        <dependencyManagement>resolved</dependencyManagement>
+                    </pomElements>
                 </configuration>
             </plugin>
         </plugins>
