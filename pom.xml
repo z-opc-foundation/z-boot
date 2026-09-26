@@ -77,7 +77,7 @@
         <z-graph.version>1.0.3</z-graph.version>
         <z-rpc.version>1.0.2</z-rpc.version>
         <z-oss.version>1.0.2</z-oss.version>
-        <z-schedule.version>1.0.2</z-schedule.version>
+        <z-schedule.version>1.0.4</z-schedule.version>
         <z-msg.version>1.0.0</z-msg.version>
         <!-- z-script 从未发布 Central (repo1 404, 2026-09-23 实测), 仅 depMgmt 占位无消费者解析 -->
         <z-script.version>1.0.0</z-script.version>
