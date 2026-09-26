@@ -294,7 +294,8 @@ public class App { public static void main(String[] args) { SpringApplication.ru
   （`maven.compiler.source` / `maven.compiler.target` / `project.build.sourceEncoding`，每个 pom
   都自己写了这三条）、`z-boot-base` 4 条（多 `log4j2.version`）、`z-boot-jackson-starter` 4 条
   （多 `jackson-databind.version`）、`z-boot-datasource-starter` 6 条（多 `druid/mysql/log4j2.version`）、根 pom 30 条（+1557 B）；其余行逐字节同。
-  对外新暴露的 129 条去重 property 键值（27 个发布件的 `<properties>` 段合计 274 行），
+  对外新暴露的 129 条去重 property 键值（27 个发布件的 `<properties>` 段合计 274 **行** = 220 条条目
+  + 每份 pom 那两行标签），
   按凭证类词（password/secret/token/apikey/credential/…）和内网主机类词（`192.168.`/`localhost`/
   `http://`/…）扫 = **0 命中**（按 property 条数分：22 个模块 3 条、`z-boot-base` 4 条、
   `z-boot-jackson-starter` 4 条、`z-boot-datasource-starter` 6 条、`z-boot-dependencies` 110 条、根 pom 30 条；
