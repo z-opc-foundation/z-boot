@@ -40,10 +40,16 @@
              z-lc / z-mist / z-rpc-client / z-webide)。业务模块可单独引入。 -->
         <module>z-boot-jackson-starter</module>
         <module>z-boot-ctc-starter</module>
-        <!-- 临时排除 z-boot-script-starter（依赖 z-script-web 1.0.0 仍未发 Central） -->
-        <!-- <module>z-boot-script-starter</module> -->
-        <!-- 临时排除 z-tool-webide-spring-boot-starter（依赖 monorepo 内部 z-webide，
-             Central 发布时无法 resolve；等 z-webide 也发布到 Central 后再加回来） -->
+        <!-- z-script-web 1.0.0 实测已在 Central（空仓 dependency:resolve BUILD SUCCESS），
+             所以 script-starter 从 1.0.15 起进 reactor 一起发。 -->
+        <module>z-boot-script-starter</module>
+        <!-- z-tool-webide-spring-boot-starter 不能进 reactor：它的 pom 还停在命名空间迁移之前，
+             2026-09-26 实测（放开后 `mvn -B package` 直接 rc=1，且是"读不起整个 reactor"级别）：
+               Non-resolvable import POM: com.zifang:z-boot-dependencies:pom:1.0.1 (absent)
+               'dependencies.dependency.version' for com.zifang:z-tool-webide-{docker,api,common}:jar is missing
+               'dependencies.dependency.version' for org.springframework.boot:spring-boot-autoconfigure:jar is missing
+             即 <parent> 写死 1.0.1（不吃 ${revision}）、依赖是 com.zifang 组（repo1 该组 404）且无版本。
+             要发它得先把 z-tool-webide-{docker,api,common} 发布到 Central 并把本 pom 迁到 io.github.yuku123 + ${revision}。 -->
         <!-- <module>z-tool-webide-spring-boot-starter</module> -->
 
         <!-- FEATURE066: L3 Agent/AI 7 仓聚合 starter -->
@@ -162,8 +168,10 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-ctc-web</artifactId>
-                <!-- 和 z-ctc-sso 同源，属 z-ctc L3：`${project.version}` 会解析成 z-boot 自己的
-                     1.0.14，repo1 实测 404（而 1.0.1 = 200）。当前无模块消费它，补一句就会拿到坏版本。 -->
+                <!-- 和 z-ctc-sso 同源，属 z-ctc L3。这里绝不能用 `${project.version}`：那会解析成
+                     z-boot 自己的 <revision>，而 z-ctc 的发布节奏与 z-boot 无关（z-boot 1.0.x 这个
+                     坐标在 repo1 上不存在，z-ctc-web 只有 1.0.1）。当前无模块消费它，所以错 pin
+                     不会在构建期暴露，一暴露就是消费者拿到坏版本。 -->
                 <version>${z-ctc.version}</version>
             </dependency>
 

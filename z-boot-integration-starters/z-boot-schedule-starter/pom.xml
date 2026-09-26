@@ -48,8 +48,8 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- 子 pom 自包含版本号, 顶层 ${revision} flatten 后 z-schedule.version 才可解析; 须与根 pom 同步 -->
-        <z-schedule.version>1.0.4</z-schedule.version>
+        <!-- z-schedule 版本用顶层 pom 的 <z-schedule.version>。这里原有份副本，注释自己写着
+             "须与根 pom 同步"——手抄两份正是漂移的成因，且删掉不改变产物：2026-09-26 两侧实测同为 1.0.4。 -->
     </properties>
 
     <dependencyManagement>

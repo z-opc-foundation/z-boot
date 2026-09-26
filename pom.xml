@@ -59,7 +59,7 @@
 
     <properties>
         <!-- 项目自身版本（CI-friendly versions 根，发版改这一处即可） -->
-        <revision>1.0.14</revision>
+        <revision>1.0.15</revision>
 
         <!-- JDK / 编译 -->
         <maven.compiler.source>8</maven.compiler.source>
@@ -78,8 +78,10 @@
         <z-rpc.version>1.0.2</z-rpc.version>
         <z-oss.version>1.0.2</z-oss.version>
         <z-schedule.version>1.0.4</z-schedule.version>
-        <z-msg.version>1.0.0</z-msg.version>
-        <!-- z-script 从未发布 Central (repo1 404, 2026-09-23 实测), 仅 depMgmt 占位无消费者解析 -->
+        <z-msg.version>1.1.0</z-msg.version>
+        <!-- z-script 1.0.0 实测已在 Central：repo1 的 z-script/{z-script-web,z-script-core,z-script-engine}
+             pom+jar 均 200，且空仓 `dependency:resolve io.github.yuku123:z-script-web:1.0.0` BUILD SUCCESS
+             （落地 16 个 io.github.yuku123 jar）。此前这里写的"从未发布 (repo1 404)"是 2026-09-23 的旧口径。 -->
         <z-script.version>1.0.0</z-script.version>
 
         <!-- L3 Agent/AI 生态版本 (FEATURE066 7 仓矩阵) -->

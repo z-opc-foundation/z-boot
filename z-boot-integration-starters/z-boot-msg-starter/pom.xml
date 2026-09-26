@@ -48,8 +48,10 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- 子 pom 自包含版本号, 顶层 ${revision} flatten 后 z-msg.version 才可解析 -->
-        <z-msg.version>1.0.0</z-msg.version>
+        <!-- z-msg 版本一律用顶层 pom 的 <z-msg.version>，这里不再重复声明：
+             2026-09-26 实测顶层抬到 1.1.0 后 dependency:tree 仍解析出 1.0.0，
+             就是因为这里有一份子 pom 副本在遮蔽父 property（flatten 会把生效值折成字面量，
+             所以"自包含"不是需要副本的理由）。 -->
     </properties>
 
     <dependencyManagement>
