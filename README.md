@@ -50,6 +50,11 @@
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
+        <artifactId>z-boot-mq-starter</artifactId>
+        <version>1.0.16</version>
+    </dependency>
+    <dependency>
+        <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-rpc-starter</artifactId>
         <version>1.0.16</version>
     </dependency>
@@ -353,31 +358,12 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 ### Case 1: 业务方全栈（一行 import 一个能力）
 
-```xml
-<!-- 引入 z-boot BOM -->
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.16</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
-
-<dependencies>
-    <!-- Web + DB -->
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.0.16</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-datasource-starter</artifactId><version>1.0.16</version></dependency>
-
-    <!-- 中间件 (一行一个) -->
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.0.16</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-mq-starter</artifactId><version>1.0.16</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-rpc-starter</artifactId><version>1.0.16</version></dependency>
-</dependencies>
-```
+依赖形状就是上面 [🚀 5 分钟接入 · 方式一](#方式一业务模块推荐-一次性-import-全部能力) 那一份
+（BOM import + 每个 `z-boot-*-starter` 自带 `<version>`），这一格以前抄了第二份、
+下面「模块结构 → 用法」抄了第三份 ⇒ 2026-09-26 三份收敛成那一份真源，别再往回抄。
+按场景在真源那份的 `<dependencies>` 里增删就行，全 19 个 L3 聚合 starter 逐个列在
+「z-boot-* 聚合 starter（19 个）」那张表里。业务方全栈常见的一档：`web` + `datasource`
++ `jackson`，再按需挂 `cache` / `mq` / `rpc` / `config` / `oss`。
 
 ### Case 2: 单独用某个 starter（外部开发者）
 
@@ -707,70 +693,30 @@ bash deploy_maven_center.sh publish   # 发到 Maven Central
 
 ## 用法
 
-> ⚠ 本节与上面「🚀 5 分钟接入」「⚙️ 实用 Case」是**同一段 XML 的第三份副本**。
-> 2026-09-26 的整批版本号腐烂（README 停在 1.0.2、lead 停在 1.0.9、pom 是当时的发布版）就是这么来的：
-> 抬版时只改了一份。三份现在都是 1.0.16，但**权威那份是「5 分钟接入」**。
-> 副本没法一次改到位，所以留一条能跑的账：`~/.cache/zboot-1016/readme-classify.py` —— 它从根 pom 读
-> `<revision>`（剥掉 XML 注释再读，见下方 ⚠），然后要求**代码围栏内每一行 `<version>X</version>` 都等于
-> 那个值**，围栏外的提及只列出来不参与判定。2026-09-26 在 1.0.16 上实跑：围栏内 25 行、值只有一种
-> （`1.0.16`）、STALE 0 ⇒ PASS；同一轮把第 24 行改成 `1.0.9` 的内存副本当场判出 STALE 1 ⇒ 尺有牙。
-> ⚠ **别拿 `grep -c "<version>1\.0\.16</version>"` 当尺**：25 这个数本身会随示例增减而漂，
-> 而 1.0.15 那轮的 26 里含「5 分钟接入」末尾那句取证叙述（第 63 行），按定值抬版的 blanket sed
-> 会把这段**历史测量**改坏（1.0.16 这轮就是这么差点丢掉的）。
-> ⚠ 这把尺第一次跑判的是"25 行都没跟上 `X.Y.Z`"——根 pom 第 10 行**注释里**就写着
+> ⚠ 这一段是防"版本号腐烂"的制度，不是装饰。2026-09-26 的整批腐烂（README 停在 1.0.2、lead 停在 1.0.9、
+> pom 是当时的发布版）成因就是**同一段 XML 被抄了三份、抬版只改了一份**。
+> ✅ **三份已收敛成一份真源 = 「🚀 5 分钟接入 · 方式一」**（CEO 2026-09-26 点头"执行这五项修改"之后做的）：
+> 真源那份补成超集（多一行 `z-boot-mq-starter`，使被删的两份一个字都没丢），
+> 「⚙️ 实用 Case · Case 1」和下面「### 业务方接入」两整块 XML 换成回指真源的链接。
+> 实测效果：本文件 857 → 803 行（857 = 本次收敛前那笔提交的读数，1.0.16 发布那笔是 840），
+> 尺的判定分母 25 → **14 行**（收敛后仍围栏内 14 行、值只有一种
+> `1.0.16`、STALE 0 ⇒ PASS，同一轮把第 24 行改成 `1.0.9` 的内存副本当场判出 STALE 1 ⇒ 尺有牙）。
+> 留一条能跑的账兜底：`~/.cache/zboot-1016/readme-classify.py` —— 它从根 pom 读 `<revision>`
+> （剥掉 XML 注释再读，见下方 ⚠），然后要求**代码围栏内每一行 `<version>X</version>` 都等于那个值**，
+> 围栏外的提及只列出来不参与判定。
+> ⚠ **别拿 `grep -c "<version>1\.0\.16</version>"` 当尺**：这个数本身会随示例增减而漂（今天就是 25 → 14），
+> 而且 1.0.15 那轮的 26 里含「5 分钟接入」末尾那句 `<version>1.0.15</version>` 取证叙述——**别按行号去找它，
+> 行号会随每次编辑漂**（它这轮就从第 63 行漂到第 68 行）， blanket sed 会把这段**历史测量**改坏
+> （1.0.16 这轮就是这么差点丢掉的）。
+> ⚠ 这把尺第一次跑判的是"所有示例都没跟上 `X.Y.Z`"——根 pom 第 10 行**注释里**就写着
 > `<revision>X.Y.Z</revision>`，不剥注释量到的就是它。
-> 对不上就是漏改了某一份——不用眼睛找，一条命令判红。（把后两段直接删掉只留一份这件事仍等点头，不擅自动手。）
+> 对不上就是漏改了某一份——不用眼睛找，一条命令判红。
 
 ### 业务方接入 (推荐: 一次性引入 z-boot)
 
-```xml
-<!-- 1. 引入 z-boot-dependencies BOM (锁所有第三方版本) -->
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.16</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
-
-<!-- 2. 引入需要的 starter (version 必须自己写 —— BOM 不管理 z-boot-* 坐标) -->
-<dependencies>
-    <!-- 基础能力 -->
-    <dependency>
-        <groupId>io.github.yuku123</groupId>
-        <artifactId>z-boot-web-starter</artifactId>
-        <version>1.0.16</version>
-    </dependency>
-    <dependency>
-        <groupId>io.github.yuku123</groupId>
-        <artifactId>z-boot-datasource-starter</artifactId>
-        <version>1.0.16</version>
-    </dependency>
-
-    <!-- L3 中间件 (一行 import 集成, 不用自己再找 L3 starter) -->
-    <dependency>
-        <groupId>io.github.yuku123</groupId>
-        <artifactId>z-boot-cache-starter</artifactId>
-        <version>1.0.16</version>
-    </dependency>
-    <dependency>
-        <groupId>io.github.yuku123</groupId>
-        <artifactId>z-boot-mq-starter</artifactId>
-        <version>1.0.16</version>
-    </dependency>
-    <dependency>
-        <groupId>io.github.yuku123</groupId>
-        <artifactId>z-boot-rpc-starter</artifactId>
-        <version>1.0.16</version>
-    </dependency>
-    <!-- ... 其余 z-boot-*-starter 按需：19 个 L3 聚合 + jackson，逐个列在
-         上面「z-boot-* 聚合 starter（19 个）」那张表里（这里以前写"其他 5 个"，是旧表只列 10 行时留下的数）-->
-</dependencies>
-```
+这段以前抄了第三份"完整接入 XML"（和上面「5 分钟接入 · 方式一」逐行同构），2026-09-26 删掉，
+只留真源那一份：BOM import + 每个 starter 自带 `<version>`，形状见
+[🚀 5 分钟接入](#-5-分钟接入)。要挑哪些 starter 看「z-boot\* 聚合 starter（19 个）」那张表。
 
 ### 全世界开发者 (外部, 一行 import 一个中间件)
 
