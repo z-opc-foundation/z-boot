@@ -3,7 +3,7 @@
 > **Spring Boot Starter 聚合仓 + 第三方依赖版本权威 (BOM)**
 > 把所有 z-* L3 中间件 + 通用 starter 收成"开箱即用"系列, 业务模块一行 import 一个能力
 
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.15-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.16-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
 [![License](https://img.shields.io/license/MIT-green)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-8%2B-orange)](https://openjdk.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.x-6DB33F)](https://spring.io)
@@ -150,7 +150,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 | `z-boot-rpc-starter` | z-rpc-spring-boot-starter | `${z-rpc.version}` = 1.0.2 | `z.rpc.enabled`，`matchIfMissing=true` ⇒ 默认开 |
 | `z-boot-oss-starter` | z-oss-common | `${z-oss.version}` = 1.0.2 | 按 **`oss.provider`** 分支（`local` 为 matchIfMissing），没有 enabled 开关 |
 | `z-boot-schedule-starter` | z-schedule-spring-boot-starter | `${z-schedule.version}` = 1.0.4 | 按 **`z.base.db.schedule.disabled=false`** 反向开关，没有 `z.schedule.enabled` |
-| `z-boot-msg-starter` | z-msg-web | `${z-msg.version}` = 1.2.0（**仓内 property**；repo1 的 1.0.15 发布件实测仍是 1.1.0，见下方注） | **`z-msg.enabled`**（连字符不是点），默认开 |
+| `z-boot-msg-starter` | z-msg-web | `${z-msg.version}` = 1.2.0（仓内 property 与 **1.0.16 发布件**已一致；1.0.15 发布件仍是 1.1.0，那段历史见下方注） | **`z-msg.enabled`**（连字符不是点），默认开 |
 | `z-boot-ctc-starter` | z-ctc-sso | `${z-ctc.version}` = 1.0.1 | **`z.boot.ctc.enabled=true`**（开关在 z-boot 这层，不在 L3；`ZBootCtcAutoConfiguration:27`），默认关 |
 | `z-boot-llm-starter` | z-llm-starter | `${z-llm.version}` = 0.1.4 | `z.llm.enabled=true`，默认关 |
 | `z-boot-mcp-starter` | z-mcp-starter | `${z-mcp.version}` = 0.1.2 | `z.mcp.enabled=true`，`matchIfMissing=false` ⇒ 默认关 |
@@ -161,24 +161,28 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 | `z-boot-script-starter` | z-script-web | `${z-script.version}` = 1.0.0 | 无开关（z-boot 侧 0 个 `@ConditionalOnProperty`；实体装配在 z-script-web 自己的 `spring.factories` → `ZScriptWebAutoConfiguration`）。1.0.15 才进反应堆，宿主前置：MySQL 建过 z-script 的 `_doc/002_deploy/init.sql`、数据源键写 `z.base.db.script.*`（写 `spring.datasource.*` 会静默回落 localhost/root） |
 
 > **这一列的版本号已经在对外发布件里了，不只是仓内 property**：2026-09-26 逐个 curl repo1 上
-> `z-boot-*-starter-1.0.15.pom`（flatten 已把 property 展开成字面量），19/19 抽出的
-> `io.github.yuku123` 直接依赖与本表"聚合的 L3 坐标 + 版本"两列逐格一致
-> （量具：`~/.cache/zboot-1015/published-aggregate-table.sh`）。上一版这条对不上的是 `z-msg`
+> `z-boot-*-starter-1.0.16.pom`（flatten 已把 property 展开成字面量），**19/19** 抽出的
+> `io.github.yuku123` 直接依赖与本表"聚合的 L3 坐标 + 版本"两列逐格一致、0 格不一致
+> （量具：`~/.cache/zboot-1016/table-vs-published-1016.py` —— 期望值不手敲，整张表从本 README
+> 机械解析，实测分母 19）。上一版这条对不上的是 `z-msg`
 > （property 抬了但 1.0.14 发布件里还是 1.0.0）和 `z-llm`——两处都在 1.0.15 兑现了。
 >
-> ⚠ **这条"表格 == 发布件"的等式现在对 z-msg 一格重新失效，且是故意的**：2026-09-26 21:11 把根 pom 的
-> `<z-msg.version>` 抬到 1.2.0 后，实测是 **18/19 一致 + 1 格已知分叉** —— repo1 的
-> `z-boot-msg-starter-1.0.15.pom` 仍写 `z-msg-web:1.1.0`（21:12 curl，`1.0.16` 404，
-> `maven-metadata.xml` 的 `<version>` 列表停在 1.0.15）。仓内这一侧量过：`mvn -o -pl
+> ✅ 曾有一条**故意留着**的分叉已在 1.0.16 收掉，过程记在这里：2026-09-26 21:11 把根 pom 的
+> `<z-msg.version>` 抬到 1.2.0 之后、1.0.15 发布之前，实测是 **18/19 一致 + 1 格已知分叉** ——
+> repo1 的 `z-boot-msg-starter-1.0.15.pom` 当时仍写 `z-msg-web:1.1.0`（21:12 curl，`1.0.16` 404，
+> `maven-metadata.xml` 的 `<version>` 列表停在 1.0.15）。仓内这一侧当时量过：`mvn -o -pl
 > z-boot-integration-starters/z-boot-msg-starter -am package` 生成的 `.flattened-pom.xml` 里是字面量
-> `1.2.0`，`dependency:tree` 解析出 `z-msg-web:jar:1.2.0 → z-msg-core:jar:1.2.0 → z-msg-api:jar:1.2.0`。
-> 所以分叉只能靠**发 1.0.16** 收掉，改表格文字收不掉它。
+> `1.2.0`。分叉确实只能靠发版收，改表格文字收不掉它——发完 1.0.16 后同一处回读：
+> `z-boot-msg-starter-1.0.16.pom` = **`z-msg-web:1.2.0`**（21:58 curl，且它已不含 XML 注释、
+> 多了一个 `<properties>` 块，见下面「BOM」一节），上面那条 19/19 就是对 1.0.16 重跑的结果。
 >
-> ⚠ **反向的账：19 个 pin 里原本有 6 个落后于 Central 的 `<latest>`**（2026-09-26 逐个读
-> `<artifact>/maven-metadata.xml`，13 个 SAME / 6 个 LAG / 0 个读不到）：
+> ⚠ **反向的账：19 个 pin 里有 5 个仍落后于 Central 的 `<latest>`**（同一张表、同一把尺，
+> 但分母换成 repo1 的 **1.0.16 发布件**字面量后逐个读 `<artifact>/maven-metadata.xml`：
+> **14 个 SAME / 5 个 LAG / 0 个读不到**，量具 `~/.cache/zboot-1016/latest-vs-published-1016.py`）：
 > z-config 1.0.7→**1.0.8**、z-cache 1.3.1→**1.3.5**、z-mq 1.2.0→**1.2.1**、
-> z-gw 1.0.1→**1.0.3**、z-vector 1.0.1→**1.0.3**、z-msg 1.1.0→**1.2.0**。
-> 其中 `z-msg` 那一格已在 09-26 21:11 抬到 1.2.0（仓内），所以这份清单只剩 5 格待判。
+> z-gw 1.0.1→**1.0.3**、z-vector 1.0.1→**1.0.3**。
+> （1.0.15 那阵子这条尺量到的是 13 SAME / 6 LAG，第 6 格 `z-msg` 1.1.0→1.2.0 已随 1.0.16 发布兑现，
+> 所以清单从 6 格缩到 5 格——这 5 格 1.0.16 **没有**顺带抬，抬号要按各仓回归单独判。）
 > "落后"不等于"该抬"——每个 L3 的新版是否可用要按各仓的回归判，别照 `<latest>` 盲抬；
 > 但这张表从此有了一个能自动跑的对账尺，抬号前拿它量一遍就行。
 
@@ -186,7 +190,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 | 模块 | 说明 |
 |---|---|
-| `z-boot-dependencies` | 第三方依赖版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4，共 133 条受管依赖 / 1011 行；repo1 上的 1.0.15 发布件也是 1011 行——BOM 用 `resolveCiFriendliesOnly` 模式，`<dependencyManagement>` 原样保留）|
+| `z-boot-dependencies` | 第三方依赖版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4，共 **132 条**受管依赖 / 仓内 1009 行）。发布件行数别再拿它当"没被动过"的尺：1.0.15 的 repo1 件是 1011 行、1.0.16 是 **889 行**——差的不是依赖（两版 `<dependencyManagement>` 逐条对过：132 vs 133，唯一实质差别是删掉死项 `ojdbc6`），是 1.0.16 起 flatten 走的写入器把 XML 注释剥了，成因与实测见下面「第三方版本权威（BOM）」 |
 
 ### 聚合 POM (3 个)
 
@@ -232,30 +236,55 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 ### 第三方版本权威（BOM）
 - ✅ **z-boot-dependencies** 锁的是**第三方**版本，不是 z-* 的版本锁入口
   （实测：BOM 的 `<dependencyManagement>` 里 `z-boot-*` 坐标 **0 条**，见上面「5 分钟接入」的 ⚠）
-- ✅ **1011 行 / 133 条受管依赖**（2026-09-26 在 **repo1 的 1.0.15 发布件**上逐条解析
-  `<dependencyManagement>` 得到的分解）：**115 条钉的是字面版本** + **14 条钉的是 `${...}` property**
-  + 2 条 `scope=import`。内容如 spring-boot-dependencies 2.7.12 / jackson-databind 2.18.6 /
+- ✅ **132 条受管依赖**（2026-09-26 在 **repo1 的 1.0.16 发布件**上逐条解析 `<dependencyManagement>`
+  得到的分解）：**119 条钉的是字面版本**（其中 2 条是 `scope=import`）+ **13 条钉的是 `${...}` property**
+  = 132，条数自洽。内容如 spring-boot-dependencies 2.7.12 / jackson-databind 2.18.6 /
   mybatis-plus 3.5.7 / druid 1.2.23 / log4j2 2.25.4 / commons-lang3 3.18.0
-- ⚠ **那 14 条 `${...}` 对外部 import 者是失效的**（不是"看起来失效"，是空仓跑出来的）：
-  拿一个只 import `z-boot-dependencies:1.0.14` 的干净 pom、无版本声明 `io.github.yuku123:z-graph-api`
-  ⇒ Maven 当场拒读，`'dependencies.dependency.version' for io.github.yuku123:z-graph-api:jar is missing`；
-  同一支 pom 把坐标换成钉字面版本的 `org.springframework.boot:spring-boot-configuration-processor`
-  ⇒ 正常解析出 2.7.12、`BUILD SUCCESS`（阳性对照，证明不是网/量具的错）。
-  14 条是：`log4j-to-slf4j`、`mybatis-plus-{boot-starter,extension,core,generator}`、
-  `dynamic-datasource-spring-boot-starter`、`jsqlparser`、`ojdbc6`、`mybatis-spring-boot-starter`、
-  `mybatis-spring`、`mybatis`、`z-graph-{api,core,protocol}`。
-  成因是发布机制不是笔误：BOM 用 `resolveCiFriendliesOnly`（flatten 文档原话——该模式
-  "keep the dependencyManagement **as-is** without resolving parent influences"，占位符原样留着，
-  指望父 pom 给出 property），而根 pom 用 `oss` 模式发布成 37 行、**不含 `<properties>`** ⇒ 链条断在中间。
-  已试过的路都不成立（实测）：`flattenMode=bom` 会把 `<parent>` 剥掉、占位符一条不归零；
-  `<pomElements><dependencyManagement>interpolate</...>` 构建成功但 14 条占位符**依旧在**；
+  （早先这里写的是"115 + 14 + 2 = 131 / 共 133"，那 2 条 `import` 本来就带字面版本、被重复数成了另一类，
+  分解对不上总数；1.0.16 起按上面的口径重数）
+- ✅ **1.0.16 修掉了一个对外失效的缺陷**（这是发 1.0.16 的唯一目的）：
+  1.0.15 及之前，外部工程 import `z-boot-dependencies` 后有 **4 条**受管项解析不出来——
+  `io.github.yuku123:z-graph-{api,core,protocol}`（`${z-graph.version}` 只定义在根 pom 里）和
+  `com.oracle.database.jdbc:ojdbc6`。症状不是"没锁住"，是 Maven **当场拒读整份 BOM**：
+  `'dependencies.dependency.version' for io.github.yuku123:z-graph-api:jar is missing`，
+  定位到 BOM pom 第 977 行；同一支探针把坐标换成钉字面版本的
+  `org.springframework.boot:spring-boot-configuration-processor` ⇒ 正常解析出 2.7.12（阳性对照）。
+  成因在发布机制：BOM 用 `resolveCiFriendliesOnly`，占位符**原样**留在发布件里（flatten 文档原话
+  "keep the dependencyManagement as-is without resolving parent influences"），指望父 pom 给出 property，
+  而根 pom 用 `oss` 模式发布成 37 行、**`<properties>` 一个都没有** ⇒ 链条断在中间。
+  所以这个缺陷在**仓内永远看不见**（reactor 里父 pom 是真的，property 解析得动）。
+  ⚠ **早先这里写的"14 条都失效"是错的**：那 14 条 `${...}` 里有 **10 条**的 property 就在 BOM
+  自己那 110 条 `<properties>` 里，外部 import 者解析得到；真正失效的是 4 条。数错的原因是把
+  "版本带 `${}`"当成了"对外失效"，没逐条回查 property 定义在哪。
+- ✅ **修法 = 让发布出去的父 pom 带上 `<properties>`**（`z-boot/pom.xml` 的 flatten 配置加
+  `<pomElements><properties>keep</properties></pomElements>`）。为此试过又否掉的三条路留档：
+  `flattenMode=bom` 会把 `<parent>` 剥掉、占位符一条不归零；
+  `<pomElements><dependencyManagement>interpolate</…>` 构建成功但 13 条占位符**依旧在**；
   写 `resolved` 连构建都进不去——`ElementHandling` 的合法取值实测只有
-  `flatten / expand / resolve / interpolate / extended_interpolate / keep / remove`（`javap` 读 Enum），
-  连 `resolveCiFriendliesOnly` 之外想要"占位符归零但不吞 import"这一档，插件里没有现成档可用。
-  ⇒ 要修得动发布机制本身，且 Central 构件不可变（1.0.11–1.0.15 都是这个行为），**未擅自改，等裁定**。
-  影响面先说清楚：这 14 条里的 13 条是第三方，走 `z-boot-*-starter` 聚合的消费者不受影响
-  （starter 的 pom 是 `oss` 模式、版本已折成字面量）；真正拿不到约束的只有"直接 import BOM
-  又自己声明这些坐标、且不写 version"的写法。
+  `flatten / expand / resolve / interpolate / extended_interpolate / keep / remove`（`javap` 读 Enum）。
+  即"占位符归零但不吞 import"这一档插件里没有现成档 ⇒ 不改 BOM，改**父 pom 该发布成什么样**。
+  实测效果：`z-boot-1.0.16.pom` = 69 行 / **30 条 property**（含 `z-graph.version=1.0.5`），
+  对 1.0.15 的 37 行 / 0 条。只加 `<properties>`、不顺手展开占位符，是这套里改动最小的一档
+  （`flattenMode=bom` 产出的根 pom 与之逐字节相同，但会顺带换一整套元数据处理规则，没必要）。
+  一次性对账（空仓、隔离 repo，跑的是**上传的那批字节**）：无版本声明 `z-graph-api`
+  ⇒ 对 1.0.15 拒读、对 1.0.16 解析出 **1.0.5**；`ojdbc6` 现在给的是消费者自己 pom 上那句
+  honest 的 "version is missing"，而不是一份坏掉的 BOM。
+- ⚠ **这条修法有个连带效应，发布件形状变了**（别拿行数当"没被动过"的尺）：根 pom 的
+  `<build><plugins>` 里那份 flatten `<configuration>` 会被 BOM 模块**继承**，于是 BOM 那遍
+  从"保留注释的原始 XML 支路"切到了模型写入器 ⇒ repo1 的 BOM 从 1011 行变 **889 行**、
+  XML 注释 **2153 字节 → 0**。A/B 实测（同一份 HEAD 树，唯一差别是有没有那段 `pomElements`）：
+  加 ⇒ 889 行 / 0 注释字节，且产物与 repo1 上 1.0.16 的 BOM **md5 逐字节相同**
+  （`c6e4141d6b1e41a65a4a0828ff0acbb6`）；去掉 ⇒ 1009 行 / 2366 注释字节。两遍
+  `<dependencyManagement>` 都是 132 条、逐条对得上，实质差别只有 `nacos-config` /
+  `flowable-…-process` 两条 `<version>` 尾部的空白被规范化掉。27 个子模块各自也只是
+  多了同一个 3 条 property 块（+208 B）、其余逐字节同。
+- ⚠ **`com.oracle.database.jdbc:ojdbc6` 那条受管项已在 1.0.16 删除**（133 → 132 条）。它钉的是
+  `${oracle6.version}`，而这个 property **全仓从未定义过**（首笔提交 `2b17fb9` 起就是死的）——
+  所以它不是"对外失效"，是对内对外都从来没生效过，谁撞上都是 Maven 拒读整份 BOM。
+  留了一条注释说明为什么这里空了。删它的判据是机械的：受管项的 property 在 BOM 自身 + 父链里
+  都找不到 ⇒ 死项。
+- ✅ 这条"外部 import 者能不能解析"从此有永久闸：`z-opc/z-middleware-integration-test` 的
+  `ZBootBomExternalResolutionIT`（5 例，见下面「集成测试覆盖」）。
 - ✅ 自研 L3 里目前**只有 z-graph 的三个坐标**（引擎侧 `z-graph-{api,core,protocol}`，2026-09-26 补进）
   进了这份 BOM；**连 `z-graph-spring-boot-starter` 本身都不在**，其余 z-* 也仍只在
   `z-boot-integration-starters` 里钉，import 这份 BOM 的消费者拿不到约束
