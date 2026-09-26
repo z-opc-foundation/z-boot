@@ -131,7 +131,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-oss-common</artifactId>
-                <version>1.0.1</version>
+                <version>${z-oss.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
@@ -162,7 +162,9 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-ctc-web</artifactId>
-                <version>${project.version}</version>
+                <!-- 和 z-ctc-sso 同源，属 z-ctc L3：`${project.version}` 会解析成 z-boot 自己的
+                     1.0.14，repo1 实测 404（而 1.0.1 = 200）。当前无模块消费它，补一句就会拿到坏版本。 -->
+                <version>${z-ctc.version}</version>
             </dependency>
 
             <dependency>
