@@ -21,7 +21,7 @@
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.15</version>
+            <version>1.0.16</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -34,24 +34,24 @@
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-web-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-datasource-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
 
     <!-- L3 中间件 (一行 import 一个) -->
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-cache-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-rpc-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
 </dependencies>
 ```
@@ -90,7 +90,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.0.15</version>
+    <version>1.0.16</version>
 </dependency>
 ```
 
@@ -288,7 +288,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.15</version>
+            <version>1.0.16</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -297,13 +297,13 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 <dependencies>
     <!-- Web + DB -->
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.0.15</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-datasource-starter</artifactId><version>1.0.15</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.0.16</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-datasource-starter</artifactId><version>1.0.16</version></dependency>
 
     <!-- 中间件 (一行一个) -->
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.0.15</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-mq-starter</artifactId><version>1.0.15</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-rpc-starter</artifactId><version>1.0.15</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.0.16</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-mq-starter</artifactId><version>1.0.16</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-rpc-starter</artifactId><version>1.0.16</version></dependency>
 </dependencies>
 ```
 
@@ -314,7 +314,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.0.15</version>
+    <version>1.0.16</version>
 </dependency>
 ```
 
@@ -327,7 +327,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.15</version>
+            <version>1.0.16</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -339,10 +339,10 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 ```xml
 <dependencies>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.0.15</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-kb-starter</artifactId><version>1.0.15</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-vector-starter</artifactId><version>1.0.15</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.0.15</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.0.16</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-kb-starter</artifactId><version>1.0.16</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-vector-starter</artifactId><version>1.0.16</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.0.16</version></dependency>
 </dependencies>
 ```
 
@@ -586,7 +586,7 @@ bash deploy_maven_center.sh publish   # 发到 Maven Central
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.15</version>
+            <version>1.0.16</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -599,29 +599,29 @@ bash deploy_maven_center.sh publish   # 发到 Maven Central
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-web-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-datasource-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
 
     <!-- L3 中间件 (一行 import 集成, 不用自己再找 L3 starter) -->
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-cache-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-mq-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-rpc-starter</artifactId>
-        <version>1.0.15</version>
+        <version>1.0.16</version>
     </dependency>
     <!-- ... 其他 5 个 z-boot-*-starter 按需 -->
 </dependencies>
@@ -633,7 +633,7 @@ bash deploy_maven_center.sh publish   # 发到 Maven Central
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.0.15</version>
+    <version>1.0.16</version>
 </dependency>
 ```
 
