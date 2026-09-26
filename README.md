@@ -202,7 +202,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 | 模块 | 说明 |
 |---|---|
-| `z-boot-dependencies` | 第三方依赖版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4，共 **132 条**受管依赖 / 仓内 1009 行）。发布件行数别再拿它当"没被动过"的尺：1.0.15 的 repo1 件是 1011 行、1.0.16 是 **889 行**——差的不是依赖（两版 `<dependencyManagement>` 逐条对过：132 vs 133，唯一实质差别是删掉死项 `ojdbc6`），是 1.0.16 起 flatten 走的写入器把 XML 注释剥了，成因与实测见下面「第三方版本权威（BOM）」 |
+| `z-boot-dependencies` | 第三方依赖版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4，共 **132 条**受管依赖 / 仓内 1005 行）。发布件行数别再拿它当"没被动过"的尺：1.0.15 的 repo1 件是 1011 行、1.0.16 是 **889 行**——差的不是依赖（两版 `<dependencyManagement>` 逐条对过：132 vs 133，唯一实质差别是删掉死项 `ojdbc6`），是 1.0.16 起 flatten 走的写入器把 XML 注释剥了，成因与实测见下面「第三方版本权威（BOM）」 |
 
 ### 聚合 POM (3 个)
 
@@ -286,7 +286,8 @@ public class App { public static void main(String[] args) { SpringApplication.ru
   从"保留注释的原始 XML 支路"切到了模型写入器 ⇒ repo1 的 BOM 从 1011 行变 **889 行**、
   XML 注释 **2153 字节 → 0**。A/B 实测（同一份 HEAD 树，唯一差别是有没有那段 `pomElements`）：
   加 ⇒ 889 行 / 0 注释字节，且产物与 repo1 上 1.0.16 的 BOM **md5 逐字节相同**
-  （`c6e4141d6b1e41a65a4a0828ff0acbb6`）；去掉 ⇒ 1009 行 / 2366 注释字节。两遍
+  （`c6e4141d6b1e41a65a4a0828ff0acbb6`）；去掉 ⇒ 1009 行 / 2366 注释字节（这是 1.0.16 那棵树的读数，
+  仓内现在因下文那条"删 7 条 property 复制件"是 1005 行）。两遍
   `<dependencyManagement>` 都是 132 条、逐条对得上，实质差别只有 `nacos-config` /
   `flowable-…-process` 两条 `<version>` 尾部的空白被规范化掉。
   其余 25 个子模块的发布件形状，逐个 diff 1.0.15/1.0.16 量过（27 个 pom 全部成对比过，不是抽样）：
@@ -308,6 +309,15 @@ public class App { public static void main(String[] args) { SpringApplication.ru
   所以它不是"对外失效"，是对内对外都从来没生效过，谁撞上都是 Maven 拒读整份 BOM。
   留了一条注释说明为什么这里空了。删它的判据是机械的：受管项的 property 在 BOM 自身 + 父链里
   都找不到 ⇒ 死项。
+- ✅ **BOM 自己那份 `<properties>` 里 L3 Agent/AI 的 7 条复制件已删**（2026-09-26，仓内 1009 → 1005 行）。
+  判据同样是机械的而不是"看着没人用"：这 7 个键（`z-agent-kernel` / `z-llm` / `z-mcp` / `z-skill` /
+  `z-agent` / `z-bot` / `z-agent-proxy`）在 BOM 文件内各只出现 **1 次 = 只有定义**，而引用它们的
+  `z-boot-integration-starters/pom.xml:269-294` 父链是**根 pom**（根 pom 91-97 行本来就有一条同值的），
+  且 `<scope>import</scope>` 只搬 `dependencyManagement`、不把 property 借给导入方 ⇒ 复制件空转。
+  两侧都实测过：改前/改后 `help:effective-pom`（BOM 与 `z-boot-llm-starter` 两个模块）**逐字节同**
+  ⇒ 仓内解析零影响；发布侧新构建的扁平件 889 → **882 行**、property **110 → 103 条**，
+  少掉的正好是那 7 个键、`<dependencyManagement>` 规范化后逐条同 ⇒ 对外也只是少 7 个没人能读的键。
+  ⚠ 这条只落在仓里：**repo1 上的 `z-boot-dependencies:1.0.16` 仍是 110 条**，要等下一次发布才变。
 - ✅ 这条"外部 import 者能不能解析"从此有永久闸：`z-opc/z-middleware-integration-test` 的
   `ZBootBomExternalResolutionIT`（5 例，见下面「集成测试覆盖」）。
 - ✅ 自研 L3 里目前**只有 z-graph 的三个坐标**（引擎侧 `z-graph-{api,core,protocol}`，2026-09-26 补进）
@@ -408,7 +418,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 ```
 z-boot/
 ├── pom.xml                          # 自给自足 parent (Central namespace)
-├── z-boot-dependencies/             # 第三方版本 BOM (仓内 1009 行 / 132 条受管依赖；发布件 889 行，见下面 flatten 那节)
+├── z-boot-dependencies/             # 第三方版本 BOM (仓内 1005 行 / 132 条受管依赖；发布件 889 行，见下面 flatten 那节)
 ├── z-boot-starter/                  # 基础 starter 聚合
 │   ├── z-boot-base                  # Log4j2 门面
 │   ├── z-boot-web-starter           # Web + Log4j2 + Knife4j

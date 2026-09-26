@@ -132,14 +132,10 @@
         <commons-compress.version>1.26.0</commons-compress.version>
         <knife4j-openapi3-spring-boot-starter>4.1.0</knife4j-openapi3-spring-boot-starter>
 
-        <!-- FEATURE066: L3 Agent/AI 7 仓版本, 由 z-boot 聚合 starter 引用 -->
-        <z-agent-kernel.version>0.1.1</z-agent-kernel.version>
-        <z-llm.version>0.1.4</z-llm.version>
-        <z-mcp.version>0.1.2</z-mcp.version>
-        <z-skill.version>0.1.2</z-skill.version>
-        <z-agent.version>0.1.2</z-agent.version>
-        <z-bot.version>0.1.0</z-bot.version>
-        <z-agent-proxy.version>0.1.0</z-agent-proxy.version>
+        <!-- L3 Agent/AI 7 仓的 version property 只有根 pom 一处真源。这里曾复制过同名 7 条
+             （z-agent-kernel/z-llm/z-mcp/z-skill/z-agent/z-bot/z-agent-proxy）：本 BOM 的
+             dependencyManagement 一条都不引用它们，而引用它们的 z-boot-integration-starters
+             父链是 z-boot 根 pom 不是本 BOM ⇒ 复制件纯属空转，只会随根 pom 漂移。 -->
     </properties>
 
     <dependencyManagement>
