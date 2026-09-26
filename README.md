@@ -335,7 +335,14 @@ public class App { public static void main(String[] args) { SpringApplication.ru
   （另有几处 `com.zifang` 出现在**注释文字**里——解释 tool-webide 为什么被排除、以及
   script-starter 提到 z-script 的包名 `com.zifang.z.script`——那不是坐标，别拿"grep 到 com.zifang"当缺陷）
 - ⚠ **树上只剩一个未进 reactor 的目录**：`z-tool-webide-spring-boot-starter`
-  （`z-boot-script-starter` 已经在 1.0.15 补进反应堆并发布，见下面目录树的 ⚠）
+  （`z-boot-script-starter` 已经在 1.0.15 补进反应堆并发布，见下面目录树的 ⚠）。
+  这条不是"忘了加"，是**加了就整个 reactor 读不起**——2026-09-26 本机复跑过：放开那行 `<module>`
+  ⇒ `mvn -B -o validate` rc=1、5 条 ERROR 原文与判据记在 `z-boot-integration-starters/pom.xml`
+  那段注释里。要点两条：它 `<parent>` 写死 `1.0.1` 不吃 `${revision}`；它三条依赖的 groupId 是
+  `com.zifang`，而本聚合 pom **已经**管了 `io.github.yuku123:z-tool-webide-{common,api,core,docker}`
+  ⇒ 报 "version is missing" 是 groupId 对不上，不是没人管版本。被包的 L3 源码在 **sibling 仓
+  `z-opc-foundation/z-webide`**（不在 z-opc 里），repo1 上两个 groupId 都 404 ⇒ 今天无解，
+  再入门条件按那段注释逐条走。
 - ✅ **可独立发布到 Maven Central**——`<revision>` 1.0.16，repo1 实测 27 个坐标的 `.pom` 全 200、
   staging 里 84 个 `.pom`/`.jar` 与 repo1 逐字节相同（普查口径与阳性对照见上面「已发布到 Maven Central
   的所有模块」那段）
