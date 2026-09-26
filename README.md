@@ -442,19 +442,46 @@ public class MyFeatureAutoConfiguration {
 ## 🧪 集成测试覆盖
 
 `z-opc/z-middleware-integration-test` → `ZBootAggregatorStarterMavenCentralPullIT`
-（2026-09-26 本机跑绿：`Tests run: 4, Failures: 0, Errors: 0, Skipped: 0`，17.41 s）：
+（2026-09-26 20:43 本机跑绿：`Tests run: 4, Failures: 0, Errors: 0, Skipped: 0`，22.40 s）：
 
-- **18 个 z-boot-* 聚合 starter @ 1.0.14**：逐个拉 `.pom`，HTTP 200 **且**发布件正文里必须出现上表对应的那一个
+- **19 个 z-boot-* 聚合 starter @ 1.0.15**：逐个拉 `.pom`，HTTP 200 **且**发布件正文里必须出现上表对应的那一个
   L3 坐标（`<artifactId>z-cache-spring-boot-starter</artifactId>` 整串匹配）。
-  以前只断言"pom 拉得到"、且只覆盖 10 个 ⇒ 现在 18 行全覆盖，第二列从此不能手填。
-- **表自证**：行数必须等于 18、artifactId 不许重复（重复 = 某个 starter 静默失去覆盖）。
-  两支变异实测都红：`AGGREGATOR_COUNT` 改 17 ⇒ `expected: <17> but was: <18>`；复制 cache 行 ⇒
-  `有重复 artifactId: [z-boot-cache-starter]`。还原后 md5 与变异前逐字节一致。
-- 命名约定校验 ✅（18 个都符合 `z-boot-{pkg}-starter`、无 `--`）
+  以前只断言"pom 拉得到"、且只覆盖 10 个 ⇒ 现在 19 行全覆盖，第二列从此不能手填。
+- **这张表怎么来的**：不手抄。机械抽取每个 `z-boot-*-starter/pom.xml` 里 `io.github.yuku123` 的**直接**
+  依赖（先剥 XML 注释、再剥 `<dependencyManagement>`）⇒ 20 条 active `<module>` 里 19 条有 ≥1 个 z-* 依赖，
+  只有 `z-boot-jackson-starter` 是 0 个（所以它不在表里）。
+- **表自证**：行数必须等于 19、artifactId 不许重复（重复 = 某个 starter 静默失去覆盖）。
+  三支变异实测（每次注入前先 `cp` 具名备份、还原只从备份 `cp`，两边 md5 都是 `a74ccbe3fd7c0c0f88ee6c2cb92df2ee`）：
+  1. `AGGREGATOR_COUNT` 改 18 ⇒ `EXPECTED_AGGREGATORS 应该有 18 行 … expected: <18> but was: <19>`
+  2. 复制 cache 行**并把 count 一起改成 20**（否则长度守卫先红，重复守卫根本测不到）⇒
+     `有重复 artifactId, 对应 starter 没被真正覆盖: [z-boot-cache-starter]`
+  3. `VERSION` 改成从未发布的 1.0.16 ⇒ 19 条 URL 全 404，`Tests run: 4, Failures: 1, Errors: 1`
+     （那支 Error 是抽样测试读不到流）。本机 m2 里也只有 1.0.1–1.0.15、没有 1.0.16，且这测试拼的是
+     字面 `https://repo1.maven.org/...` URL ⇒ 404 只可能来自 repo1，不是本地仓库的回声
+- 命名约定校验 ✅（19 个都符合 `z-boot-{pkg}-starter`、无 `--`）
 - `z-boot-cache-starter` pom 抽样：确认引用 `z-cache-spring-boot-starter` 且 groupId 是 `io.github.yuku123` ✅
 
+⚠ **跑法**：`z-middleware-integration-test` **不在** `z-opc/pom.xml` 的 `<modules>` 里（实测全仓
+`grep -rn z-middleware-integration-test --include=pom.xml .` 只有它自己 pom 的 4 处自引用），
+所以 `mvn -pl z-middleware-integration-test` 当场 `Could not find the selected project in the reactor`，
+必须 `mvn -f z-middleware-integration-test/pom.xml test`。
+
+⚠ **整模块 52 例里有 20 例是关着的**：6 个类级 `@EnabledIfEnvironmentVariable` 开关
+（`RUN_ZCACHE_IT` / `RUN_ZMQ_IT` / `RUN_ZOSS_CENTRAL_IT` / `RUN_ZRPC_CENTRAL_IT` /
+`RUN_ZWF_CENTRAL_IT` / `RUN_ZWF_RPC_IT`）默认不给值 ⇒ `BUILD SUCCESS` 不等于那些 L3 被验过。
+
+**本轮顺带修掉一格常红**（不是本次抬号引入的）：`ZConfigMavenCentralPullIT` 的 `VERSION` 停在 **1.0.0**，
+而 1.0.0 从未发布到 Central —— 实测四坐标 × {1.0.0, 1.0.1, 1.0.2, 1.0.4, 1.0.7, 1.0.8} = 24 次 curl，
+1.0.0 那 4 次全 404、其余 20 次全 200。改成该模块 `pom.xml` 自己钉的 1.0.7 后：整模块从
+`52, Failures: 1, Errors: 1, Skipped: 20`（20:36:07）变 `52 / 0 / 0 / 20`（20:38:46），逐类 tally
+**只有 ZConfig 那一行变**（其余 10 行逐字节同）。
+
+**同时把该模块的 `<z-boot.version>` 1.0.14 → 1.0.15**：抬号前逐个比了发布件，本模块消费的 7 个 starter
+的 pom 在两版之间只差版本字面量、其余逐字节同；`dependency:tree` 两版各 250 行，diff 恰好只有那 7 行
+⇒ 对解析出来的依赖树是 no-op（抬号前后两次整模块逐类 tally md5 同为 `c551dffe3c9173c506814b21554add74`）。
+
 > 这份 IT 验的是"**发布件里聚合关系对不对**"，不验 jar 里有没有 class、也不验 property 抬的版本
-> 有没有真的进入发布件（那要 `dependency:tree` + 发版）。上面「项目结构」的 26 坐标 / 22 jar 普查
+> 有没有真的进入发布件（那要 `dependency:tree` + 发版）。上面「项目结构」的 27 坐标 / 23 jar 普查
 > 是 2026-09-26 手工 curl 的，不在 IT 里。
 
 ---
