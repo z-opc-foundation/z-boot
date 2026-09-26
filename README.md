@@ -142,6 +142,25 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 > **版本列不是手抄的**：真源是 `z-boot/pom.xml` 里的 `<z-*.version>` property（经
 > `z-boot-integration-starters/pom.xml` 的 `<dependencyManagement>` 下发给每个 `z-boot-*-starter`）。
 > 升级改 property，这张表只是 2026-09-26 从 property 抄下来的一次快照。
+>
+> ⚠ **但"仓内 property"和"repo1 上已发布件里的 pin"是两个事实，2026-09-26 起故意不一致**：
+> 这轮把 5 格 property 抬到各坐标 repo1 `<latest>`，而 `z-boot-*-starter:1.0.16` 那批发布件
+> 折进去的还是抬之前的值 ⇒ 这 5 格**对外未兑现，要等下一次发布**。
+> 分叉名单（5）：`z-boot-config-starter`, `z-boot-cache-starter`, `z-boot-mq-starter`, `z-boot-gw-starter`, `z-boot-vector-starter`
+> 上面那行不是说明文字，是尺的**输入**：`~/.cache/zboot-1016/pin-fork-check.py` 按"模块名 → `${z-<模块>.version}`"
+> 机械推 property、逐行去 repo1 拉 1.0.16 发布件对账，要求**实测分叉集正好等于声明名单**——
+> 多一格（新分叉没声明）或少一格（分叉被发布收掉了却没撤声明）都判红；它自己也有两支阳性对照
+> （表里塞一个 `9.9.9` 必须判 T 红；换 1.0.15 的发布件跑同一套必须报出非空分叉，证明分类器不是瞎的）。
+>
+> **"哪 5 格落后"也不是手点的**：`~/.cache/zboot-1016/latest-census.py` 把上面 19 行的每个 L3 坐标
+> 都拉一次 repo1 `maven-metadata.xml`，拿 property 值和 `<latest>`**以及** `<versions>` 里的最大值各比
+> 一遍（Central 的 `<latest>` 语义是"最后部署"而不是"版本号最大"，两个都算才不被它骗）。
+> 2026-09-26 23:15 实测：19 个坐标里 **5 格 LAG**（z-config 1.0.7→1.0.8、z-cache 1.3.1→1.3.5、
+> z-mq 1.2.0→1.2.1、z-gw 1.0.1→1.0.3、z-vector 1.0.1→1.0.3）、0 格 AHEAD、`<latest>` 与最大值 0 处分歧；
+> 抬后复跑 `LAG 0`。那把尺同样自带一支对照（把 z-cache 退回 1.3.1 必须重新出现在 LAG 名单里——
+> 否则"落后 0 条"和"尺看不见落后"是同一个输出）。原始读数留档
+> `~/.cache/zboot-1016/latest-census.receipt`（含 metacache 逐文件 mtime，23:15:07–23:15:32 抓完）。
+>
 > "聚合的 L3 坐标"列也是从每个 starter 的 pom 机械抽出来的（去掉 dependencyManagement 后取
 > `io.github.yuku123` 直接依赖），不是照旧表抄的——所以 20 个 `<module>` 里除 `z-boot-jackson-starter`
 > 全在这 19 行，最早的旧表只列了 10 行。
@@ -157,12 +176,12 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 | 模块 | 聚合的 L3 坐标 | 版本（= property 实测值） | L3 侧启用条件（各仓 HEAD 实测 `@ConditionalOnProperty`） |
 |---|---|---|---|
-| `z-boot-config-starter` | z-config-spring-boot-starter | `${z-config.version}` = 1.0.7 | `z.config.enabled=true`，无 matchIfMissing ⇒ 默认关 |
-| `z-boot-cache-starter` | z-cache-spring-boot-starter | `${z-cache.version}` = 1.3.1 | `z.cache.enabled=true`，默认关 |
-| `z-boot-mq-starter` | z-mq-spring-boot-starter | `${z-mq.version}` = 1.2.0 | **`zmq.enabled`**（前缀无点），`matchIfMissing=true` ⇒ 默认开 |
-| `z-boot-gw-starter` | z-gw-spring-boot-starter | `${z-gw.version}` = 1.0.1 | **`zgw.enabled`**，默认开 |
+| `z-boot-config-starter` | z-config-spring-boot-starter | `${z-config.version}` = 1.0.8 | `z.config.enabled=true`，无 matchIfMissing ⇒ 默认关 |
+| `z-boot-cache-starter` | z-cache-spring-boot-starter | `${z-cache.version}` = 1.3.5 | `z.cache.enabled=true`，默认关 |
+| `z-boot-mq-starter` | z-mq-spring-boot-starter | `${z-mq.version}` = 1.2.1 | **`zmq.enabled`**（前缀无点），`matchIfMissing=true` ⇒ 默认开 |
+| `z-boot-gw-starter` | z-gw-spring-boot-starter | `${z-gw.version}` = 1.0.3 | **`zgw.enabled`**，默认开 |
 | `z-boot-kb-starter` | z-kb-spring-boot-starter | `${z-kb.version}` = 1.0.2 | **`zkb.enabled`**，默认开 |
-| `z-boot-vector-starter` | z-vector-spring-boot-starter | `${z-vector.version}` = 1.0.1 | **`zvector.server.auto-start`**，没有 `z.vector.enabled` 这个键 |
+| `z-boot-vector-starter` | z-vector-spring-boot-starter | `${z-vector.version}` = 1.0.3 | **`zvector.server.auto-start`**，没有 `z.vector.enabled` 这个键 |
 | `z-boot-graph-starter` | z-graph-spring-boot-starter | `${z-graph.version}` = 1.0.5 | `z.graph.enabled=true`，默认关 |
 | `z-boot-rpc-starter` | z-rpc-spring-boot-starter | `${z-rpc.version}` = 1.0.2 | `z.rpc.enabled`，`matchIfMissing=true` ⇒ 默认开 |
 | `z-boot-oss-starter` | z-oss-common | `${z-oss.version}` = 1.0.2 | 按 **`oss.provider`** 分支（`local` 为 matchIfMissing），没有 enabled 开关 |
@@ -698,7 +717,9 @@ bash deploy_maven_center.sh publish   # 发到 Maven Central
 > ✅ **三份已收敛成一份真源 = 「🚀 5 分钟接入 · 方式一」**（CEO 2026-09-26 点头"执行这五项修改"之后做的）：
 > 真源那份补成超集（多一行 `z-boot-mq-starter`，使被删的两份一个字都没丢），
 > 「⚙️ 实用 Case · Case 1」和下面「### 业务方接入」两整块 XML 换成回指真源的链接。
-> 实测效果：本文件 857 → 803 行（857 = 本次收敛前那笔提交的读数，1.0.16 发布那笔是 840），
+> 实测效果：本文件行数 `4ed124a`=857 →（收敛这一笔）`1e6a5c8`=803 → 工作树现在 822
+> （后面这 19 行是 pin 分叉声明加回来的，`git diff --numstat` = `19 0`，纯增行；`1526342`=840 是 1.0.16
+> 那批文档收口的读数）——**这三个数各自钉一笔，别拿任何一个当"现状"，现状一律 `wc -l README.md` 现测**；
 > 尺的判定分母 25 → **14 行**（收敛后仍围栏内 14 行、值只有一种
 > `1.0.16`、STALE 0 ⇒ PASS，同一轮把第 24 行改成 `1.0.9` 的内存副本当场判出 STALE 1 ⇒ 尺有牙）。
 > 留一条能跑的账兜底：`~/.cache/zboot-1016/readme-classify.py` —— 它从根 pom 读 `<revision>`
