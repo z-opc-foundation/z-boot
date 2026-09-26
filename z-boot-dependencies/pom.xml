@@ -481,11 +481,9 @@
                 <artifactId>mysql-connector-j</artifactId>
                 <version>8.4.0</version>
             </dependency>
-            <dependency>
-                <groupId>com.oracle.database.jdbc</groupId>
-                <artifactId>ojdbc6</artifactId>
-                <version>${oracle6.version}</version>
-            </dependency>
+            <!-- 原此处的 com.oracle.database.jdbc:ojdbc6 受管项已在 1.0.16 删除：它的版本写的是
+                 ${oracle6.version}，而这个 property 全仓从未定义过（首笔 2b17fb9 起就是死的），
+                 所以这条从未生效过，只是让 BOM 看起来"管着 Oracle"。要用 Oracle 请自带版本号。 -->
 
             <dependency>
                 <groupId>com.alibaba</groupId>
