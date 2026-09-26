@@ -74,7 +74,7 @@
         <z-gw.version>1.0.1</z-gw.version>
         <z-kb.version>1.0.2</z-kb.version>
         <z-vector.version>1.0.1</z-vector.version>
-        <z-graph.version>1.0.4</z-graph.version>
+        <z-graph.version>1.0.5</z-graph.version>
         <z-rpc.version>1.0.2</z-rpc.version>
         <z-oss.version>1.0.2</z-oss.version>
         <z-schedule.version>1.0.4</z-schedule.version>

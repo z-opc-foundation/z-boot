@@ -964,6 +964,29 @@
                 <version>1.5.2-5</version>
             </dependency>
 
+            <!-- 自研 z-graph 三个引擎侧坐标。此前本 BOM 一条 io.github.yuku123 都不管，
+                 结果 import 它的消费者拿不到任何 z-graph 约束：z-boot-kb-starter 经已发布的
+                 z-kb-spring-boot-starter:1.0.2 -> z-kb-graph:1.0.2 传递带进 z-graph-{api,core,protocol}
+                 **1.0.1**，而 z-boot 根 pom 的 ${z-graph.version} 只管得到
+                 z-graph-spring-boot-starter 一个坐标（那条在 z-boot-integration-starters 里）。
+                 钉这三行就是让"抬 z-graph 版本"在整棵树上真的成立，而不是只抬直依赖。
+                 版本号取自根 pom 的 z-graph.version，别在这里另起一份 property。 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-api</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-core</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-protocol</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

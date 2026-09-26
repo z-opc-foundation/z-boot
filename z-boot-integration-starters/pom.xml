@@ -105,6 +105,24 @@
                 <artifactId>z-graph-spring-boot-starter</artifactId>
                 <version>${z-graph.version}</version>
             </dependency>
+            <!-- 引擎侧三个坐标也要钉：本聚合不 import z-boot-dependencies BOM（见根 pom 注释），
+                 少了这三行，z-boot-kb-starter 经已发布 z-kb-spring-boot-starter:1.0.2 -> z-kb-graph:1.0.2
+                 传递进来的就还是 z-graph 1.0.1，而 ${z-graph.version} 只管得到上面那一个坐标。 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-api</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-core</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-protocol</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-rpc-spring-boot-starter</artifactId>
