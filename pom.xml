@@ -59,7 +59,7 @@
 
     <properties>
         <!-- 项目自身版本（CI-friendly versions 根，发版改这一处即可） -->
-        <revision>1.0.16</revision>
+        <revision>1.0.17</revision>
 
         <!-- JDK / 编译 -->
         <maven.compiler.source>8</maven.compiler.source>
@@ -100,7 +100,7 @@
 
         <!-- L3 Agent/AI 生态版本 (FEATURE066 7 仓矩阵) -->
         <z-agent-kernel.version>0.1.1</z-agent-kernel.version>
-        <z-llm.version>0.1.4</z-llm.version>
+        <z-llm.version>0.1.5</z-llm.version>
         <z-mcp.version>0.1.2</z-mcp.version>
         <z-skill.version>0.2.0</z-skill.version>
         <z-agent.version>0.1.2</z-agent.version>
