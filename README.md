@@ -3,7 +3,7 @@
 > **Spring Boot Starter 聚合仓 + 第三方依赖版本权威 (BOM)**
 > 把所有 z-* L3 中间件 + 通用 starter 收成"开箱即用"系列, 业务模块一行 import 一个能力
 
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.16-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.17-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
 [![License](https://img.shields.io/license/MIT-green)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-8%2B-orange)](https://openjdk.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.x-6DB33F)](https://spring.io)
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.16</version>
+            <version>1.0.17</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -34,29 +34,29 @@
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-web-starter</artifactId>
-        <version>1.0.16</version>
+        <version>1.0.17</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-datasource-starter</artifactId>
-        <version>1.0.16</version>
+        <version>1.0.17</version>
     </dependency>
 
     <!-- L3 中间件 (一行 import 一个) -->
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-cache-starter</artifactId>
-        <version>1.0.16</version>
+        <version>1.0.17</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-mq-starter</artifactId>
-        <version>1.0.16</version>
+        <version>1.0.17</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-rpc-starter</artifactId>
-        <version>1.0.16</version>
+        <version>1.0.17</version>
     </dependency>
 </dependencies>
 ```
@@ -97,7 +97,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.0.16</version>
+    <version>1.0.17</version>
 </dependency>
 ```
 
@@ -105,7 +105,24 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 ## 📦 已发布到 Maven Central 的所有模块
 
-> groupId: `io.github.yuku123` · 最新 release: **1.0.16**（21:31:30 上传完成，见 `~/.cache/zboot-1016/deploy-1016.log` 的 `Finished at`，deploymentId `52ca313d-b842-4536-b3b8-dfecefee0aff`）· 共 **27 个坐标**
+> groupId: `io.github.yuku123` · 最新 release: **1.0.17**（`Finished at: 2026-09-27T15:00:56+08:00`，
+> 见 `~/.cache/zboot-1017/deploy-1017.log`，deploymentId `5c4474f5-9862-4ded-aa98-0c200a4367e5`）· 共 **27 个坐标**
+> **1.0.17 的发版目的**：把仓内已经抬过、对外还欠着的 L3 pin 一次兑现。尺（`~/.cache/zboot-1016/pin-fork-check.py`
+> 的分类器，驱动 `~/.cache/zboot-1017/fork_for_version.py`）逐版本量出来是
+> **1.0.15 分叉 8 格 → 1.0.16 分叉 7 格 → 1.0.17 分叉 0 格**（`fork-by-version.receipt`；
+> 这轮新关的两格是 `z-boot-llm-starter` 0.1.4→**0.1.5**、`z-boot-skill-starter` 0.1.2→**0.2.0**）。
+> 发布判据 = `~/.cache/zboot-1017/repo1-verify.sh` 15:24:17–15:28:54 那一次运行（读数
+> `repo1-1017.receipt`，末行 `FAILS=0`）：分母机械取自本次 staging（27 pom + 23 主 jar + 17 sources
+> + 17 javadoc = **84 件**，`.asc` 同为 84），要求每件 repo1 200 **且 md5 与上传字节逐字节同**
+> ⇒ **84/84**；`.asc` **84/84 验签通过**（不抽样）；再钉住发版目的那一格：
+> `z-boot-llm-starter-1.0.17.pom` 里 `z-llm-starter` = **0.1.5**、父 pom 的 `<z-llm.version>` = **0.1.5**。
+> ⚠ 这支尺的牙是**注入量出来的**：拿 staging 的一份真拷贝、把 `z-boot-llm-starter-1.0.17.pom`
+> 换成 1.0.16 的字节重跑，A 当场点名该件 `repo1=cee15bfa… 本地=d374437b…` 并报 `83 ≠ 84`、
+> C 也拒把它当被签件（`FAILS=4`，日志 `ctrl-inject.log`）——"84/84 相同"不是空跑出来的。
+> 同步期实测：上传完 15:00:56 → 首个坐标 200 是 **15:08:26**（轮询 `wait-1017.log`，约 7.5 分钟），
+> 而 84 件全 200 要到 15:15 之后那次普查才成立 ⇒ 轮询要落盘，别只看第一支 200。
+>
+> 下面这段是**上一轮 1.0.16 的普查记录（历史读数，原样保留）**：
 > 全量普查（`~/.cache/zboot-1016/census2.py`，日志 `census2-1016.log` 22:28:12 收尾）：分母不是手敲的清单，
 > 是本机 `target/central-staging/io/github/yuku123` 里那 **84 个**
 > `.pom`/`.jar` 文件（27 pom + 23 主 jar + 17 sources + 17 javadoc，日志里按这四类各出一行分母），
@@ -141,16 +158,23 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 > **版本列不是手抄的**：真源是 `z-boot/pom.xml` 里的 `<z-*.version>` property（经
 > `z-boot-integration-starters/pom.xml` 的 `<dependencyManagement>` 下发给每个 `z-boot-*-starter`）。
-> 升级改 property，这张表只是 2026-09-26 从 property 抄下来的一次快照。
+> 升级改 property，这张表要在发布后按 property 回读（2026-09-27 这一轮就是靠尺抓出两格没跟上：
+> `z-boot-llm-starter` 表里还写 0.1.4、`z-boot-skill-starter` 还写 0.1.2，而 property 早已是 0.1.5 / 0.2.0）。
 >
-> ⚠ **但"仓内 property"和"repo1 上已发布件里的 pin"是两个事实，2026-09-26 起故意不一致**：
-> 这轮把 5 格 property 抬到各坐标 repo1 `<latest>`，而 `z-boot-*-starter:1.0.16` 那批发布件
-> 折进去的还是抬之前的值 ⇒ 这 5 格**对外未兑现，要等下一次发布**。
-> 分叉名单（5）：`z-boot-config-starter`, `z-boot-cache-starter`, `z-boot-mq-starter`, `z-boot-gw-starter`, `z-boot-vector-starter`
-> 上面那行不是说明文字，是尺的**输入**：`~/.cache/zboot-1016/pin-fork-check.py` 按"模块名 → `${z-<模块>.version}`"
-> 机械推 property、逐行去 repo1 拉 1.0.16 发布件对账，要求**实测分叉集正好等于声明名单**——
-> 多一格（新分叉没声明）或少一格（分叉被发布收掉了却没撤声明）都判红；它自己也有两支阳性对照
-> （表里塞一个 `9.9.9` 必须判 T 红；换 1.0.15 的发布件跑同一套必须报出非空分叉，证明分类器不是瞎的）。
+> ✅ **"仓内 property"和"repo1 上已发布件里的 pin"是两个事实**，这条分叉在 **1.0.17 已归零**：
+> `~/.cache/zboot-1016/pin-fork-check.py` 对 repo1 的 1.0.17 发布件逐行读回，19 行里
+> **T 文档漂 0 / F 分叉 0 / 取不到 0**（读数 `~/.cache/zboot-1017/fork-by-version.receipt`，15:2x）。
+> 分叉名单（0）：
+> 上面那行不是说明文字，是尺的**输入**：它按"模块名 → `${z-<模块>.version}`"机械推 property、
+> 逐行去 repo1 拉**当前 revision** 的发布件对账，要求**实测分叉集正好等于声明名单**——
+> 多一格（新分叉没声明）或少一格（分叉被发布收掉了却没撤声明）都判红。
+> ⚠ **声明行会烂掉，而且烂得很安静**：1.0.16 那阵子它写的是 5 格，而尺今天同一套分类器
+> 对准 1.0.16 的发布件量出来是 **7 格**（1.0.15 是 8 格）——多出的两格是 09-26 之后抬的
+> `z-llm` 0.1.4→0.1.5、`z-skill` 0.1.2→0.2.0，抬 property 的人没回读声明行，于是"仓内改了、
+> 对外没兑现"这件事只在尺的 F 判红里现形。⇒ **抬任何一格 `<z-*.version>` 之后必须跑这支尺**，
+> 别指望表格里那行快照自己更新。
+> 它自己也有两支阳性对照（同一次运行内）：表里塞一个 `9.9.9` 必须判 T 红；
+> 换 1.0.15 的发布件跑同一套必须报出非空分叉（实测 8 格）——证明分类器不是瞎的。
 >
 > **"哪 5 格落后"也不是手点的**：`~/.cache/zboot-1016/latest-census.py` 把上面 19 行的每个 L3 坐标
 > 都拉一次 repo1 `maven-metadata.xml`，拿 property 值和 `<latest>`**以及** `<versions>` 里的最大值各比
@@ -160,6 +184,16 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 > 抬后复跑 `LAG 0`。那把尺同样自带一支对照（把 z-cache 退回 1.3.1 必须重新出现在 LAG 名单里——
 > 否则"落后 0 条"和"尺看不见落后"是同一个输出）。原始读数留档
 > `~/.cache/zboot-1016/latest-census.receipt`（含 metacache 逐文件 mtime，23:15:07–23:15:32 抓完）。
+> ⚠ **2026-09-27 15:2x 复跑时这把尺自己露了馅**：它取 `maven-metadata.xml` 是
+> `if not 缓存文件存在: 才 curl`，于是 09-26 23:15 的快照被当成"repo1 最新"一直复用——
+> 当场报 `z-llm-starter <latest>=0.1.4`（真值已是 0.1.5，artifact 早就能 200 下载）、
+> `z-skill-starter <latest>=0.1.2`（真值 0.2.0），把两格正确的 property 判成 **AHEAD**。
+> 这是"缓存把没量伪装成量过"，朝**看不见**的方向坏。修成每次真拉、并把每份 metadata 的
+> `<lastUpdated>` 打进读数当归因；修后实测 **LAG 0 / AHEAD 0 / `<latest>`≠max 0**、
+> CTRL（把 z-cache 退回 1.3.1）仍如期报出 1 格 LAG，留档 `~/.cache/zboot-1016/latest-census-1017.receipt`
+> （陈旧现场归档在 `~/.cache/zboot-1016/metacache-stale-0926/`，19 份文件 mtime 全在 09-26 23:15）。
+> ⚠ 只有 `maven-metadata.xml` 这类**可变**文档要禁缓存；发布件 pom/jar 在 Central 上不可变，
+> `pin-fork-check.py` 那种"下过就不重下"是对的，别顺手把两边一起改。
 >
 > "聚合的 L3 坐标"列也是从每个 starter 的 pom 机械抽出来的（去掉 dependencyManagement 后取
 > `io.github.yuku123` 直接依赖），不是照旧表抄的——所以 20 个 `<module>` 里除 `z-boot-jackson-starter`
@@ -188,9 +222,9 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 | `z-boot-schedule-starter` | z-schedule-spring-boot-starter | `${z-schedule.version}` = 1.0.4 | 按 **`z.base.db.schedule.disabled=false`** 反向开关，没有 `z.schedule.enabled` |
 | `z-boot-msg-starter` | z-msg-web | `${z-msg.version}` = 1.2.0（仓内 property 与 **1.0.16 发布件**已一致；1.0.15 发布件仍是 1.1.0，那段历史见下方注） | **`z-msg.enabled`**（连字符不是点），默认开 |
 | `z-boot-ctc-starter` | z-ctc-sso | `${z-ctc.version}` = 1.0.1 | **`z.boot.ctc.enabled=true`**（开关在 z-boot 这层，不在 L3；`ZBootCtcAutoConfiguration:27`），默认关 |
-| `z-boot-llm-starter` | z-llm-starter | `${z-llm.version}` = 0.1.4 | `z.llm.enabled=true`，默认关 |
+| `z-boot-llm-starter` | z-llm-starter | `${z-llm.version}` = 0.1.5 | `z.llm.enabled=true`，默认关 |
 | `z-boot-mcp-starter` | z-mcp-starter | `${z-mcp.version}` = 0.1.2 | `z.mcp.enabled=true`，`matchIfMissing=false` ⇒ 默认关 |
-| `z-boot-skill-starter` | z-skill-starter | `${z-skill.version}` = 0.1.2 | `z.skill.enabled=true`，默认关 |
+| `z-boot-skill-starter` | z-skill-starter | `${z-skill.version}` = 0.2.0 | `z.skill.enabled=true`，默认关 |
 | `z-boot-agent-starter` | z-agent-starter | `${z-agent.version}` = 0.1.2 | `z.agent.enabled=true`，默认关 |
 | `z-boot-bot-starter` | z-bot-core | `${z-bot.version}` = 0.1.0 | 无开关（L3 全仓 `@ConditionalOnProperty` 0 命中） |
 | `z-boot-agent-proxy-starter` | z-agent-proxy | `${z-agent-proxy.version}` = 0.1.0 | 无开关（同上） |
@@ -367,9 +401,9 @@ public class App { public static void main(String[] args) { SpringApplication.ru
   ⇒ 报 "version is missing" 是 groupId 对不上，不是没人管版本。被包的 L3 源码在 **sibling 仓
   `z-opc-foundation/z-webide`**（不在 z-opc 里），repo1 上两个 groupId 都 404 ⇒ 今天无解，
   再入门条件按那段注释逐条走。
-- ✅ **可独立发布到 Maven Central**——`<revision>` 1.0.16，repo1 实测 27 个坐标的 `.pom` 全 200、
-  staging 里 84 个 `.pom`/`.jar` 与 repo1 逐字节相同（普查口径与阳性对照见上面「已发布到 Maven Central
-  的所有模块」那段）
+- ✅ **可独立发布到 Maven Central**——`<revision>` 1.0.17，repo1 实测 27 个坐标的 `.pom` 全 200、
+  staging 里 84 个 `.pom`/`.jar` 与 repo1 逐字节相同、84 份 `.asc` 全部验签通过（判据脚本、注入对照
+  与历史口径见上面「已发布到 Maven Central 的所有模块」那段）
 
 ---
 
@@ -391,7 +425,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.0.16</version>
+    <version>1.0.17</version>
 </dependency>
 ```
 
@@ -404,7 +438,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-boot-dependencies</artifactId>
-            <version>1.0.16</version>
+            <version>1.0.17</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -416,10 +450,10 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 ```xml
 <dependencies>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.0.16</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-kb-starter</artifactId><version>1.0.16</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-vector-starter</artifactId><version>1.0.16</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.0.16</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.0.17</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-kb-starter</artifactId><version>1.0.17</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-vector-starter</artifactId><version>1.0.17</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.0.17</version></dependency>
 </dependencies>
 ```
 
@@ -745,7 +779,7 @@ bash deploy_maven_center.sh publish   # 发到 Maven Central
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.0.16</version>
+    <version>1.0.17</version>
 </dependency>
 ```
 

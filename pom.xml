@@ -75,9 +75,17 @@
              尺 = ~/.cache/zboot-1016/latest-census.py（自带一支 CTRL：把 z-cache 退回 1.3.1 必须
              重新进 LAG 名单，否则"落后 0 条"和"尺看不见落后"是同一个输出），
              读数留档 = ~/.cache/zboot-1016/latest-census.receipt。
-             ⚠ 这五格抬的是**仓内** property：repo1 上已发布的 z-boot:1.0.16 各 starter 仍折进的是
-             抬之前的旧值（1.0.7/1.3.1/1.2.0/1.0.1/1.0.1），对外要等下一次发布才兑现。
-             这条"仓内 vs 发布件"的分叉不许靠眼睛记，尺 = ~/.cache/zboot-1016/pin-fork-check.py。 -->
+             ⚠ 那把尺取 maven-metadata 是"缓存文件在就不重下"，2026-09-27 复跑时它把 09-26 23:15
+             的快照当"repo1 最新"用，把已经发布的 z-llm 0.1.5 / z-skill 0.2.0 误判成 AHEAD。
+             已改成每次真拉 + 读数里带 metadata 的 <lastUpdated> 归因；改后 LAG 0 / AHEAD 0。
+             ✅ 下面这段"仓内 vs 发布件"的分叉不许靠眼睛记，尺 = ~/.cache/zboot-1016/pin-fork-check.py。
+             1.0.17 发布后复跑：对 repo1 的 1.0.17 发布件 **F 分叉 0 / T 文档漂 0 / 取不到 0**，
+             同一套分类器对 1.0.16 量出 **7 格**、对 1.0.15 量出 **8 格**
+             （读数 ~/.cache/zboot-1017/fork-by-version.receipt）⇒ 上面那五格连同后来的
+             z-llm 0.1.4→0.1.5、z-skill 0.1.2→0.2.0 全部在 1.0.17 对外兑现。
+             ⚠ 而 1.0.16 那阵子 README 的声明行只写了 5 格：少记的两格正是发布之后才抬的
+             llm/skill——抬 property 的人没回读声明行。⇒ 抬任何一格都跑一次那支尺，
+             别用手抄的清单当分叉账。 -->
         <z-config.version>1.0.8</z-config.version>
         <z-ctc.version>1.0.1</z-ctc.version>
         <z-cache.version>1.3.5</z-cache.version>
