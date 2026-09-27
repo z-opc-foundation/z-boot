@@ -547,6 +547,19 @@ z-boot/
 > 19/19 个 starter 的发布件都按这条对过账，且那 19 个期望值是**从下面那张表机械解析**的
 > （21:5x 对 1.0.16 重跑：19/19 一致、0 不一致，见表格下面那段）。
 
+> **当前欠着的一格（2026-09-27 登记，未修）**：repo1 已有 z-llm **0.1.6**（#40① 的
+> "body 读坏回 400 且不再把 controller 方法签名吐给调用方"），而本仓 `<z-llm.version>` 仍是
+> **0.1.5** —— 尺是现成的：`python3 ~/.cache/zboot-1016/latest-census.py` 读
+> 「分母 19 个坐标 / **LAG 1**：`z-llm-starter` 仓内 0.1.5，repo1 最新 0.1.6」（同一次运行内的
+> 阳性对照：把 z-cache 强行退回 1.3.1 后 LAG=2 ⇒ 这一格不是尺瞎）。
+> 这里**故意只登记不抬**：property 抬到 0.1.6 而不发版，就是把"对外可见性"从 19 格 MATCH
+> 换成 1 格未声明的分叉（`pin-fork-check.py` 的 F 判据正是为此而设），而发一版 z-boot（1.0.18）
+> 需要点头。**在 z-boot 重发之前**，经 `z-boot-llm-starter` 传递拿 z-llm 的消费者看不见 0.1.6：
+> 实测 `z-middleware-integration-test` 走 `${z-boot.version}`=1.0.17 → `z-llm-starter:0.1.5`；
+> 该模块原本还自己抄了一份 `<z-llm.version>` **死副本**（本文件内引用次数 0），2026-09-27 已删，
+> 删前删后 `dependency:tree` 逐行 diff = 0 行 ⇒ 它从来就没决定过任何读数。
+> 只有像 z-opc 那样**直接**声明 `z-llm-*` 的消费者能吃到 0.1.6。
+
 发一版 z-boot 之后，业务方只改 `<z-boot.version>` 一处就能整批换 L3 版本；
 L1 业务模块的第三方版本锁则来自 import `z-boot-dependencies`（同 `<revision>`）。
 
