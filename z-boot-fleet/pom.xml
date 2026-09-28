@@ -44,7 +44,7 @@
         <z-schedule.version>1.0.5</z-schedule.version>
         <z-msg.version>1.2.1</z-msg.version>
         <z-script.version>1.0.0</z-script.version>
-        <z-util.version>1.0.12</z-util.version>
+        <z-util.version>1.0.13</z-util.version>
         <z-agent-kernel.version>0.1.1</z-agent-kernel.version>
         <z-llm.version>0.1.6</z-llm.version>
         <z-mcp.version>0.1.2</z-mcp.version>
