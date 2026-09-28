@@ -199,7 +199,7 @@ def report(repo, supply_props, supply_dm):
     print("  · 3 迁移后要在本仓 DM 钉 ${project.version} 的自家坐标："
           + ", ".join(repo_modules(repo)))
     print("  · 4 现存 BOM import：" + ("; ".join(imports) or "无"))
-    watch = {k for k, _ in missing} | {k for k, _, _ in same} | {k for k, _ in differ}
+    watch = {k for k, _ in missing} | {k for k, _, _ in same} | {k for k, _, _ in differ}
     sites = ref_sites(repo, poms, watch, supply_dm, supply_props)
     hang = [(k, f, c, t) for k, lst in sites.items() for f, c, t in lst if k in dict(missing)]
     if hang:
