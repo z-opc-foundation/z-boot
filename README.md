@@ -429,8 +429,6 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
 
 ### 聚合 POM (3 个) + 两个独立 pom
 
-### 聚合 POM (3 个) + 两个独立 pom
-
 - `z-boot`（**根，1.0.19 起没有 `<modules>`**，只带 plugin 版本、`central` profile、flatten 配置；它是**发布用** parent）
 - `z-boot-starter`（基础 starter 聚合：base / web / datasource）
 - `z-boot-integration-starters`（集成 + L3 聚合 starter 聚合，20 个 active `<module>`）
