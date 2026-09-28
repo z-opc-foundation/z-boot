@@ -272,8 +272,8 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 | 模块 | 说明 |
 |---|---|
-| `z-boot-dependencies` | **第三方**版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4 + netty-bom）。1.0.19 实测 `<dependencyManagement>` **156 条**（字面 109 / property 42 / BOM import 5）、pom 1117 行。1.0.18 及以前它还夹带 3 条 `z-graph-*` 兄弟仓 pin，1.0.19 起全部搬进 fleet，这里只剩第三方 |
-| `z-boot-fleet` | **兄弟仓（L3 `z-*`）**版本权威，1.0.19 新增。21 个版本格 property + **164 条**受管坐标（全部 `${z-*.version}` 形式，字面 0）、pom 912 行。**不手写**：由 `_doc/003_script/gen_fleet_bom.py` 从磁盘上的兄弟仓 pom + repo1 实测存在性重算，抬号 = 重跑脚本。允许滞后于兄弟仓 HEAD，但每一格都有出处 |
+| `z-boot-dependencies` | **第三方**版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4 + netty-bom）。1.0.19 实测 `<dependencyManagement>` **156 条**（字面 109 / property 42 / BOM import 5）、pom 1179 行。1.0.18 及以前它还夹带 3 条 `z-graph-*` 兄弟仓 pin，1.0.19 起全部搬进 fleet，这里只剩第三方 |
+| `z-boot-fleet` | **兄弟仓（L3 `z-*`）**版本权威，1.0.19 新增。21 个版本格 property + **164 条**受管坐标（全部 `${z-*.version}` 形式，字面 0）、pom 915 行。**不手写**：由 `_doc/003_script/gen_fleet_bom.py` 从磁盘上的兄弟仓 pom + repo1 实测存在性重算，抬号 = 重跑脚本。允许滞后于兄弟仓 HEAD，但每一格都有出处。⚠ 盘上这 164 条里含 `z-ctc-admin`，而 admin 自 2026-09-28 起被 `excludeArtifacts` 永久挡在 Central 外——下次 `--write` 重算是 **163 条**，别把 164 当成长期口径 |
 
 > 两个 BOM 的坐标空间**不相交**（floor 只管第三方，fleet 只管 `io.github.yuku123:z-*`），所以消费者把它们
 > 并列 import 不会有 dm 优先级打架。**代价**：每个 `z-boot-*-starter` 要显式 import 两次（见下面「项目结构」）。

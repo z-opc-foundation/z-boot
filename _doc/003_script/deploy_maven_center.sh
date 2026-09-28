@@ -336,6 +336,10 @@ cmd_readme() {
     unzip -l target/central-publishing/central-bundle.zip 看命中数是否为 0 —— 这是唯一
     不打真实上传就能验排除生效的路子。
   ✗ 探活不能用 HEAD —— repo1/Fastly 对 HEAD 不给 200，用 curl -r 0-0（200/206 才算活着）。
+  ✗ 上传返 500/errorCode 10500 别急着怀疑自己的包。差分实测：错凭证 → 401 "Invalid token"，
+    空 body → 同一个 500。也就是说 10500 出现在鉴权之后、与负载无关，是 Sonatype 侧故障；
+    这种时候把 bundle 造好放着一件一件重试就行，别去改 pom 或重签名。
+    （deployments 清单的顶层键是 deployments，不是 results。）
   ✗ 不要把 CENTRAL_TOKEN / GPG passphrase 贴到对话或提交进仓。
   ✓ z-boot-fleet 的 flatten 必须 override 成 resolveCiFriendliesOnly；oss 模式会把整个
     <dependencyManagement> 删掉，发出去的 fleet 就成了空 BOM（本机看不出来，只有外部 import 会炸）。
