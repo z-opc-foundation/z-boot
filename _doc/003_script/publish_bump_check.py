@@ -13,8 +13,13 @@ z-boot starter 1.0.17→1.0.19、jackson 2.13.5→2.18.6）。中央上 1.2.1 �
     所以跑之前那仓至少 `package` 过一遍，否则报"无 flatten"。
   · 逐件按 Maven 的坐标 (g:a:v) 去 repo1 取**全文** pom 比对依赖集合，不是 ranged GET
     （ranged GET 只拿 1 字节，比对不了内容 —— 这是踩过的坑）。
-  · 中央 404 ⇒ NEW（首次发布，不需要抬号）；206 且依赖集合逐字相同 ⇒ SAME；
-    206 但有出入 ⇒ BUMP（同号发不出去，必须抬号或确认不发）。
+  · 中央 404 ⇒ NEW（首次发布，不需要抬号）；200 且依赖集合逐字相同 ⇒ SAME；
+    200 但有出入 ⇒ BUMP（同号发不出去，必须抬号或确认不发）。
+  · **形状差单列**：叶子 pom 自己带不带 `<parent>` 是一等事实。带 parent 的那族，
+    版本的 `(none)` 是"由父 pom 的 DM 补"，不是缺陷；迁移把 flatten 换成 `oss` 会顺手
+    把 parent 剥掉、版本写死 ⇒ 那是**换发布形状**（判成 SHAPE），与"面值漂了"（BUMP）
+    是两件事。SHAPE 同号也发不动，但它的解法有两条（抬号 / 把 flatten 改回原形状），
+    而 BUMP 只有一条 ⇒ 混在一起会得出"必须抬 16 仓的号"这种过强的结论。
   · excludeArtifacts（central-publishing 那段）里的件不算：它们本来就不发。
 
 只读，不写任何东西、不碰 ~/.m2。
@@ -40,6 +45,14 @@ REPO1 = "https://repo1.maven.org/maven2"
 
 def q(t):
     return t.text.strip() if t is not None and t.text else None
+
+
+def has_parent(root):
+    """发布形状的一等事实：叶子 pom 自己带不带 <parent>。
+    带 parent 的族（z-oss / z-skill 那一类）中央那份叶子是**靠 parent 的 DM 补版本**的，
+    所以它的 dependency 看起来"没有 version"不是缺陷；flatten 换成 oss 会把 parent 剥掉、
+    同时把版本写死 ⇒ 那是**换发布形状**，与"版本漂了"是两件事，要分开报。"""
+    return root.find(NS + "parent") is not None
 
 
 def coord_of(root):
@@ -129,7 +142,7 @@ def report(repo, quiet):
     if not flat:
         print(f"{os.path.basename(repo):<15} parent={pname:<16} 盘上无 .flattened-pom.xml ⇒ 没跑过构建，判不了（先 package 一遍）")
         return
-    rows, counts = [], {"NEW": 0, "SAME": 0, "BUMP": 0, "SKIP": 0, "UNREAD": 0, "UNPARSED": 0}
+    rows, counts = [], {"NEW": 0, "SAME": 0, "BUMP": 0, "SHAPE": 0, "SKIP": 0, "UNREAD": 0, "UNPARSED": 0}
     for f in flat:
         try:
             loc = ET.parse(f).getroot()
@@ -145,18 +158,22 @@ def report(repo, quiet):
             continue
         url = f"{REPO1}/{g.replace('.', '/')}/{a}/{v}/{a}-{v}.pom"
         code, body = fetch(url)
+        local_parent = has_parent(loc)
         if code == 404:
-            verdict, detail = "NEW", ""
+            verdict, detail = "NEW", "" if local_parent else "(自包含形状)"
         elif code != 200:
             verdict, detail = "UNREAD", f"(取不到 central 那份：HTTP {code} ⇒ 不可判，别当 SAME)"
         else:
             try:
-                pub, pub_dm = deps(ET.fromstring(body))
+                pub_root = ET.fromstring(body)
+                pub, pub_dm = deps(pub_root)
             except ET.ParseError:
                 verdict, detail = "BUMP", "中央那份 pom 解析不了"
             else:
                 l, l_dm = deps(loc)
-                if l == pub and l_dm == pub_dm:
+                # 带 parent 的叶子靠父 pom 的 DM 补版本，打印出来就是 "(none)" —— 那是形状，不是缺陷
+                shape_shift = has_parent(pub_root) != local_parent
+                if l == pub and l_dm == pub_dm and not shape_shift:
                     verdict, detail = "SAME", ""
                 else:
                     # 按 (g,a,scope) 归并版本：一个坐标可能出现多次（不同 scope），逐个 scope 比
@@ -167,33 +184,49 @@ def report(repo, quiet):
                                 d.setdefault((g_, a_, sc_), set()).add(v_)
                             return d
                         Pk, Lk = keyed(P), keyed(L)
-                        out = []
+                        drift, shape = [], []
                         for k in sorted(set(Pk) | set(Lk)):
                             pv, lv = Pk.get(k, set()), Lk.get(k, set())
                             if pv == lv:
                                 continue
                             g_, a_, sc_ = k
                             sfx = f'@{sc_}' if sc_ != 'compile' else ''
+                            if shape_shift and ("(none)" in pv or "(none)" in lv):
+                                shape.append(f"{g_}:{a_}{sfx}")
+                                continue
                             if pv and lv:
-                                out.append(f"{g_}:{a_}{sfx} {'/'.join(sorted(pv))}→{'/'.join(sorted(lv))}")
+                                drift.append(f"{g_}:{a_}{sfx} {'/'.join(sorted(pv))}→{'/'.join(sorted(lv))}")
                             elif lv:
-                                out.append(f"+{g_}:{a_}{sfx} {'/'.join(sorted(lv))}")
+                                drift.append(f"+{g_}:{a_}{sfx} {'/'.join(sorted(lv))}")
                             else:
-                                out.append(f"-{g_}:{a_}{sfx} {'/'.join(sorted(pv))}")
-                        return out
-                    dm_mv = moves(pub_dm, l_dm)
-                    dep_mv = moves(pub, l)
+                                drift.append(f"-{g_}:{a_}{sfx} {'/'.join(sorted(pv))}")
+                        return drift, shape
+                    dm_mv, dm_sh = moves(pub_dm, l_dm)
+                    dep_mv, dep_sh = moves(pub, l)
+                    n_shape = len(dm_sh) + len(dep_sh)
                     parts = ([f"依赖{len(dep_mv)}格: " + "; ".join(dep_mv[:5])] if dep_mv else []) + \
                             ([f"DM{len(dm_mv)}格: " + "; ".join(dm_mv[:5])] if dm_mv else [])
-                    verdict, detail = "BUMP", " ｜ ".join(parts) + (" …" if len(dep_mv) > 5 or len(dm_mv) > 5 else "")
+                    if not parts and shape_shift:
+                        # 只有形状差：对外面值没漂，但发出去的那份 pom 与中央同号那份不是同一个东西 ⇒ 一样得抬号
+                        verdict, detail = "SHAPE", (f"中央那份{'带' if has_parent(pub_root) else '不带'}<parent>，本地 flatten "
+                                                    f"{'带' if local_parent else '不带'} ⇒ 换发布形状（{n_shape} 格版本由 parent 补）")
+                    else:
+                        verdict, detail = "BUMP", " ｜ ".join(parts) + \
+                            (f" …(+{n_shape} 格形状差)" if shape_shift and n_shape > 5 else
+                             (" ｜ 另有形状差" if shape_shift else "")) + \
+                            (" …" if len(dep_mv) > 5 or len(dm_mv) > 5 else "")
         counts[verdict] = counts.get(verdict, 0) + 1
         rows.append((verdict, f"{g}:{a}:{v}", detail))
         time.sleep(0.05)
     name = os.path.basename(repo)
     tag = f"parent={pname}"
     if quiet:
-        line = f"{name:<15} {tag:<26} " + " ".join(f"{k}={counts[k]}" for k in ("NEW", "SAME", "BUMP", "SKIP", "UNREAD") if counts.get(k))
-        print(line + ("   ⚠ 同号发不动，必须抬 revision" if counts.get("BUMP") else ""))
+        line = f"{name:<15} {tag:<26} " + " ".join(f"{k}={counts[k]}" for k in ("NEW", "SAME", "BUMP", "SHAPE", "SKIP", "UNREAD") if counts.get(k))
+        if counts.get("BUMP"):
+            line += "   ⚠ 面值漂了，同号发不动，必须抬 revision"
+        elif counts.get("SHAPE"):
+            line += "   ⚠ 只有发布形状差：抬号，或把 flatten 形状改回中央那一版的样子"
+        print(line)
     else:
         print(f"\n=== {name}  {tag}  flatten 件 {len(flat)} 个 ===")
         for verdict, c, detail in rows:
@@ -228,9 +261,11 @@ def main():
         if r:
             for k, v in r.items():
                 tot[k] = tot.get(k, 0) + v
-    print(f"\n合计 {len(targets)} 仓：" + " ".join(f"{k}={tot.get(k,0)}" for k in ("NEW", "SAME", "BUMP", "SKIP", "UNREAD", "UNPARSED")))
+    print(f"\n合计 {len(targets)} 仓：" + " ".join(f"{k}={tot.get(k,0)}" for k in ("NEW", "SAME", "BUMP", "SHAPE", "SKIP", "UNREAD", "UNPARSED")))
     if tot.get("BUMP"):
-        print("⚠ 有件的对外 pom 与中央同号那份不一致 ⇒ 批量发布前逐仓决定抬号；不抬就发不出去。")
+        print("⚠ 有件的对外 pom 与中央同号那份**面值不同** ⇒ 批量发布前逐仓决定抬号；不抬就发不出去。")
+    if tot.get("SHAPE") and not tot.get("BUMP"):
+        print("⚠ 只有发布形状差（叶子带不带 <parent>）⇒ 可以不改号，但要把 flatten 配置还原成中央那一版的样子。")
 
 
 if __name__ == "__main__":
