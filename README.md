@@ -449,6 +449,13 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
    `UNRESOLVED_OWN_VERSION`：fleet 那 163 格里目前 1 格 = `z-agent-proxy:0.1.0`，同样只能补 flatten 后抬号。
 
 **判据（两遍都要跑）**：
+- **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
+  它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
+  ranged 只拿 1 字节比不了内容）。中央 404 ⇒ `NEW`（首次发，不涉及抬号）；206 且逐字相同 ⇒ `SAME`；
+  206 但面值动了 ⇒ `BUMP` —— **这一版号已经发不出去了**，只能抬 `revision`。2026-09-29 全量跑一遍：
+  20 个已迁仓 `NEW=27 / SAME=74 / BUMP=69`，16 仓至少一件 BUMP，最典型的一格就是
+  `z-util-core 1.0.10→1.0.13`（正是我们要的升级，但正因为升了才不能占着旧号）。
+  z-util 这类 `resolveCiFriendliesOnly` 的仓要盯 `DM…格` 那一段：聚合根 pom 的版本表也是对外契约。
 - 复跑步骤 1 那条命令，与基线 diff ⇒ 允许出现的差异**只有你明确决定要改的那几行**
   （试点那一轮的完整 diff 是 1 行：`z-cache-common 1.3.4 → 1.3.6`）。
   提坐标两边用**同一个** `grep -oE 'g:a:jar:v'`，别一个 4 段一个 3 段——那样比出来的
@@ -1173,6 +1180,7 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
   - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 按文件夹发布（`publish fleet` 等）+ `bundle <zip>` 逐坐标点件
   - [`gen_fleet_bom.py`](_doc/003_script/gen_fleet_bom.py) — `z-boot-fleet` 的生成器 + 对账尺（兄弟仓 pom × repo1 实测 → 163 条受管项；`--parent` / `--write-parent` 维护 `z-boot-parent` 里那段 z-boot 自家 starter 清单）
   - [`repo1_census.py`](_doc/003_script/repo1_census.py) — 逐坐标点 repo1 的 4 件套（只认 repo1，不回退 `~/.m2`）；"半发/漏件"用它抓，`--repo ../z-xxx` 可点任意仓
+  - [`publish_bump_check.py`](_doc/003_script/publish_bump_check.py) — 拿盘上 flatten 产物与**中央同号那份全文 pom** 逐坐标比依赖/DM：`NEW / SAME / BUMP`，`BUMP` = 这版号已被不可覆盖性锁死、必须抬 `revision` 才发得动（迁移后批量发布前唯一的那把尺）
   - [`install-settings.sh`](_doc/003_script/install-settings.sh)
 
 各文档详细说明见各子目录。
