@@ -923,6 +923,8 @@ z-opc (主后端)              ← 消费者
 ./_doc/003_script/deploy_maven_center.sh readme                # 摘要：前置 + 文件夹语义 + 判据
 ./_doc/003_script/deploy_maven_center.sh publish --dry fleet    # 只 mvn verify：编译+sources+javadoc+gpg 签名，不打包不上传
 ./_doc/003_script/deploy_maven_center.sh publish --bundle fleet # bundle 演练：连打包都跑，只把上传目标指到不可达域名
+./_doc/003_script/deploy_maven_center.sh bundle <folder>/target/central-publishing/central-bundle.zip  # 逐坐标点件
+python3 _doc/003_script/central_pom_scan.py                # 上传前静态点伤，一次扫 ../ 下所有带 central profile 的仓
 ./_doc/003_script/deploy_maven_center.sh publish fleet          # 只发一个文件夹
 ./_doc/003_script/deploy_maven_center.sh publish                # 按序全发 parent→deps→fleet→starter→integration
 ```
@@ -933,12 +935,21 @@ z-opc (主后端)              ← 消费者
 
 `--dry` 到 verify 为止，**看不出 bundle 里到底装了什么**：pom-only 模块少件、`*-admin` 这类"永不发布"的模块
 混进包里，都只在打包那步现形 —— 所以有 `--bundle`：staging/签名/打包全按发布态真跑，只把 `centralBaseUrl`
-指到解析不了的域名，于是一件都发不出去，但可以 `unzip -l <folder>/target/central-publishing/central-bundle.zip`
-看个清楚。动过 flatten 配置、`excludeArtifacts` 或新加文件夹时先走一遍它（2026-09-28 就是这么验掉 z-ctc 的
-`z-ctc-admin` 排除生效的：102 个文件里 admin 命中 0）。
+指到解析不了的域名，于是一件都发不出去，但包内容可以逐坐标点清楚。`--bundle` 现在自带点件
+（`bundle_audit`：每个坐标要 `pom + jar + -sources.jar + -javadoc.jar` 四件齐、各自带 `.asc`，pom-packaging
+只要 pom），缺任意一件直接 `rc=1`；拿到别人的包也能点，用 `bundle <zip>` 子命令。动过 flatten 配置、
+`excludeArtifacts` 或新加文件夹时先走一遍它（2026-09-28 就是这么验掉 z-ctc 的 `z-ctc-admin` 排除生效的：
+102 个文件里 admin 命中 0；integration 演练 21 个坐标 0 缺件）。
 
 ⚠ **`maven.deploy.skip` 拦不住 Central** —— `central-publishing-maven-plugin` 不认这个属性，实测照样把
 admin 的 pom/jar/exec fat jar 全打进 bundle。要挡只能用插件自己的 `excludeArtifacts`（按 artifactId 精确匹配）。
+
+`central_pom_scan.py` 是上面两类事故的**上传前**版本：静态扫 `../` 下每个带 `central profile` 的仓，报四类
+—— B `deploy.skip=true` 却没进 `excludeArtifacts`、C 发布的 pom 缺自己的 `<name>`、D `dependencyManagement`
+条目无 `version`、E 插件无 `version` 且父链无兜底。它按 Maven 口径解析 `<modules>`（注释掉的 module 不算，
+`z-config-admin` / `z-oss/_frontend` / `z-gw-examples` 这些"目录在、reactor 不在"的不会误报），根 pom 无
+`<modules>` 的 z-boot 文件夹拓扑单独认。实测口径：25 仓 / 0 缺陷；正负双向都验过（造一个缺 javadoc.jar
+和一个 `.asc` 的包，两处缺口都报出且 `rc=1`）。
 
 抬一格兄弟仓 L3 版本的完整动作只有三条命令：`gen_fleet_bom.py --write` → `publish --dry fleet` → `publish fleet`。
 以前这件事要重发整个 z-boot（27 个坐标），因为版本格住在根 pom 的 `<properties>`、经
@@ -973,7 +984,8 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
 
 - [`_doc/003_script/`](_doc/003_script/) — 运维脚本:
   - [`batch_fix_zboot_meta.py`](_doc/003_script/batch_fix_zboot_meta.py)
-  - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 按文件夹发布（`publish fleet` 等）
+  - [`central_pom_scan.py`](_doc/003_script/central_pom_scan.py) — 上传前静态点伤（`../` 全仓 B/C/D/E 四类，非 0 就有缺陷）
+  - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 按文件夹发布（`publish fleet` 等）+ `bundle <zip>` 逐坐标点件
   - [`gen_fleet_bom.py`](_doc/003_script/gen_fleet_bom.py) — `z-boot-fleet` 的生成器 + 对账尺（兄弟仓 pom × repo1 实测 → 164 条受管项）
   - [`install-settings.sh`](_doc/003_script/install-settings.sh)
 

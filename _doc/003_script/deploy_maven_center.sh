@@ -363,6 +363,10 @@ cmd_readme() {
 
 【判据】
 
+  ✓ 动手发之前先静态点伤，一条命令扫 ../ 下所有带 central profile 的仓：
+      python3 _doc/003_script/central_pom_scan.py        # B/C/D/E 四类，退出码非 0 就有缺陷
+    它按 Maven 自己的口径解析 reactor（注释掉的 module 不误报），z-boot 的"根无 <modules>、
+    按文件夹独立成工程"也认。实测口径：25 仓 / 0 缺陷，z-boot 28 个 pom 全覆盖。
   ✗ BUILD SUCCESS ≠ 已可见。repo1 有 5~50 分钟无 SLA 的索引期，判发布只认 repo1 回读。
   ✗ 上传成功 ≠ 收下。"Uploaded bundle successfully … Deployment will publish automatically"
     之后 Central 还会异步校验整批组件，任何一个 pom 不合格就整批 FAILED，而 mvn 侧已经
