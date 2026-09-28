@@ -20,7 +20,7 @@
 #
 # 设计原则：
 #   - 所有凭证从 ./.env 读，.env 已被 .gitignore 排除
-#   - GPG 密钥环用 GNUPGHOME=./.gnupg，不污染 ~/.gnupg
+#   - GPG 密钥环用仓库根的 .gnupg（load_env 里 export GNUPGHOME），不污染 ~/.gnupg
 #   - 不带参数 = 按 FLEET_ORDER 全发，且是不可撤销的对外发布 ⇒ 只在明确要发版时裸跑
 #   - 先验不发用 publish --dry <folder>（只 mvn verify，不签名不上传）
 #   - 已发布的版本 Central 不允许覆盖，脚本对每个文件夹先回读 repo1，已 200 的直接跳过
@@ -61,6 +61,9 @@ load_env() {
     [[ -n "${CENTRAL_GPG_PASSPHRASE:-}" ]] || die ".env 缺 CENTRAL_GPG_PASSPHRASE（先跑 gpg-init）"
 
     export CENTRAL_USERNAME CENTRAL_TOKEN CENTRAL_GPG_PASSPHRASE
+
+    # 密钥环在本仓的 .gnupg 里（~/.gnupg 实测 0 把私钥，不导就直接 gpg 签名失败）
+    [[ -d "$PWD/.gnupg" ]] && export GNUPGHOME="$PWD/.gnupg"
 }
 
 # ---------- 依赖检查 ----------
@@ -195,16 +198,18 @@ cmd_publish() {
     fi
 
     log "═══════════════════════════════════════════════════════════════"
-    log " 即将发布 z-boot 到 Maven Central   mode=$([[ $dry == 1 ]] && echo dry-run(verify) || echo deploy)"
+    log " 即将发布 z-boot 到 Maven Central   mode=$(if [[ $dry == 1 ]]; then echo 'dry-run(verify)'; else echo deploy; fi)"
     log "  groupId : io.github.yuku123"
     log "  folders : ${want[*]}"
     log "  GPG KEY : ${GPG_KEY_ID:-?}"
     log "═══════════════════════════════════════════════════════════════"
 
-    local goal=deploy rc=0 f
+    local goal=deploy rc=0 f logf
     [[ $dry == 1 ]] && goal=verify
     for f in "${want[@]}"; do
         [[ -f "$f/pom.xml" ]] || die "找不到 $f/pom.xml（可用名：parent deps fleet starter integration）"
+        # 根文件夹是 "."，basename 出来是一个点，日志名会成 z-boot-deploy-..log
+        logf="/tmp/z-boot-deploy-$( [[ "$f" == "." ]] && echo parent || basename "$f" ).log"
         if [[ $dry == 0 ]] && already_live "$f"; then
             warn "跳过 $f —— 该版本已在 repo1（Central 不允许覆盖已发布版本）"
             continue
@@ -215,16 +220,16 @@ cmd_publish() {
             -Pcentral \
             -DskipTests \
             -Dgpg.passphrase="$CENTRAL_GPG_PASSPHRASE" \
-            -f "$f/pom.xml" > "/tmp/z-boot-deploy-$(basename "$f").log" 2>&1 || rc=1
-        if grep -q "BUILD SUCCESS" "/tmp/z-boot-deploy-$(basename "$f").log"; then
+            -f "$f/pom.xml" > "$logf" 2>&1 || rc=1
+        if grep -q "BUILD SUCCESS" "$logf"; then
             log "   ✅ $f SUCCESS"
         else
-            err "   ✗ $f FAILURE —— tail -30 of /tmp/z-boot-deploy-$(basename "$f").log:"
-            tail -30 "/tmp/z-boot-deploy-$(basename "$f").log" | sed 's/^/      /'
+            err "   ✗ $f FAILURE —— tail -30 of $logf:"
+            tail -30 "$logf" | sed 's/^/      /'
         fi
     done
     [[ $rc == 0 ]] || die "有文件夹发布失败，见 /tmp/z-boot-deploy-*.log"
-    [[ $dry == 1 ]] && { log "dry-run 完成（未签名、未上传）"; return 0; }
+    [[ $dry == 1 ]] && { log "dry-run 完成（跑了编译 + sources + javadoc + gpg 签名，未上传）"; return 0; }
     log ""
     log "✅ 全部文件夹发布流程结束"
     log "Central Portal 控制台：https://central.sonatype.com/publishing/deployments"
