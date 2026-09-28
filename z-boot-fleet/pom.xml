@@ -18,7 +18,8 @@
         z-opc-foundation 兄弟仓 (z-config / z-cache / z-mq / z-gw / z-kb / z-vector / z-graph /
         z-rpc / z-oss / z-schedule / z-msg / z-script / z-ctc / z-util / L3 Agent-AI 7 仓) 的版本权威。
         与 z-boot-dependencies (第三方地板) 分家:抬任何一格兄弟仓版本只需要重发本 pom 一个文件夹,
-        不牵动第三方地板,也不牵动 19 个 z-boot-*-starter。本文件由 _doc/003_script/gen_fleet_bom.py
+        不牵动第三方地板。z-boot 自家的 z-boot-*-starter 不在这里 —— 它们只能和 z-boot 同版本,
+        所以钉在 z-boot-parent。本文件由 _doc/003_script/gen_fleet_bom.py
         生成 —— 坐标清单取自兄弟仓盘上的 pom,版本逐件对 repo1 复核过,别手改。
     </description>
 

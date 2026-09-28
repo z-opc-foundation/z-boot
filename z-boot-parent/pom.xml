@@ -15,13 +15,20 @@
         使用方从此不写 <dependencyManagement>、不写版本属性（现状是每个仓自己起名字：
         z-util.version 13 仓 / util.version 7 仓 / zutil.version 1 仓，还各自漏钉 z-util）。
 
-        两个和"发布件对外可见"直接相关的决定，改之前先读：
+        三个和"发布件对外可见"直接相关的决定，改之前先读：
         1) flatten 在这里覆盖成 resolveCiFriendliesOnly，不用根 pom 的 oss —— oss 会剥掉
            <build>/<pluginManagement>，那样发出去的 parent 就只剩版本、没有构建口径，
            而本机永远看不出来（同 fleet 那条"别在 fleet 上用 oss"的教训）。
-        2) maven.deploy.skip=true 是本 parent 给后代的安全默认：继承链带着 Central 的
-           distributionManagement，没有它，任何仓手滑 `mvn deploy` 就会往 Central 推。
-           真要发布走 `-Pcentral`，那条路用 central-publishing-plugin，不吃 deploy.skip。
+        2) z-boot 自家 starter 的版本键必须是**字面 property** <z-boot.version>，不能照
+           spring-boot-dependencies 那样用 ${project.version}：resolveCiFriendliesOnly 只解
+           ${revision}/${sha1}/${changelist}，${project.version} 会原样留在发出去的 pom 里，
+           于是消费方按**它自己的**版本去解析。2026-09-28 在隔离 repo
+           (-Dmaven.repo.local=/tmp/zboot-parent-repo) 实测：一个 version=9.9.9-PROBE 的探针
+           工程从本 parent 拿到的 z-boot-web-starter 就是 9.9.9-PROBE（404），不是 1.0.19。
+        3) 不放 maven.deploy.skip —— 它挡不住任何东西：distributionManagement 只在 -Pcentral 里
+           才有（根 pom 第 92 行），不带 profile 的 `mvn deploy` 本来就报 "repository element
+           was not specified"；而按 central_pom_scan 的 B 类口径，central-publishing 插件"不认
+           skip"，真发布时它同样不生效。留一个两处都不生效的开关只会误导下一个人。
     -->
     <parent>
         <groupId>io.github.yuku123</groupId>
@@ -41,6 +48,9 @@
         <!-- fleet 的落点。fleet 是脚本产物（_doc/003_script/gen_fleet_bom.py），只钉 repo1 实测
              存在的版本；fleet 内容变了就抬这一格并重发 fleet 文件夹。 -->
         <z-boot-fleet.version>1.0.0</z-boot-fleet.version>
+        <!-- z-boot 自家 starter 的落点：与本 parent 自己的 <version> 同格（同一个仓、一起发版）。
+             由 gen_fleet_bom.py --write-parent 逐件对 repo1 复核后落笔，别手改。 -->
+        <z-boot.version>1.0.19</z-boot.version>
 
         <java.version>1.8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
@@ -48,15 +58,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <!-- 见上方注释 2：默认挡住"手滑 deploy 到 Central"，不影响 -Pcentral 发布路径 -->
-        <maven.deploy.skip>true</maven.deploy.skip>
-
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <maven-failsafe-plugin.version>2.22.2</maven-failsafe-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
         <spring-boot.version>2.7.18</spring-boot.version>
+        <!-- 显式钉住：链上的 z-boot-dependencies / z-boot 发布件被 oss 剥过 <build>，没有一处给
+             flatten 兜版本 ⇒ 消费方继承到一条无 version 的插件声明（Maven 直接 WARNING，也就是
+             central_pom_scan 的 E 类）。这一格把链补严。 -->
+        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -68,6 +79,9 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- BEGIN z-boot-self (gen_fleet_bom.py --write-parent 维护，勿手改) -->
+            <!-- END z-boot-self -->
         </dependencies>
     </dependencyManagement>
 
@@ -125,6 +139,10 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
+                <version>${flatten-maven-plugin.version}</version>
+                <!-- 只为本 pom 自己服务：inherited=false 免得把一条 flatten 声明塞给全组织
+                     30 个仓（它们发的是非扁平 pom，凭空继承一条插件声明没有好处只有惊讶）。 -->
+                <inherited>false</inherited>
                 <configuration>
                     <updatePomFile>true</updatePomFile>
                     <flattenMode>resolveCiFriendliesOnly</flattenMode>

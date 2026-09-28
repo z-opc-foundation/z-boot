@@ -4,7 +4,7 @@
 #
 # 子命令：
 #   publish [folder...]   按文件夹发布;不带参数=按依赖顺序全发
-#                         folder 可用短名 parent / deps / fleet / starter / integration
+#                         folder 可用短名 root / deps / fleet / parent / starter / integration
 #   verify     验证 Maven Central 上能否搜到 io.github.yuku123
 #   gpg-init   首次发布前生成 GPG 密钥并写 .env
 #   bundle     点件：<path>/central-bundle.zip 逐坐标核 pom/jar/sources/javadoc + .asc
@@ -142,16 +142,26 @@ EOF
 }
 
 # ---------- 子命令：publish ----------
-# 1.0.19 起 z-boot 根 pom 只是 parent（没有 <modules>），发版按文件夹为单位：
+# 1.0.19 起 z-boot 根 pom 只是发布用 pom（没有 <modules>），发版按文件夹为单位：
 #   publish                 = 按依赖顺序全发
-#   publish fleet           = 只发 z-boot-fleet（parent 若 repo1 已有就跳过）
+#   publish fleet           = 只发 z-boot-fleet（根 pom 若 repo1 已有就跳过）
+#   publish parent          = 只发 z-boot-parent（消费入口；fleet 未发时自动前置）
 #   publish deps starter    = 发地板 + 3 个基础 starter
 #   publish --dry fleet     = 只 mvn verify 不 deploy（不签名不上传，验 flatten/受管项形状）
 # 抬一格兄弟仓版本 = gen_fleet_bom.py --write + publish fleet，其余文件夹不动。
-FLEET_ORDER=( "." "z-boot-dependencies" "z-boot-fleet" "z-boot-starter" "z-boot-integration-starters" )
+#
+# 顺序不是审美问题，是硬依赖：fleet 1.0.0 被 20 个叶子 starter 的 <dependencyManagement>
+# 按字面版本 import（z-boot-integration-starters/*/pom.xml:64），而 z-boot-parent 也 import 它。
+# Central 上 fleet 一个版本都没有 ⇒ integration/parent 从干净机器发必然 "Non-resolvable import POM"
+# —— 1.0.19 那次 integration 整文件夹没落进 Central（repo1 只到 1.0.18），本机 ~/.m2 装过就看不出来。
+# 所以 fleet 一旦发出去就是 immutable：发之前必须 `gen_fleet_bom.py --write` 重算 + 逐件复核。
+FLEET_ORDER=( "." "z-boot-dependencies" "z-boot-fleet" "z-boot-parent" "z-boot-starter" "z-boot-integration-starters" )
 alias_folder() {
     case "$1" in
-        .|parent|root)      echo "." ;;
+        .|root)             echo "." ;;
+        # "parent" 这里指 z-boot-parent 这个文件夹（消费入口），不是根 pom —— 根 pom 用 root 或 "."。
+        # 1.0.19 之前短名 parent 是给根 pom 用的，文档里那几处已经一起改成 root。
+        parent)             echo "z-boot-parent" ;;
         deps|dependencies)  echo "z-boot-dependencies" ;;
         fleet)              echo "z-boot-fleet" ;;
         starter|starters)   echo "z-boot-starter" ;;
@@ -237,12 +247,27 @@ cmd_publish() {
     done
     [[ ${#want[@]} -eq 0 ]] && want=("${FLEET_ORDER[@]}")
 
-    # parent 不在发布清单里时，若 repo1 还没有当版 parent，也必须先把它发出去
+    # 根 pom 不在发布清单里时，若 repo1 还没有当版根 pom，也必须先把它发出去
     if [[ " ${want[*]} " != *" . "* ]]; then
-        already_live "." || { log "parent 未发布 → 前置 ."; want=( "." "${want[@]}" ); }
+        already_live "." || { log "根 pom 未发布 → 前置 ."; want=( "." "${want[@]}" ); }
+    fi
+    # fleet 是 integration / parent 的 import 目标：它不在清单里而当版没上线时，自动前置，
+    # 否则那 20 个 starter（或 parent）在 Central 上是一条解不开的 import。
+    if [[ " ${want[*]} " == *" z-boot-integration-starters "* || " ${want[*]} " == *" z-boot-parent "* ]]; then
+        if [[ " ${want[*]} " != *" z-boot-fleet "* ]] && ! already_live "z-boot-fleet"; then
+            log "z-boot-fleet 当版未发布 → 前置 fleet（integration/parent 的 <dependencyManagement> import 它）"
+            want=( "z-boot-fleet" "${want[@]}" )
+        fi
     fi
 
     local mode=deploy
+    # 上面两个前置是在清单两头插队，顺序可能已经乱 ⇒ 按 FLEET_ORDER 重排一次
+    # （根 → deps → fleet → parent → starter → integration；发出去的东西只能引用更早发出去的）
+    local sorted=() fo wi
+    for fo in "${FLEET_ORDER[@]}"; do
+        for wi in "${want[@]}"; do [[ "$wi" == "$fo" ]] && sorted+=("$fo"); done
+    done
+    want=("${sorted[@]}")
     [[ $dry == 1 ]] && mode='dry-run(verify)'
     [[ $bundle == 1 ]] && mode='bundle 演练(不上传)'
     log "═══════════════════════════════════════════════════════════════"
@@ -260,9 +285,9 @@ cmd_publish() {
     local extra=()
     [[ $bundle == 1 ]] && extra=(-DcentralBaseUrl=https://central-rehearsal.invalid)
     for f in "${want[@]}"; do
-        [[ -f "$f/pom.xml" ]] || die "找不到 $f/pom.xml（可用名：parent deps fleet starter integration）"
+        [[ -f "$f/pom.xml" ]] || die "找不到 $f/pom.xml（可用名：root deps fleet parent starter integration）"
         # 根文件夹是 "."，basename 出来是一个点，日志名会成 z-boot-deploy-..log
-        logf="/tmp/z-boot-deploy-$( [[ "$f" == "." ]] && echo parent || basename "$f" ).log"
+        logf="/tmp/z-boot-deploy-$( [[ "$f" == "." ]] && echo root || basename "$f" ).log"
         if [[ $dry == 0 && $bundle == 0 ]] && already_live "$f"; then
             warn "跳过 $f —— 该版本已在 repo1（Central 不允许覆盖已发布版本）"
             continue
@@ -336,10 +361,11 @@ cmd_readme() {
 
 【z-boot 没有 ${revision}】
 
-  四个文件夹 + 根都是独立工程，pom 里写的是字面版本：
-    .                        z-boot (parent，只带 plugin/profile/flatten 配置，无 <modules>)
+  五个文件夹 + 根都是独立工程，pom 里写的是字面版本：
+    .                        z-boot 根 pom（只带 plugin/profile/flatten 配置，无 <modules>；短名 root）
     z-boot-dependencies      第三方地板 BOM
     z-boot-fleet             兄弟仓 z-* 版本 BOM（gen_fleet_bom.py 生成，勿手改）
+    z-boot-parent            消费入口 parent：继承地板 + import fleet + 下发 Java 8 构建口径（短名 parent）
     z-boot-starter           base / web / datasource
     z-boot-integration-starters   20 个 L3 聚合 starter
   所以发版 = 选文件夹，不是全仓重发：
@@ -347,13 +373,14 @@ cmd_readme() {
     ./deploy_maven_center.sh publish --dry fleet     # 只 mvn verify：编译+sources+javadoc+gpg 签名都跑，不打包不上传
     ./deploy_maven_center.sh publish --bundle fleet  # bundle 演练：连打包都跑，只把上传目标指到不可达域名
     ./deploy_maven_center.sh publish fleet           # 真发一个文件夹
-    ./deploy_maven_center.sh publish                 # 全发（按 parent→deps→fleet→starter→integration）
+    ./deploy_maven_center.sh publish                 # 全发（按 root→deps→fleet→parent→starter→integration）
 
   --dry 看不出 bundle 里到底有什么（pom-only 模块少件、admin 这类"永不发布"模块混进来，
   都要到打包那步才现形）⇒ 改了 flatten / excludeArtifacts / 新加文件夹时先 --bundle 再真发。
 
   脚本会：逐文件夹回读 repo1，同版本已上线的直接跳过（Central 不可覆盖，重发只会 400）；
-  若 parent 当版还没上线而你要发子文件夹，自动把 parent 前置。日志落 /tmp/z-boot-deploy-<folder>.log。
+  若根 pom 当版还没上线而你要发子文件夹，自动把根前置；fleet 同理对 integration/parent 前置。
+  日志落 /tmp/z-boot-deploy-<folder>.log。
 
 【抬一格兄弟仓版本（日常）】
 
