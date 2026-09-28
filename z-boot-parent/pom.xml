@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        z-boot-parent —— 消费入口：一行 <parent> 就拿到"地板 + fleet + 构建口径"。
+
+        形状照 c2f-boot 的 c2f-boot-parent → c2f-boot-dependencies 那一层（1.0.19 抄了它的
+        拓扑，但没抄消费模型）：
+          继承 z-boot-dependencies  ⇒ 白拿 156 条第三方地板（spring-boot/netty/jackson/log4j2…）
+          本 pom 再 import z-boot-fleet ⇒ 白拿 163 条兄弟仓 z-* 版本格
+          本 pom 补 pluginManagement ⇒ Java 8 口径、编码、-parameters、surefire/boot 插件版本
+        使用方从此不写 <dependencyManagement>、不写版本属性（现状是每个仓自己起名字：
+        z-util.version 13 仓 / util.version 7 仓 / zutil.version 1 仓，还各自漏钉 z-util）。
+
+        两个和"发布件对外可见"直接相关的决定，改之前先读：
+        1) flatten 在这里覆盖成 resolveCiFriendliesOnly，不用根 pom 的 oss —— oss 会剥掉
+           <build>/<pluginManagement>，那样发出去的 parent 就只剩版本、没有构建口径，
+           而本机永远看不出来（同 fleet 那条"别在 fleet 上用 oss"的教训）。
+        2) maven.deploy.skip=true 是本 parent 给后代的安全默认：继承链带着 Central 的
+           distributionManagement，没有它，任何仓手滑 `mvn deploy` 就会往 Central 推。
+           真要发布走 `-Pcentral`，那条路用 central-publishing-plugin，不吃 deploy.skip。
+    -->
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-boot-dependencies</artifactId>
+        <version>1.0.19</version>
+        <relativePath>../z-boot-dependencies/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>z-boot-parent</artifactId>
+    <version>1.0.19</version>
+    <packaging>pom</packaging>
+
+    <name>z-boot-parent (Consumer Parent)</name>
+    <description>z-opc-foundation 各仓的统一 parent：继承第三方地板 BOM、导入兄弟仓版本权威 fleet，并下发 Java 8 构建口径</description>
+
+    <properties>
+        <!-- fleet 的落点。fleet 是脚本产物（_doc/003_script/gen_fleet_bom.py），只钉 repo1 实测
+             存在的版本；fleet 内容变了就抬这一格并重发 fleet 文件夹。 -->
+        <z-boot-fleet.version>1.0.0</z-boot-fleet.version>
+
+        <java.version>1.8</java.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- 见上方注释 2：默认挡住"手滑 deploy 到 Central"，不影响 -Pcentral 发布路径 -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <maven-failsafe-plugin.version>2.22.2</maven-failsafe-plugin.version>
+        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+        <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+        <spring-boot.version>2.7.18</spring-boot.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-fleet</artifactId>
+                <version>${z-boot-fleet.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <source>${maven.compiler.source}</source>
+                        <target>${maven.compiler.target}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <!-- Spring 的构造器注入/@ConfigurationProperties 绑定靠参数名，
+                             各仓现在靠自己的 <compilerArgs> 各抄一遍，这里统一 -->
+                        <compilerArgs>
+                            <arg>-parameters</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${maven-failsafe-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven-resources-plugin.version}</version>
+                    <configuration>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <!-- 覆盖父 pom 的 flatten 绑定：见头部注释 1，只解 CI-friendly 版本，
+                 保住 <build>/<pluginManagement>/<dependencyManagement> -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

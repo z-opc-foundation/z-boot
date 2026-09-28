@@ -32,13 +32,13 @@
              手抄清单当分叉账在 1.0.16 上翻过车(README 少记 llm/skill 两格)。
              PENDING = 已上传但 Central 尚未进索引,发布 fleet 前必须回看成 200。 -->
         <z-config.version>1.0.8</z-config.version>
-        <z-ctc.version>1.0.2</z-ctc.version>
+        <z-ctc.version>1.0.1</z-ctc.version>
         <z-cache.version>1.3.5</z-cache.version>
         <z-mq.version>1.3.0</z-mq.version>
         <z-gw.version>1.0.4</z-gw.version>
-        <z-kb.version>1.0.2</z-kb.version>
+        <z-kb.version>1.0.3</z-kb.version>
         <z-vector.version>1.0.4</z-vector.version>
-        <z-graph.version>1.0.5</z-graph.version>
+        <z-graph.version>1.0.7</z-graph.version>
         <z-rpc.version>1.0.3</z-rpc.version>
         <z-oss.version>1.0.3</z-oss.version>
         <z-schedule.version>1.0.5</z-schedule.version>
@@ -87,12 +87,7 @@
                 <artifactId>z-config-web</artifactId>
                 <version>${z-config.version}</version>
             </dependency>
-            <!-- z-ctc 1.0.2 -->
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-ctc-admin</artifactId>
-                <version>${z-ctc.version}</version>
-            </dependency>
+            <!-- z-ctc 1.0.1 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-ctc-common</artifactId>
@@ -201,7 +196,7 @@
                 <artifactId>z-gw-spring-boot-starter</artifactId>
                 <version>${z-gw.version}</version>
             </dependency>
-            <!-- z-kb 1.0.2 -->
+            <!-- z-kb 1.0.3 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-kb-api</artifactId>
@@ -288,7 +283,7 @@
                 <artifactId>z-vector-storage</artifactId>
                 <version>${z-vector.version}</version>
             </dependency>
-            <!-- z-graph 1.0.5 -->
+            <!-- z-graph 1.0.7 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-graph-api</artifactId>
@@ -430,11 +425,6 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-msg-example</artifactId>
-                <version>${z-msg.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-msg-im</artifactId>
                 <version>${z-msg.version}</version>
             </dependency>
@@ -474,7 +464,7 @@
                 <artifactId>z-script-web</artifactId>
                 <version>${z-script.version}</version>
             </dependency>
-            <!-- z-util 1.0.12 -->
+            <!-- z-util 1.0.13 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-aop</artifactId>
@@ -628,6 +618,11 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-proxy</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-benchmarks</artifactId>
                 <version>${z-util.version}</version>
             </dependency>
             <dependency>

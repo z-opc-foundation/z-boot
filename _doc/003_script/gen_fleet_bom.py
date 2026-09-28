@@ -25,7 +25,10 @@ BASE = "https://repo1.maven.org/maven2/io/github/yuku123/"
 # 兄弟仓 -> (fleet property 名, 目标版本)。property 名即 <z-xxx.version>。
 FAMILIES = {
     "z-config":  ("z-config",  "1.0.8"),
-    "z-ctc":     ("z-ctc",     "1.0.2"),
+    # 1.0.2 在 z-ctc 仓的 pom 里是 <revision>,但 repo1 实测 404(z-ctc-1.0.2.pom 与
+    # z-ctc-core-1.0.2.pom 都是;1.0.1 探活 206) ⇒ 那一版没落进 Central。fleet 只能钉实测存在的
+    # 版本,等 z-ctc 真发出 1.0.2/1.0.3 再重算抬格。
+    "z-ctc":     ("z-ctc",     "1.0.1"),
     "z-cache":   ("z-cache",   "1.3.5"),
     "z-mq":      ("z-mq",      "1.3.0"),
     "z-gw":      ("z-gw",       "1.0.4"),
