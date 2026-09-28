@@ -7,11 +7,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>${revision}</version>
+        <version>1.0.19</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-ctc-starter</artifactId>
+    <version>1.0.19</version>
     <name>z-boot :: ctc-starter (4A 安全 HTTP hook 默认实现)</name>
     <description>z-boot CTC 聚合 starter — 一行 import 集成 z-ctc 4A 安全, 提供 HTTP 实现的 CtcAuthHook / CtcAuthorizeHook 默认 bean.</description>
     <url>https://github.com/yuku123/z-boot</url>
@@ -54,7 +55,15 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-dependencies</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.19</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- 兄弟仓(z-* L3)版本权威:与地板坐标空间不相交,抬兄弟版只重发 fleet -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-fleet</artifactId>
+                <version>1.0.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -62,7 +71,7 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- z-ctc 接口 (来自 z-ctc-sso, 版本由父 dependencyManagement 锁) -->
+        <!-- z-ctc 接口 (来自 z-ctc-sso, 版本由 z-boot-fleet BOM 锁) -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-ctc-sso</artifactId>

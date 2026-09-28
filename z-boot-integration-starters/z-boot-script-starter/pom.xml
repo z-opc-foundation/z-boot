@@ -7,11 +7,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>${revision}</version>
+        <version>1.0.19</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-script-starter</artifactId>
+    <version>1.0.19</version>
     <name>z-boot :: script-starter (z-script 脚本/Mock 引擎内嵌)</name>
     <description>z-boot z-script 聚合 starter — 一行 import 把 z-script 的脚本引擎、HTTP 暴露、
         Mock 分发与 app+AK 鉴权内嵌进业务应用（进程内运行，无需独立部署 z-script-admin）.</description>
@@ -55,15 +56,35 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-dependencies</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.19</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- 兄弟仓(z-* L3)版本权威:与地板坐标空间不相交,抬兄弟版只重发 fleet -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-fleet</artifactId>
+                <version>1.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- 经 z-z-msg/z-schedule/z-script 传递进来的 z-boot 自家件,在本叶子钉到当次 cut,
+                 免得同一坐标在 z-opc 全树上出现两个 z-boot-* 版本 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-datasource-starter</artifactId>
+                <version>1.0.19</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-web-starter</artifactId>
+                <version>1.0.19</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
-        <!-- z-script 全量（web 传递 core/engine，版本由父 dependencyManagement 锁）。
+        <!-- z-script 全量（web 传递 core/engine，版本由 z-boot-fleet BOM 锁）。
              z-script-web 自带 spring.factories 自动装配：ComponentScan com.zifang.z.script + 引擎 bean。
              本 starter 与仓内 config/cache 等 starter 同款直通模式：只聚合依赖 + 标记类，不重复注册 bean。 -->
         <dependency>

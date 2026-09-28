@@ -6,12 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>${revision}</version>
+        <version>1.0.19</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-cache-starter</artifactId>
+    <version>1.0.19</version>
     <name>z-boot-cache-starter</name>
     <description>z-boot Cache 聚合 starter — 一行 import 集成 z-cache 分布式缓存客户端。</description>
     <licenses>
@@ -53,7 +54,15 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-dependencies</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.19</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- 兄弟仓(z-* L3)版本权威:与地板坐标空间不相交,抬兄弟版只重发 fleet -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-fleet</artifactId>
+                <version>1.0.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

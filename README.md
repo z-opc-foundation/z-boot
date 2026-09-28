@@ -25,6 +25,16 @@
             <type>pom</type>
             <scope>import</scope>
         </dependency>
+        <!-- 1.0.19 起再加这一条：兄弟仓 z-*（z-cache/z-mq/z-llm/…）的版本格在 z-boot-fleet 里，
+             不在地板 BOM 里。想直接写 `io.github.yuku123:z-cache-spring-boot-starter` 而不经
+             z-boot-*-starter 的消费者，没有这条就一条版本约束都拿不到。 -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-boot-fleet</artifactId>
+            <version>1.0.0</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
     </dependencies>
 </dependencyManagement>
 
@@ -156,10 +166,12 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 ### z-boot-* 聚合 starter（19 个，一行 import 一个 L3）
 
-> **版本列不是手抄的**：真源是 `z-boot/pom.xml` 里的 `<z-*.version>` property（经
-> `z-boot-integration-starters/pom.xml` 的 `<dependencyManagement>` 下发给每个 `z-boot-*-starter`）。
-> 升级改 property，这张表要在发布后按 property 回读（2026-09-27 这一轮就是靠尺抓出两格没跟上：
-> `z-boot-llm-starter` 表里还写 0.1.4、`z-boot-skill-starter` 还写 0.1.2，而 property 早已是 0.1.5 / 0.2.0）。
+> **版本列不是手抄的**：1.0.18 及以前的真源是 `z-boot/pom.xml` 的 `<z-*.version>` property（经
+> `z-boot-integration-starters/pom.xml` 的 `<dependencyManagement>` 下发给每个 `z-boot-*-starter`）；
+> **1.0.19 起真源是 `z-boot-fleet/pom.xml`**，而它是 `_doc/003_script/gen_fleet_bom.py` 从兄弟仓 pom +
+> repo1 实测重算出来的，所以这张表要么按脚本回读、要么按发布件 pom 回读，**不能手填**
+>（2026-09-27 那一轮就是靠尺抓出两格没跟上：`z-boot-llm-starter` 表里还写 0.1.4、
+> `z-boot-skill-starter` 还写 0.1.2，而 property 早已是 0.1.5 / 0.2.0）。
 >
 > ✅ **"仓内 property"和"repo1 上已发布件里的 pin"是两个事实**，这条分叉在 **1.0.17 已归零**：
 > `~/.cache/zboot-1016/pin-fork-check.py` 对 repo1 的 1.0.17 发布件逐行读回，19 行里
@@ -256,17 +268,36 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 > "落后"不等于"该抬"——每个 L3 的新版是否可用要按各仓的回归判，别照 `<latest>` 盲抬；
 > 但这张表从此有了一个能自动跑的对账尺，抬号前拿它量一遍就行。
 
-### BOM (1 个)
+### BOM (2 个)
 
 | 模块 | 说明 |
 |---|---|
-| `z-boot-dependencies` | 第三方依赖版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4，共 **132 条**受管依赖 / 仓内 1005 行）。发布件行数别再拿它当"没被动过"的尺：1.0.15 的 repo1 件是 1011 行、1.0.16 是 **889 行**——差的不是依赖（两版 `<dependencyManagement>` 逐条对过：132 vs 133，唯一实质差别是删掉死项 `ojdbc6`），是 1.0.16 起 flatten 走的写入器把 XML 注释剥了，成因与实测见下面「第三方版本权威（BOM）」 |
+| `z-boot-dependencies` | **第三方**版本权威（spring-boot-dependencies 2.7.12 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4 + netty-bom）。1.0.19 实测 `<dependencyManagement>` **156 条**（字面 109 / property 42 / BOM import 5）、pom 1117 行。1.0.18 及以前它还夹带 3 条 `z-graph-*` 兄弟仓 pin，1.0.19 起全部搬进 fleet，这里只剩第三方 |
+| `z-boot-fleet` | **兄弟仓（L3 `z-*`）**版本权威，1.0.19 新增。21 个版本格 property + **164 条**受管坐标（全部 `${z-*.version}` 形式，字面 0）、pom 912 行。**不手写**：由 `_doc/003_script/gen_fleet_bom.py` 从磁盘上的兄弟仓 pom + repo1 实测存在性重算，抬号 = 重跑脚本。允许滞后于兄弟仓 HEAD，但每一格都有出处 |
 
-### 聚合 POM (3 个)
+> 两个 BOM 的坐标空间**不相交**（floor 只管第三方，fleet 只管 `io.github.yuku123:z-*`），所以消费者把它们
+> 并列 import 不会有 dm 优先级打架。**代价**：每个 `z-boot-*-starter` 要显式 import 两次（见下面「项目结构」）。
+> 为什么要拆：1.0.18 之前兄弟仓版本格住在**根 pom 的 `<properties>`**、经
+> `z-boot-integration-starters/pom.xml` 的 36 条 `<dependencyManagement>` 下发，于是"抬一格兄弟仓版本"
+> = 重发整个 z-boot（根 + floor BOM + 23 个 starter），而 floor 里那些第三方一个字都没变。
+> 拆完之后：抬兄弟版只重发 `z-boot-fleet` 一个文件夹。
+>
+> ⚠ **"允许滞后"是有代价的，现在正欠着两格**：fleet 钉 z-graph **1.0.5** / z-kb **1.0.2**，
+> 而 Java 8 移植版是 z-graph **1.0.7** / z-kb **1.0.3** —— 那两个号**只在 `~/.m2` 里**
+> （`_remote.repositories` 写 `>=`，即本机 install、没有 repo1 件），脚本按"repo1 实测才写"的规矩不收。
+> 后果：**class-file 61 的 1.0.5/1.0.2 在 Java 8 运行时会 `UnsupportedClassVersionError`**，
+> 所以走 Java 8 的消费者必须在自己的 dm 里覆盖这两格（z-opc 根 pom 803-844 行就是这么写的，父级 dm 赢过 import 的 BOM）。
+> 等 1.0.7/1.0.3 真上了 repo1，`gen_fleet_bom.py` 改两行 `--write` 重算就能收。
 
-- `z-boot`（顶层聚合）
-- `z-boot-starter`（基础 starter 聚合）
-- `z-boot-integration-starters`（集成 + L3 聚合 starter 聚合）
+### 聚合 POM (3 个 + 1 个 parent)
+
+- `z-boot`（**根 = 发布用 parent，1.0.19 起没有 `<modules>`**，只带 plugin 版本、`central` profile、flatten 配置）
+- `z-boot-starter`（基础 starter 聚合：base / web / datasource）
+- `z-boot-integration-starters`（集成 + L3 聚合 starter 聚合，20 个 active `<module>`）
+- `z-boot-dependencies` / `z-boot-fleet` 两个 BOM 文件夹各是独立工程，不聚合任何人
+
+四个文件夹（+ 根）都是**独立可发**的 Maven 工程：`<parent>` 和自己的 `<version>` 都写字面量（不再有
+`${revision}`），所以 `mvn deploy -f <文件夹>/pom.xml` 只发那一个文件夹。
 
 ---
 
@@ -290,8 +321,9 @@ public class App { public static void main(String[] args) { SpringApplication.ru
     28 行、`public final class` + 私有构造、0 注解、`src/main/resources` 整个目录都没有 ⇒ 不注册任何 bean），
     `z-boot-msg-starter` / `z-boot-schedule-starter` 只有 `package-info.java`，
     `z-boot-llm/mcp/skill/agent/bot/agent-proxy-starter` **6 个零源文件**——它们的 jar 实测 ~1.9 KB，只有一个 MANIFEST
-- ✅ **L3 版本统一由 `z-boot/pom.xml` 的 `<z-*.version>` property 管理**——改版本只改 property 一处，
-  `z-boot-integration-starters/pom.xml` 的 `<dependencyManagement>` 全部写成 `${z-*.version}`
+- ✅ **L3 版本统一由 `z-boot-fleet` 的 `<z-*.version>` property 管理**（1.0.19 起；此前在根 pom），
+  改版本 = 改 `gen_fleet_bom.py` 的 `FAMILIES` 表后 `--write` 重算，**不手改 pom**。
+  1.0.18 及以前是"根 property + `z-boot-integration-starters` 的 36 行 dm 写 `${z-*.version}`"
   （2026-09-26 之前有两处漏网的字面量/错 property：`z-oss-common` 钉死 `1.0.1`、`z-ctc-web` 钉
   `${project.version}`（= z-boot 自己的 `<revision>`，跟 z-ctc 的发布节奏无关，repo1 上那个号根本不存在），
   两处都已接回 `${z-oss.version}` / `${z-ctc.version}`）
@@ -302,8 +334,15 @@ public class App { public static void main(String[] args) { SpringApplication.ru
     两份副本已在 `a6035e4` 删掉。判据：改完 property 必须跑 `dependency:tree` 从 **stdout** 读实际落点，
     "flatten 之后子 pom 要自包含"不是留副本的理由——flatten 折的本就是**生效值**。
     （`z-boot-dependencies/pom.xml:136-142` 里还有 7 处这种 property 副本，动它会改到发布件字节，尚未处理）
+    1.0.19 里 msg/schedule 那两条**依赖级**的 `${z-msg.version}` / `${z-schedule.version}` 也删了（版本改由
+    fleet 的 dm 供给），因为 property 已经不在父链上，留着 Maven 当场报 "must be a valid version"
+    —— 第二遍构建失败就是这么炸出来的。
 
 ### 第三方版本权威（BOM）
+- ✅ **1.0.19 的分工已经量过**：`z-boot-dependencies` dm **156 条**（字面 109 / property 42 / import 5），
+  其中 `io.github.yuku123` 坐标 **0 条**；`z-boot-fleet` dm **164 条**，其中 `io.github.yuku123` **164 条**
+  （全部 `${z-*.version}`，字面 0）。两边坐标空间不相交 ⇒ 并列 import 不打架。
+  下面那批 132/133 的读数是 **1.0.16 发布件**的历史账，别拿来当现值。
 - ✅ **z-boot-dependencies** 锁的是**第三方**版本，不是 z-* 的版本锁入口
   （实测：BOM 的 `<dependencyManagement>` 里 `z-boot-*` 坐标 **0 条**，见上面「5 分钟接入」的 ⚠）
 - ✅ **132 条受管依赖**（2026-09-26 在 **repo1 的 1.0.16 发布件**上逐条解析 `<dependencyManagement>`
@@ -463,8 +502,9 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 ```
 z-boot/
-├── pom.xml                          # 自给自足 parent (Central namespace)
-├── z-boot-dependencies/             # 第三方版本 BOM (仓内 1005 行 / 132 条受管依赖；发布件 889 行，见下面 flatten 那节)
+├── pom.xml                          # 发布用 parent (Central namespace) — 1.0.19 起无 <modules>，只管 plugin 版本 / central profile / flatten
+├── z-boot-dependencies/             # 第三方版本 BOM（仓内 1117 行 / 156 条受管项；发布件行数以 flatten 后为准，见下面 flatten 那节）
+├── z-boot-fleet/                    # 兄弟仓 z-* 版本 BOM（912 行 / 164 条受管项 / 21 个版本格，由 gen_fleet_bom.py 生成，不手写）
 ├── z-boot-starter/                  # 基础 starter 聚合
 │   ├── z-boot-base                  # Log4j2 门面
 │   ├── z-boot-web-starter           # Web + Log4j2 + Knife4j
@@ -492,12 +532,18 @@ z-boot/
     └── z-boot-agent-proxy-starter
 ```
 
-> 上面这棵树与三个 pom 的 active `<module>` 是**逐名对过账的**：`~/.cache/zboot-1016/tree-vs-modules.py`
-> 剥掉 XML 注释后取根 3 + `z-boot-starter` 3 + `z-boot-integration-starters` 20 条，与树里的名字求双向差集
-> ⇒ 26 条模块名 + 顶层 `z-boot` 自身，**双向 0 差**；同一条尺报出"磁盘上有 pom 但未进 `<module>`"= 1 个。
+> **1.0.19 是拓扑改动**，不是又一个版本号：以前根 pom 是"顶层聚合"（`<modules>` 挂 3 个文件夹 + 兄弟仓版本
+> property 全住在这里），现在根只是 parent，四个文件夹各自独立成工程、各带字面版本。发版按文件夹发
+> （`_doc/003_script/deploy_maven_center.sh publish <folder>`），兄弟仓抬一格只重发 `z-boot-fleet`，
+> 不再牵动 floor BOM 和 23 个 starter。
+
+> 上面这棵树与各 pom 的 active `<module>` 是**逐名对过账的**：`~/.cache/zboot-1016/tree-vs-modules.py`
+> 剥掉 XML 注释后取 `z-boot-starter` 3 + `z-boot-integration-starters` 20 条，与树里的名字求双向差集
+> ⇒ **双向 0 差**；同一条尺报出"磁盘上有 pom 但未进 `<module>`"= 1 个（就是下面那条 webide）。
 > 造这把尺时它先假红了两次：注释里也写着 `<module>`（不剥就把排除掉的模块算成在反应堆里），
 > 以及树的第一行 `z-boot/` 没有 `├──` 前缀（漏了它反报"树漏画"）。阳性对照：内存里抹掉
 > `z-boot-script-starter` 一个名字，尺当场报出它。对不上是迟早的事，所以判据留在仓外、不靠眼睛。
+> ⚠ 1.0.19 起这条尺**不再对根 pom 跑**（根没有 `<modules>` 了），"根 3 条"那个读数只属于 1.0.18 及之前。
 
 > ⚠ 唯一没有进 `<modules>` 的 starter：**`z-boot-integration-starters/z-tool-webide-spring-boot-starter`**
 > （注意它在 `z-boot-integration-starters/` 下面，不在仓根 ⇒ 只扫顶层目录的尺会报"零个未进反应堆"，
@@ -523,45 +569,62 @@ z-boot/
 
 ### 升级 z-boot / L3 中间件版本
 
-改 `z-boot/pom.xml` 的 `<z-*.version>` property 一处（`z-boot-integration-starters` 的
-`<dependencyManagement>` 全部写成 `${z-*.version}`，所以只有 property 是真源）：
+**1.0.19 起分两处**，按你要抬的是哪一类版本选：
+
+- 抬**第三方**（spring / jackson / druid / netty / log4j2 …）→ 改 `z-boot-dependencies/pom.xml`，发 `publish z-boot-dependencies`（+ 需要重发引它的 starter）。
+- 抬**兄弟仓 `z-*`**（z-cache / z-mq / z-llm / z-graph …）→ **不要手改 pom**，改 `_doc/003_script/gen_fleet_bom.py` 里的 `FAMILIES` 表然后重算，发 `publish z-boot-fleet` 一个文件夹就完事，floor BOM 和 23 个 starter 都不用动。
+
+```bash
+# 真源是脚本里的这张表：repo -> (property 名, 版本)
+FAMILIES = { "z-cache": ("z-cache.version", "1.3.5"), "z-llm": ("z-llm.version", "0.1.6"), ... }
+
+python3 _doc/003_script/gen_fleet_bom.py          # 只算不发：逐 family 打印"收几件 / repo1 是 OK 还是 MISSING"
+python3 _doc/003_script/gen_fleet_bom.py --write  # 落成 z-boot-fleet/pom.xml
+```
+
+脚本的判据不是"我以为这个版本存在"：每个候选坐标都用 `curl -r 0-0` 打 repo1 的 `.jar`/`.pom`
+（⚠ **HEAD 不行**，repo1/Fastly 对 HEAD 不给 200，只有 200/206 算活着），200 才写进 pom；
+拉不到就报 `MISSING`，本机有 `~/.m2` 副本报 `PENDING`（已 deploy 未索引）。
+**所以 fleet 里不存在"凭记忆钉一个还没发出去的版本"这条路**——1.0.18 之前那 36 行 `${z-*.version}`
+是手抄的，抄错没人拦得住。
 
 ```xml
-<!-- z-boot/pom.xml -->
+<!-- z-boot-fleet/pom.xml（脚本产物，勿手改） -->
 <properties>
-    <z-cache.version>1.3.1</z-cache.version>   <!-- ← 改这一行 = 只换 z-boot-cache-starter 一个 starter 的 L3 版本 -->
-    <z-graph.version>1.0.5</z-graph.version>   <!--    graph 特殊：BOM 里那 3 个引擎坐标也吃这个 property
-                                                    （1.0.15 及之前它**只对仓内生效**——发布件里它是
-                                                     `${...}` 占位符；1.0.16 起父 pom 带着 property 发布，
-                                                     对外也生效了，见上面「第三方版本权威（BOM）」一节） -->
-    ...
+    <z-cache.version>1.3.5</z-cache.version>
+    <z-llm.version>0.1.6</z-llm.version>
+    <z-graph.version>1.0.5</z-graph.version>   <!-- 1.0.6 作废（api/protocol 是 52=Java 8、core/bolt/starter 是 61=Java 17，
+                                                    class major 实测混装）、1.0.7 未发 ⇒ 钉 repo1 上内部一致的 1.0.5 -->
+    ...                                        <!-- 共 21 格 -->
 </properties>
 ```
 
 > 别指望"改 property 一处"就对外生效：property 只影响**下一次构建**，业务方拿到的是
-> `z-boot-*-starter` 发布件 pom 里**已经展开成字面量**的版本号。抬完 property 必须发一版
-> z-boot（`<revision>` +1），否则 repo1 上的旧 starter 依旧引旧 L3。
+> `z-boot-*-starter` 发布件 pom 里**已经展开成字面量**的版本号。抬完必须发版才对外可见。
+> 1.0.19 起"发版"的粒度变小了：兄弟版只需 `publish z-boot-fleet`，starter 侧因为把版本格写死成
+> `import z-boot-fleet:1.0.0`，所以 fleet 重发一版时要连 starter 一起重发（见下面那条）。
 > 2026-09-26 这条正反两面都量过：`${z-msg.version}` 抬到 1.1.0 之后、1.0.15 发布**之前**，
 > repo1 上 1.0.14 的 `z-boot-msg-starter.pom` 里读到的还是 `z-msg-web:1.0.0`；
 > 1.0.15 上线后同一处 curl 回读 = **1.1.0**；1.0.16 上线后（21:58 那次 curl）再回读 = **1.2.0**。
 > 19/19 个 starter 的发布件都按这条对过账，且那 19 个期望值是**从下面那张表机械解析**的
 > （21:5x 对 1.0.16 重跑：19/19 一致、0 不一致，见表格下面那段）。
 
-> **当前欠着的一格（2026-09-27 登记，未修）**：repo1 已有 z-llm **0.1.6**（#40① 的
+> **曾经欠着的一格（2026-09-27 登记 → 1.0.19 兑现）**：repo1 已有 z-llm **0.1.6**（#40① 的
 > "body 读坏回 400 且不再把 controller 方法签名吐给调用方"），而本仓 `<z-llm.version>` 仍是
 > **0.1.5** —— 尺是现成的：`python3 ~/.cache/zboot-1016/latest-census.py` 读
 > 「分母 19 个坐标 / **LAG 1**：`z-llm-starter` 仓内 0.1.5，repo1 最新 0.1.6」（同一次运行内的
 > 阳性对照：把 z-cache 强行退回 1.3.1 后 LAG=2 ⇒ 这一格不是尺瞎）。
-> 这里**故意只登记不抬**：property 抬到 0.1.6 而不发版，就是把"对外可见性"从 19 格 MATCH
-> 换成 1 格未声明的分叉（`pin-fork-check.py` 的 F 判据正是为此而设），而发一版 z-boot（1.0.18）
-> 需要点头。**在 z-boot 重发之前**，经 `z-boot-llm-starter` 传递拿 z-llm 的消费者看不见 0.1.6：
-> 实测 `z-middleware-integration-test` 走 `${z-boot.version}`=1.0.17 → `z-llm-starter:0.1.5`；
-> 该模块原本还自己抄了一份 `<z-llm.version>` **死副本**（本文件内引用次数 0），2026-09-27 已删，
+> ✅ **这一格 1.0.19 已兑现**：`z-boot-fleet` 的 `<z-llm.version>` = **0.1.6**（脚本对 repo1 实测过才写进去的）。
+> 上面那段登记原文保留，因为它记的是"仓内改了、对外没兑现"这件事**只在尺的 F 判红里现形**——
+> 1.0.19 的重构就是把这条教训固化成了流程：版本格由脚本从 repo1 回读生成，不再靠人回读声明行。
+> `z-opc/z-middleware-integration-test` 原本还自己抄了一份 `<z-llm.version>` **死副本**（本文件内引用次数 0），2026-09-27 已删，
 > 删前删后 `dependency:tree` 逐行 diff = 0 行 ⇒ 它从来就没决定过任何读数。
-> 只有像 z-opc 那样**直接**声明 `z-llm-*` 的消费者能吃到 0.1.6。
+> 在 1.0.19 之前，只有像 z-opc 那样**直接**声明 `z-llm-*` 的消费者能吃到 0.1.6。
 
-发一版 z-boot 之后，业务方只改 `<z-boot.version>` 一处就能整批换 L3 版本；
-L1 业务模块的第三方版本锁则来自 import `z-boot-dependencies`（同 `<revision>`）。
+消费者的口径没变：`<z-boot.version>` 一处决定所有 z-boot 坐标；第三方锁来自 import
+`z-boot-dependencies`，兄弟仓 `z-*` 锁来自 import `z-boot-fleet`（1.0.19 起两者成对，starter 的 pom 里
+就把这两条并列 import 写死）。发布件的 pom 里版本全是字面量，`<revision>` 那个占位符从此不出现在
+z-boot 自己的 pom 里。
 
 ### 自定义 z-boot 内部 starter（私有）
 
@@ -700,18 +763,21 @@ mvn clean verify -Pcentral   # 编译 + 测试 + 准备发布
 bash deploy_maven_center.sh publish   # 发到 Maven Central
 ```
 
-新加 starter 时：
+新加 starter 时（1.0.19 起的拓扑）：
 1. 在 `z-boot-integration-starters/` 下建目录
-2. 写 `pom.xml`（`<parent>` 指 `z-boot-integration-starters`，依赖 L3 坐标**不写 version**，
-   由父 pom 的 `<dependencyManagement>` 从 `${z-*.version}` 下发）
-3. 根 pom 加 `<z-xxx.version>` property + 在 `z-boot-integration-starters/pom.xml` 的
-   `<dependencyManagement>` 加一条 `${z-xxx.version}` + 加 `<module>`
+2. 写 `pom.xml`：`<parent>` 指 `z-boot-integration-starters` 且**版本写字面量**（不再有 `${revision}`），
+   自己那份 `<version>` 同样写字面量；`<dependencyManagement>` 里并列 import
+   `z-boot-dependencies` + `z-boot-fleet`（都写字面版本），依赖 L3 坐标**不写 version**，由 fleet 下发
+3. 新 L3 仓的版本格加进 `_doc/003_script/gen_fleet_bom.py` 的 `FAMILIES` 表，`--write` 重算 fleet
+   （脚本会先打 repo1 确认那个版本真的活着）+ 在 `z-boot-integration-starters/pom.xml` 加 `<module>`
 4. `mvn -o -B package` 验反应堆，再用 `dependency:tree` 从 **stdout** 读实际落到的 L3 版本
    （**不要** `mvn install`：那会把本机 m2 里的 z-boot 覆盖成未发布版本，
-   下游/本机后续构建就分叉于已发布构件——这条踩过）
-5. 升 `<revision>` + `bash deploy_maven_center.sh publish`
+   下游/本机后续构建就分叉于已发布构件——这条踩过。⚠ fleet 例外：它必须 `install` 过一次，
+   反应堆外的解析才认它，所以本机那份 `~/.m2` 副本发版后要拿 `.sha1` 跟 repo1 对一遍）
+5. `bash _doc/003_script/deploy_maven_center.sh publish integration`（parent 未发时脚本自动前置）
 6. 发完逐个 curl repo1 回读：`.pom` 200 **且**正文里那条 L3 坐标的版本号是新的
-   （starter 的 pom 是 flatten 过的，property 已展开成字面量，光看 200 验不出版本）
+   （starter 的 pom 是 flatten 过的，property 已展开成字面量，光看 200 验不出版本。
+   ⚠ repo1 对 HEAD 不给 200，探活要用 `curl -r 0-0`）
 
 > `.scripts/gen_z_boot_starters.py`（工作区脚本，不在本仓 git 里）**已退役**：模板把 parent/自身版本写死成
 > `1.0.1`、缺 licenses/developers/scm、还把 L3 版本内联成字面量，且只覆盖 8 个 starter
@@ -851,9 +917,25 @@ z-opc (主后端)              ← 消费者
 
 ## 发布
 
-通过 `lead/003_辅助能力/maven-central-publish` skill 一键发布到 Maven Central。
-（以前这里写的 `z-util/发布指引.md` 是个死路径：`find z-util -name '*发布*'` 零命中，
-`z-util/README.md` 是那个库自己的说明，不是发布手册。）
+一键脚本在仓内：`_doc/003_script/deploy_maven_center.sh`（凭证读 `.env`，密钥环 `./.gnupg`，两者都被 `.gitignore` 排除）。
+
+```bash
+./_doc/003_script/deploy_maven_center.sh readme            # 摘要：前置 + 文件夹语义 + 判据
+./_doc/003_script/deploy_maven_center.sh publish --dry fleet   # 只 mvn verify，不签名不上传
+./_doc/003_script/deploy_maven_center.sh publish fleet         # 只发一个文件夹
+./_doc/003_script/deploy_maven_center.sh publish               # 按序全发 parent→deps→fleet→starter→integration
+```
+
+1.0.19 起**发布粒度 = 文件夹**：脚本按 `FLEET_ORDER` 逐文件夹 `mvn -f <folder>/pom.xml deploy -Pcentral`，
+每个文件夹先回读 repo1，**同版本已上线就跳过**（Central 不允许覆盖，硬重发只会 400）；如果你只发子文件夹
+而当版 parent 还没上线，脚本自动把 parent 前置。日志 `/tmp/z-boot-deploy-<folder>.log`。
+
+抬一格兄弟仓 L3 版本的完整动作只有三条命令：`gen_fleet_bom.py --write` → `publish --dry fleet` → `publish fleet`。
+以前这件事要重发整个 z-boot（27 个坐标），因为版本格住在根 pom 的 `<properties>`、经
+`z-boot-integration-starters` 的 36 行 `<dependencyManagement>` 下发。
+
+（以前这里写的 `lead/003_辅助能力/maven-central-publish` skill 和 `z-util/发布指引.md` 都不是仓内可依赖的入口：
+后者 `find` 零命中，前者是另一台机器的文档。发布手册从此以本脚本 + 本节为准。）
 
 
 ## 文档目录
@@ -865,7 +947,8 @@ z-opc (主后端)              ← 消费者
 
 - [`_doc/003_script/`](_doc/003_script/) — 运维脚本:
   - [`batch_fix_zboot_meta.py`](_doc/003_script/batch_fix_zboot_meta.py)
-  - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh)
+  - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 按文件夹发布（`publish fleet` 等）
+  - [`gen_fleet_bom.py`](_doc/003_script/gen_fleet_bom.py) — `z-boot-fleet` 的生成器 + 对账尺（兄弟仓 pom × repo1 实测 → 164 条受管项）
   - [`install-settings.sh`](_doc/003_script/install-settings.sh)
 
 各文档详细说明见各子目录。

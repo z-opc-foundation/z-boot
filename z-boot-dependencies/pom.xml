@@ -6,12 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot</artifactId>
-        <version>${revision}</version>
+        <version>1.0.19</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-dependencies</artifactId>
+    <version>1.0.19</version>
     <packaging>pom</packaging>
     <name>z-boot-dependencies (BOM)</name>
     <description>
@@ -1148,28 +1149,11 @@
                 <version>1.5.2-5</version>
             </dependency>
 
-            <!-- 自研 z-graph 三个引擎侧坐标。此前本 BOM 一条 io.github.yuku123 都不管，
-                 结果 import 它的消费者拿不到任何 z-graph 约束：z-boot-kb-starter 经已发布的
-                 z-kb-spring-boot-starter:1.0.2 -> z-kb-graph:1.0.2 传递带进 z-graph-{api,core,protocol}
-                 **1.0.1**，而 z-boot 根 pom 的 ${z-graph.version} 只管得到
-                 z-graph-spring-boot-starter 一个坐标（那条在 z-boot-integration-starters 里）。
-                 钉这三行就是让"抬 z-graph 版本"在整棵树上真的成立，而不是只抬直依赖。
-                 版本号取自根 pom 的 z-graph.version，别在这里另起一份 property。 -->
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-graph-api</artifactId>
-                <version>${z-graph.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-graph-core</artifactId>
-                <version>${z-graph.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-graph-protocol</artifactId>
-                <version>${z-graph.version}</version>
-            </dependency>
+            <!-- 本 BOM 只管第三方。兄弟仓(z-* L3)坐标一律由 z-boot-fleet 权威 ——
+                 1.0.18 之前这里钉过 z-graph-{api,core,protocol} 三条(为的是 z-boot-kb-starter 经
+                 已发布 z-kb-spring-boot-starter:1.0.2 -> z-kb-graph:1.0.2 传递带进 z-graph 1.0.1
+                 那个洞),1.0.19 起那三条搬进 fleet;叶子 starter 与消费者都同时 import 地板+fleet,
+                 覆盖范围不变,但抬 z-graph 只重发 fleet 一份 pom,不再重发地板。 -->
 
         </dependencies>
     </dependencyManagement>

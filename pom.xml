@@ -6,12 +6,23 @@
 
     <!--
         z-boot 是 z-opc-foundation 的版本权威 (BOM) 自给自足, 不依赖任何 z-opc 业务模块。
-        发版模式：reversion (CI-friendly versions) + flatten-maven-plugin。
-        发版只需改顶层 <revision>X.Y.Z</revision> 一处。
+
+        2026-09-28 改造(照 ../idea_workplace/c2f-boot 的形状):本 pom 只做**已发布的 parent**,
+        不再有 <modules>。每个文件夹都是一个独立可发的 Maven 工程,发版只发需要发的那个文件夹:
+
+            z-boot-dependencies          第三方地板 BOM(spring-boot / netty / jackson / log4j2 ...)
+            z-boot-fleet                 兄弟仓(z-* L3)版本权威 —— 抬一格只重发这一份 pom
+            z-boot-starter               z-boot-base / -web-starter / -datasource-starter
+            z-boot-integration-starters  19 个 L3 聚合 starter,叶子各自 import 地板+fleet 两个字面版本
+
+        版本不再是全局一个 ${revision}:每个工程自带字面 <version>,parent 版本只在 parent 内容
+        真的变了才抬。于是「z-ctc 发了 1.0.2」不再牵动地板 BOM、不再牵动其余 18 个 starter。
+
+        发版尺 = mvn/deploy.sh <folder...>(见 README「发布」),凭证走仓根 .env + ./.gnupg。
     -->
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot</artifactId>
-    <version>${revision}</version>
+    <version>1.0.19</version>
     <packaging>pom</packaging>
 
     <name>z-boot (Starter Parent + BOM Authority)</name>
@@ -45,77 +56,21 @@
         <tag>HEAD</tag>
     </scm>
 
-    <modules>
-        <module>z-boot-starter</module>
-        <module>z-boot-dependencies</module>
-        <module>z-boot-integration-starters</module>
-    </modules>
-
     <!--
-      z-boot 子模块的 dependencyManagement 在各子 pom 自己声明 (import z-boot-dependencies BOM).
-      z-opc 等消费者通过 import z-boot-dependencies BOM 也能拿到版本约束.
-      这里不放 import 是为了避免与子模块自身继承形成 cycle.
+      这里不放 <modules>:发版按文件夹为单位(mvn/deploy.sh),整仓构建也走 mvn/install.sh。
+      z-boot 子模块的 dependencyManagement 在各叶子 pom 自己声明 (import z-boot-dependencies
+      + z-boot-fleet 两个字面版本), 形成 self-contained 的发布件。
+      第三方受管项 → z-boot-dependencies;兄弟仓受管项 → z-boot-fleet。两者坐标空间不相交。
     -->
 
     <properties>
-        <!-- 项目自身版本（CI-friendly versions 根，发版改这一处即可）
-             1.0.18: 本 BOM 成为「同坐标单版本」的唯一权威 —— 新增 netty-bom / junit-bom import
-             与 12 条此前不受管的重复坐标 pin；各中间件仓不再自钉 netty 版本。 -->
-        <revision>1.0.18</revision>
-
         <!-- JDK / 编译 -->
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- z-opc-foundation 生态版本（消费者也通过 properties 引用）。
-             对账基准 = repo1 每个 L3 坐标的 maven-metadata（<latest> 与 <versions> 最大值都算，
-             因为 Central 的 <latest> 是"最后部署"不是"版本号最大"）。
-             2026-09-26 23:15:07–23:15:32 逐坐标实测 README 表里的全部 19 个坐标：5 格落后
-             （z-config 1.0.7→1.0.8 / z-cache 1.3.1→1.3.5 / z-mq 1.2.0→1.2.1 /
-               z-gw 1.0.1→1.0.3 / z-vector 1.0.1→1.0.3），已抬；抬后 LAG 0 / AHEAD 0。
-             尺 = ~/.cache/zboot-1016/latest-census.py（自带一支 CTRL：把 z-cache 退回 1.3.1 必须
-             重新进 LAG 名单，否则"落后 0 条"和"尺看不见落后"是同一个输出），
-             读数留档 = ~/.cache/zboot-1016/latest-census.receipt。
-             ⚠ 那把尺取 maven-metadata 是"缓存文件在就不重下"，2026-09-27 复跑时它把 09-26 23:15
-             的快照当"repo1 最新"用，把已经发布的 z-llm 0.1.5 / z-skill 0.2.0 误判成 AHEAD。
-             已改成每次真拉 + 读数里带 metadata 的 <lastUpdated> 归因；改后 LAG 0 / AHEAD 0。
-             ✅ 下面这段"仓内 vs 发布件"的分叉不许靠眼睛记，尺 = ~/.cache/zboot-1016/pin-fork-check.py。
-             1.0.17 发布后复跑：对 repo1 的 1.0.17 发布件 **F 分叉 0 / T 文档漂 0 / 取不到 0**，
-             同一套分类器对 1.0.16 量出 **7 格**、对 1.0.15 量出 **8 格**
-             （读数 ~/.cache/zboot-1017/fork-by-version.receipt）⇒ 上面那五格连同后来的
-             z-llm 0.1.4→0.1.5、z-skill 0.1.2→0.2.0 全部在 1.0.17 对外兑现。
-             ⚠ 而 1.0.16 那阵子 README 的声明行只写了 5 格：少记的两格正是发布之后才抬的
-             llm/skill——抬 property 的人没回读声明行。⇒ 抬任何一格都跑一次那支尺，
-             别用手抄的清单当分叉账。 -->
-        <z-config.version>1.0.8</z-config.version>
-        <z-ctc.version>1.0.1</z-ctc.version>
-        <z-cache.version>1.3.5</z-cache.version>
-        <z-mq.version>1.2.1</z-mq.version>
-        <z-gw.version>1.0.3</z-gw.version>
-        <z-kb.version>1.0.2</z-kb.version>
-        <z-vector.version>1.0.3</z-vector.version>
-        <z-graph.version>1.0.5</z-graph.version>
-        <z-rpc.version>1.0.2</z-rpc.version>
-        <z-oss.version>1.0.2</z-oss.version>
-        <z-schedule.version>1.0.4</z-schedule.version>
-        <z-msg.version>1.2.0</z-msg.version>
-        <!-- z-msg 1.2.0 已发 Central（2026-09-26 20:09 repo1 实测 api/core/web/channels/ws/im 六件 jar+pom 全 200）。
-             相比 1.1.0 的两处行为变更都在这条 pin 可达的范围内或紧邻：core 的 RealtimeTicketService 票一次性消费
-             （web 侧只有 javadoc 变更），im 的 /history 改成带 nextSinceSeq/hasMore/headSeq/minVisibleSeq 的对象。 -->
-        <!-- z-script 1.0.0 实测已在 Central：repo1 的 z-script/{z-script-web,z-script-core,z-script-engine}
-             pom+jar 均 200，且空仓 `dependency:resolve io.github.yuku123:z-script-web:1.0.0` BUILD SUCCESS
-             （落地 16 个 io.github.yuku123 jar）。此前这里写的"从未发布 (repo1 404)"是 2026-09-23 的旧口径。 -->
-        <z-script.version>1.0.0</z-script.version>
-
-        <!-- L3 Agent/AI 生态版本 (FEATURE066 7 仓矩阵) -->
-        <z-agent-kernel.version>0.1.1</z-agent-kernel.version>
-        <z-llm.version>0.1.5</z-llm.version>
-        <z-mcp.version>0.1.2</z-mcp.version>
-        <z-skill.version>0.2.0</z-skill.version>
-        <z-agent.version>0.1.2</z-agent.version>
-        <z-bot.version>0.1.0</z-bot.version>
-        <z-agent-proxy.version>0.1.0</z-agent-proxy.version>
+        <!-- 兄弟仓 (z-* L3) 的版本格不在这里 —— 见 z-boot-fleet/pom.xml(由
+             _doc/003_script/gen_fleet_bom.py 生成并逐件对 repo1 复核)。 -->
 
         <!-- Maven 插件版本 -->
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
@@ -125,6 +80,7 @@
         <central-publishing-plugin.version>0.8.0</central-publishing-plugin.version>
         <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
     </properties>
+
 
     <profiles>
         <profile>
@@ -222,15 +178,15 @@
     <build>
         <plugins>
             <!--
-                flatten-maven-plugin: ${revision} 在 deploy 前替换为字面版本号
-                - updatePomFile=true 写入原 pom（子模块继承 ${revision} 才能 compile）
-                - flattenMode=oss 子 POM 完全 self-contained + 自定义 ${xxx} 解析 + 元数据保留
-                  (详见 lead/005_技术架构/004_flatten_maven_plugin_模式选择.md)
-                - <properties>keep 不是可选项：oss 默认把 <properties> 整个剥掉，于是外部 import
-                  z-boot-dependencies 的工程在解析 BOM 时读不到父 pom 的 property，那几条
-                  ${z-*.version} 受管项当场是 Maven 模型错误而不是"没管"。reactor 内解析得到，
-                  所以本机永远看不出来——只有从 repo1 拉发布件才暴露（1.0.15 实测：
-                  z-graph-api/core/protocol 三条，报错定位到 BOM pom line 977）。
+                flatten-maven-plugin: 把发布件 pom 收成 self-contained 的 oss 形状
+                - flattenMode=oss 剥掉 <build>/<profiles>/<pluginManagement>,保留依赖/受管项与
+                  licenses/scm/developers 元数据(详见 lead/005_技术架构/004_flatten_maven_plugin_模式选择.md)
+                - updatePomFile=true 让 install/deploy 用扁平 pom(.flattened-pom.xml)
+                - <properties>keep 不是可选项：oss 默认把 <properties> 整个剥掉,于是外部 import
+                  本 BOM 的工程在解析受管项时读不到 property,那几条 ${z-*.version} 当场是 Maven
+                  模型错误而不是"没管"。reactor 内解析得到,所以本机永远看不出来——只有从 repo1 拉
+                  发布件才暴露（1.0.15 实测:z-graph-api/core/protocol 三条,报错定位到 BOM pom line 977）。
+                  1.0.19 起这些 property 就在 z-boot-fleet 自己身上,不再靠父 pom 兜。
             -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
