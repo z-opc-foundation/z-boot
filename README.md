@@ -406,6 +406,43 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
    只有它没定义、父链里也没有 ⇒ 传进插件的是字面量 `"${compile.version}"`，而 `failOnError=false`
    把它吞了，所以这处点伤一直没现形。迁移会换掉父链，**这类借自旧 parent 的属性一定当场炸**，
    正好是一次清账：`grep -oE '\$\{[a-zA-Z0-9_.-]+\}'` 逐仓对一遍定义。
+7. ⚠ **发布形状：换了 `<parent>` 就必须自己把 pom flatten 掉**，否则发出去的是"带着 org parent 的 raw pom"。
+   `z-boot-parent` 那条 flatten 声明是 `<inherited>false</inherited>`（`z-boot-parent/pom.xml:257-264`，
+   它自己用 `resolveCiFriendliesOnly`），**不会**把 flatten 下发给消费仓——它当初的理由是"这 30 个仓发的
+   是非扁平 pom，凭空继承一条插件声明只有惊讶"，而迁移恰恰把它证伪了：加了 `<parent>` 之后
+   "非扁平"就等于把发布件的依赖含义挂在那条 parent 链上。判据按**本仓现在中央上是什么形状**来定：
+   - 本来发的是自包含 raw pom（`z-graph:1.0.7`、`z-rpc:1.0.3` 这种，`<parent>` 计数 0）⇒ 本仓
+     `<build><plugins>` 里**常开**补 flatten `oss` + `updatePomFile`（形状照 `z-cache/pom.xml:160-193`，
+     版本钉 1.5.0：门禁机 Maven 3.6.0 实测只有 1.5.0 rc=0）。**别挂 `central` profile**——不带
+     `-P central` 的 `mvn install` 会把带 parent 的废 pom 装进仓里。
+   - 本来就发带 `<parent>` 的扁平 pom（`z-skill` 的叶子模块 0.2.0 就带 `<parent>z-skill:0.2.0</parent>`）
+     ⇒ **保持它自己的 flattenMode 不动**，链子多一级是它既有的口径，不是这次迁移引入的。
+     但要清楚：`resolveCiFriendliesOnly` 只展开 `revision/sha1/changelist`，**不会**把
+     `${netty.version}` 这类解析成字面量，所以这些仓的发布含义确实随 parent 链走。
+   - 回读判据：每份 `.flattened-pom.xml` 的 `<parent>` 计数、`com.zifang` 计数、悬空 `${...}` 都要和
+     **本仓中央上那一版**逐字对得上，而不是全组织统一成 0。
+8. ⚠ **地板把 logback 从所有树里摘了**：`z-boot-dependencies/pom.xml:500-510` 对
+   `spring-boot-starter-logging` 写了 `*:*` 通配 exclusion（逐字抄自 c2f 的
+   `c2f-boot-third-dependencies/pom.xml:345-355`，它那一侧还配套把 log4j2 整族喂到 2.25.4）
+   ⇒ 继承 parent 之后 `logback-classic`/`logback-core`/`log4j-to-slf4j`/`jul-to-slf4j` 从每棵树里消失。
+   **这格按"作用域"判，不按"少了几个坐标"判**：
+   - 先看这个模块自己有没有 exclusion。`z-config-admin`/`z-rpc-admin`/`order-service`/`user-service`
+     从建仓那个提交就自己排掉了 starter-logging（`git log -S` 命中的是 init 提交）⇒ 它们本来就不吃
+     logback，通配 exclusion 对它们是惰性的，生产日志实现（log4j2）没动。
+   - 真正掉的是 **test 作用域**那一串（`z-graph` 87→83、`z-skill` 73→68 少的都是它）：后果只是测试台
+     多打两行 `SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder"`。这两仓现读
+     `find -name "logback*.xml"` = 0 个、代码里 0 处 logback/log4j 引用 ⇒ **不补**，
+     别看见树里少了 logback 就每仓加一条依赖。
+   - 确实要 binding 的仓按既有写法自己声明，别改地板：运行期用 slf4j-simple（`z-graph-bolt-server`、
+     `z-vector`），测试期用 test 作用域的 logback-classic（`z-rpc-spring-boot-starter/pom.xml:74-89`）；
+     版本都不用写——地板 import 的 `spring-boot-dependencies` 供着。
+9. ⚠ **"中央上有这件"不等于"这件读得动"**：ranged GET 拿 206 只证明文件在，不证明它的 pom 解析得了。
+   `io.github.yuku123:z-vector:1.0.1` 那个根 pom 写着 `<parent>com.zifang:z-opc:1.0.0-SNAPSHOT</parent>`
+   （`relativePath ../pom.xml`），而这件只在作者机器的 `~/.m2` 里存在、repo1 永远没有 ⇒ 任何干净机器
+   解析 `z-vector-api:1.0.1` 必挂。Central 不可覆盖 ⇒ **这种发布号是永久残次品，只能换号**
+   （z-vector 第一个自包含的是 1.0.3/1.0.4，根 pom `<parent>` 计数 0）。这条只有 repo1-only 那遍
+   复跑能抓到，本机 `~/.m2` 里恰好有那件快照就一路绿。所以每仓还有一遍必查：
+   把自己依赖的每个内部件 `curl` 回来读 pom，`<parent>` 指向 `com.zifang` 的一律抬号。
 
 **判据（两遍都要跑）**：
 - 复跑步骤 1 那条命令，与基线 diff ⇒ 允许出现的差异**只有你明确决定要改的那几行**
@@ -424,8 +461,10 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
   `BindException: Address already in use` 先 `lsof -nP -iTCP:<port> -sTCP:LISTEN` 认人，
   **别去 kill 在跑的服务**；要判"迁移有没有伤到测"，就在**两边同一条命令里排掉同一个测类**
   （`-Dtest='!XxxTest' -Dsurefire.failIfNoSpecifiedTests=false`），再把这个测类单独串行跑一遍对比。
-- 顺手回读 6 份 `.flattened-pom.xml`：`<parent>` 应当是 0（对外仍是自包含 pom，发布形状没变），
-  且不含 `com.zifang`、不含悬空 `${...}`。
+- 顺手回读每份 `.flattened-pom.xml`：判据是**和本仓中央上那一版对得上**（见步骤 7 的三种形状），
+  自包含形状的仓要求 `<parent>` 计数 0、不含 `com.zifang`、不含悬空 `${...}`；
+  本来就发带 `<parent>` 的仓（`z-skill` 那一类）叶子件带 `<parent>z-skill:x.y.z</parent>` 是对的，
+  但**根 pom 的新 parent 必须落在 repo1 上读得动**，这条由下一遍复跑覆盖，不靠肉眼。
 
 ### 聚合 POM (3 个) + 两个独立 pom
 
