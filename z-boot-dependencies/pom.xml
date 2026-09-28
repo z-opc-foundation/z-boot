@@ -33,10 +33,30 @@
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
         <lombok.version>1.18.20</lombok.version>
-        <spring-boot.version>2.7.12</spring-boot.version>
+        <!-- 2026-09-28「同坐标单版本」：2.7.12 → 2.7.18（2.7 线最后一版，Java 8 可用）。
+             原因不是尝鲜：reactor 里 8 个模块自己字面钉了 spring-boot / starter-actuator /
+             starter-websocket 2.7.18，其余跟着 BOM 的 2.7.12 ⇒ 同一个 Boot 家族两套 jar 混装
+             （spring-boot 2.7.12 + spring-boot-actuator 2.7.18 这类组合是 NoSuchMethodError 的
+             标准形状）。按「同坐标一种、取可用的最高版」把权威抬到 2.7.18，模块侧字面量删掉。 -->
+        <spring-boot.version>2.7.18</spring-boot.version>
+        <!-- spring-framework 同上一格：z-ext-core 字面钉过 spring-expression 5.3.39，其余跟
+             Boot 的 5.3.27/5.3.31。5.3.39 是 5.3 线最后一版，也是 CVE-2023-34055(SpEL) 修复版，
+             所以方向是抬高而不是把那个模块降回去。 -->
+        <spring-framework.version>5.3.39</spring-framework.version>
         <spring-cloud.version>2.2.6.RELEASE</spring-cloud.version>
+        <!-- netty 全舰队唯一真源（2026-09-28 收敛）。此前 z-rpc 4.1.66 / z-gw 4.1.100 /
+             z-mq+z-mist 4.1.108 / z-graph+z-vector 4.1.115 / z-util 4.1.137 / z-cache 4.1.138
+             各钉一份，z-opc 一个 reactor 里解析出 3 个 netty-all。netty-bom 一次覆盖
+             netty-all + 30 个子模块 + 4 个 native classifier，所以只钉这一条。
+             取 4.1.138.Final = 舰队当前在用的最高版；4.1.x 线内 API 向后兼容。 -->
+        <netty.version>4.1.138.Final</netty.version>
+        <!-- junit-jupiter 由 spring-boot 2.7.12 的 junit-bom 5.8.2 供给，但 reactor 里
+             13 个模块已按 5.9.3 编译。抬到 5.9.3 与在用面一致（Java 8 可用）。 -->
+        <junit-jupiter.version>5.9.3</junit-jupiter.version>
+        <jgit.version>5.13.4.202507202350-r</jgit.version>
         <groovy.version>3.0.9</groovy.version>
         <knife4j.version>3.0.3</knife4j.version>
+        <knife4j-openapi3.version>4.1.0</knife4j-openapi3.version>
         <swagger.v3.version>2.1.2</swagger.v3.version>
         <springfox-oas.version>3.0.0</springfox-oas.version>
         <springfox-swagger2.version>3.0.0</springfox-swagger2.version>
@@ -71,7 +91,7 @@
 
         <pagehelper.version>6.1.1</pagehelper.version>
         <sharding-jdbc.version>4.1.1</sharding-jdbc.version>
-        <mapstruct.version>1.4.2.Final</mapstruct.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
 
         <guava.version>32.0.0-jre</guava.version>
         <spring-cloud-starter-alibaba-nacos-config.version>2.2.6.RELEASE
@@ -98,7 +118,6 @@
         <javassist.version>3.24.1-GA</javassist.version>
         <jetcache.version>2.6.0</jetcache.version>
         <fastjson.version>1.2.83</fastjson.version>
-        <jackson-databind.version>2.18.6</jackson-databind.version>
         <jackson.version>2.18.6</jackson.version>
         <transmittable-thread-local.version>2.12.2</transmittable-thread-local.version>
         <objenesis.version>2.6</objenesis.version>
@@ -130,7 +149,6 @@
         <json-smart.version>2.4.9</json-smart.version>
         <zstd.version>1.5.2-5</zstd.version>
         <commons-compress.version>1.26.0</commons-compress.version>
-        <knife4j-openapi3-spring-boot-starter>4.1.0</knife4j-openapi3-spring-boot-starter>
 
         <!-- L3 Agent/AI 7 仓的 version property 只有根 pom 一处真源。这里曾复制过同名 7 条
              （z-agent-kernel/z-llm/z-mcp/z-skill/z-agent/z-bot/z-agent-proxy）：本 BOM 的
@@ -140,6 +158,52 @@
 
     <dependencyManagement>
         <dependencies>
+
+            <!-- ⚠ 这四条 import 必须排在 spring-boot-dependencies 之前。import 之间按「先声明者获胜」
+                 竞争：spring-boot 自己 import 了 netty-bom 4.1.92、junit-bom 5.8.2、
+                 jackson-bom 2.13.x、spring-framework 5.3.31，晚于它的 import 展不开就赢不了。
+                 （实测：放 spring-boot 之后 → dependency:list 仍是 4.1.92 / 5.8.2；
+                  移到之前 → 4.1.138.Final / 5.9.3，含 epoll/kqueue/macos 的 5 个 native classifier。）
+                 下面那批显式 <dependency> 条目不受这个位置约束 —— 本 POM 的直接受管项优先于
+                 任何 import 展开出来的项。 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit-jupiter.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- 2026-09-28：jackson-bom 从 spring-boot 之后搬到之前。它以前放在后面，按上面的规则
+                 等于没生效 —— 真正把 jackson-core/databind/annotations 钉在 2.18.6 的是本文件里那
+                 三条显式条目，而 jackson 家族的其余成员(datatype-jsr310 / datatype-jdk8 /
+                 dataformat-* / module-parameter-names …)没人显式钉，于是仍然跟着 spring-boot 的
+                 jackson-bom 解析成 2.13.5 ⇒ 同一个 Jackson 家族两套版本，正是 2026-09-04 那条
+                 NoSuchFieldError 事故的形状，只是换了构件。
+                 import 生效后那三条显式条目一并删除，整族只由 ${jackson.version} 说一次。 -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- spring 家族整族抬到 ${spring-framework.version}，同样必须排在 spring-boot-dependencies
+                 之前才赢得到它自带的 5.3.31。一次管住 spring-core/beans/context/expression/
+                 aop/tx/jdbc/web/webmvc/… 全部成员，模块侧不再需要单独钉 spring-expression。 -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>${spring-framework.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -158,7 +222,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.7.12</version>
+                <version>${spring-boot.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
                 <exclusions>
@@ -169,31 +233,170 @@
                 </exclusions>
             </dependency>
 
-            <!-- 2026-09-04 fix：在 spring-boot-dependencies 之后显式导入 jackson-bom 2.18.6，
-                 因为 Maven dependencyManagement 中「先声明者获胜」，
-                 Spring Boot 2.7.12 BOM 会把 jackson-annotations 拉成 2.13.x，
-                 与本地升级的 jackson-databind 2.18.6 不兼容，导致 Netty JSON 反序列化
-                 抛 NoSuchFieldError: JsonFormat$Feature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE。
-                 jackson-bom 必须出现在 spring-boot-dependencies 之后才能覆盖其中的 Jackson 版本。 -->
+            <!-- ===== 2026-09-28「同坐标单版本」补齐：以下 12 组此前不受任何 BOM 管，
+                 各自被不同上游构件拖出 2 个版本。目标版本 = 舰队当前实际在用的那个，
+                 所以补钉本身不改变任何模块的运行面，只是把剩下的离群值压平。 ===== -->
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>2.18.6</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-annotation</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>${jgit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.javaewah</groupId>
+                <artifactId>JavaEWAH</artifactId>
+                <version>1.1.13</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>1.78.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jacoco</groupId>
+                <artifactId>org.jacoco.agent</artifactId>
+                <version>0.8.5</version>
+                <!-- 2026-09-28：补 <classifier>runtime</classifier>。dm 的匹配键是
+                     groupId:artifactId:type:classifier，而 dingtalk / z-team-core 传进来的这一条
+                     实际写成 org.jacoco:org.jacoco.agent:jar:runtime:0.8.4 —— 带 classifier。
+                     原来这条无 classifier 的 pin 于是从未命中过任何节点（0.8.4 / 0.8.5 / 0.8.8
+                     三套照旧并存），加了它 dependency:tree 才收敛到 0.8.5。 -->
+                <classifier>runtime</classifier>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio-jvm</artifactId>
+                <version>${okio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>accessors-smart</artifactId>
+                <version>${json-smart.version}</version>
+            </dependency>
+            <!-- springfox 3.0.0 全家（z-team 的 @Api/@ApiOperation + DocumentationType.OAS_30
+                 只能跑在 springfox 3.x 上：knife4j 4.x 的 openapi2 starter 带的是 2.10.5，
+                 编译不过）。此前 8 个坐标不受管，z-kb-web 从上游带进 2.10.5。 -->
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>${springfox-swagger2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger-ui</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-core</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-spi</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-schema</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-spring-web</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-spring-webmvc</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-spring-webflux</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-bean-validators</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-oas</artifactId>
+                <version>${springfox-oas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>1.6.6</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-models</artifactId>
+                <version>1.6.6</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.classgraph</groupId>
+                <artifactId>classgraph</artifactId>
+                <version>4.8.149</version>
             </dependency>
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-configuration-processor</artifactId>
-                <version>2.7.12</version>
+                <version>${spring-boot.version}</version>
                 <optional>true</optional>
             </dependency>
 
             <dependency>
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
-                <version>4.1.0</version>
+                <version>${knife4j-openapi3.version}</version>
+            </dependency>
+            <!-- knife4j 的 swagger-2 / springfox 一支：z-team 的 @Api/@ApiOperation +
+                 DocumentationType.OAS_30 + springfox.documentation.oas.annotations.EnableOpenApi
+                 只能跑在 springfox 3.x 上（knife4j 4.x 的 openapi2 starter 带的是 springfox 2.10.5，
+                 没有 oas 包，编译和装配都不成立），所以这一支停在 3.0.3。
+                 knife4j-core 取 4.1.0 = 当前 fat jar 里实际生效的那一版。 -->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-boot-autoconfigure</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-ui</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-annotations</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-core</artifactId>
+                <version>${knife4j-openapi3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-ui</artifactId>
+                <version>${knife4j-openapi3.version}</version>
             </dependency>
 
             <dependency>
@@ -210,7 +413,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-test</artifactId>
-                <version>2.7.12</version>
+                <version>${spring-boot.version}</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>junit-vintage-engine</artifactId>
@@ -253,7 +456,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.7.12</version>
+                <version>${spring-boot.version}</version>
             </dependency>
 
             <dependency>
@@ -296,7 +499,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-logging</artifactId>
-                <version>2.7.12</version>
+                <version>${spring-boot.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>*</groupId>
@@ -510,17 +713,17 @@
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct-jdk8</artifactId>
-                <version>1.4.2.Final</version>
+                <version>${mapstruct.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct-processor</artifactId>
-                <version>1.4.2.Final</version>
+                <version>${mapstruct.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
-                <version>1.4.2.Final</version>
+                <version>${mapstruct.version}</version>
             </dependency>
 
             <dependency>
@@ -718,26 +921,13 @@
                 <artifactId>jetcache-starter-redis-lettuce</artifactId>
                 <version>2.6.0</version>
             </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <!-- 2026-09-04 fix：jackson-annotations 缺少显式版本会被 Spring Boot 2.7.12 BOM 拉成 2.13.x，
-                     而 jackson-databind 升级到 2.18.6 后调用 2.18 才加入的
-                     JsonFormat$Feature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE 导致
-                     NoSuchFieldError（z-mist Netty JSON 反序列化全员炸）。
-                     这里统一拉到与 databind/core 一致的 2.18.6。 -->
-                <version>2.18.6</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>2.18.6</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>2.18.6</version>
-            </dependency>
+            <!-- 2026-09-28：这里原有 jackson-annotations / jackson-databind / jackson-core 三条
+                 显式 2.18.6 条目(2026-09-04 为 z-mist 的 NoSuchFieldError 打的补丁)。补丁本身方向对，
+                 但只钉了家族 3 个构件 ⇒ 其余(datatype-jsr310 / datatype-jdk8 / module-parameter-names /
+                 dataformat-*)仍跟着 spring-boot 的 jackson-bom 走 2.13.5，同一个 Jackson 两套版本。
+                 现在 ${jackson.version} 的 jackson-bom import 已排在 spring-boot-dependencies 之前、
+                 整族一次到位(实测 probe3：core/databind/annotations/datatype-jsr310/datatype-jdk8/
+                 module-parameter-names/dataformat-yaml 全部 2.18.6)，三条字面量一并删。 -->
             <dependency>
                 <groupId>com.alibaba</groupId>
                 <artifactId>transmittable-thread-local</artifactId>
@@ -913,19 +1103,19 @@
             <dependency>
                 <groupId>com.squareup.okio</groupId>
                 <artifactId>okio</artifactId>
-                <version>3.9.0</version>
+                <version>${okio.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
-                <version>4.12.0</version>
+                <version>${okhttp.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp-sse</artifactId>
-                <version>4.12.0</version>
+                <version>${okhttp.version}</version>
             </dependency>
 
             <dependency>

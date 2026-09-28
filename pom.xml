@@ -58,8 +58,10 @@
     -->
 
     <properties>
-        <!-- 项目自身版本（CI-friendly versions 根，发版改这一处即可） -->
-        <revision>1.0.17</revision>
+        <!-- 项目自身版本（CI-friendly versions 根，发版改这一处即可）
+             1.0.18: 本 BOM 成为「同坐标单版本」的唯一权威 —— 新增 netty-bom / junit-bom import
+             与 12 条此前不受管的重复坐标 pin；各中间件仓不再自钉 netty 版本。 -->
+        <revision>1.0.18</revision>
 
         <!-- JDK / 编译 -->
         <maven.compiler.source>8</maven.compiler.source>

@@ -88,10 +88,12 @@
             <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
 
+        <!-- knife4j / springdoc 的版本由上面 import 的 z-boot-dependencies BOM 唯一供给
+             （${knife4j-openapi3.version}）。这里再写一份字面量，就会和 BOM 各说各话：
+             消费者按 BOM 编译、本 starter 按这一行装配。 -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
-            <version>4.1.0</version>
         </dependency>
 
     </dependencies>
