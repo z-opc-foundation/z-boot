@@ -215,6 +215,7 @@ def write_parent(report_only=True):
         return 2
     out = lines[:i + 1] + block + lines[j:]
     open(pp, "w", encoding="utf-8").write("\n".join(out))
+    validate_pom(pp)
     print("written: %s(%d 条)" % (pp, len(keep)))
     return 0
 
@@ -233,6 +234,22 @@ def live_on_central(aid, ver):
         if code in ("200", "206"):
             return True
     return False
+
+
+def validate_pom(path):
+    """落盘后立刻用 XML 解析器复量一遍。
+
+    为什么必须有:注释里出现两个连字符是**非法 XML**,而本脚本的注释爱写命令行开关
+    (`--write-parent` 这种)—— 2026-09-28 就这么把 z-boot-parent/pom.xml 写成了
+    "Non-parseable POM ... next character must be > not w",mvn 连模型都读不起来。
+    报告里写得再漂亮,文件解析不了就是零。
+    """
+    try:
+        ET.parse(path)
+    except ET.ParseError as ex:
+        sys.stderr.write("✗ %s 写完解析不了(%s)—— 十有八九是注释里出现了 --，XML 注释非法。"
+                         "把措辞改成'的 write-parent'这类写法再来。\n" % (path, ex))
+        sys.exit(4)
 
 
 def main():
@@ -353,6 +370,7 @@ def main():
             sys.exit(2)
         os.makedirs(os.path.dirname(target), exist_ok=True)
         open(target, "w", encoding="utf-8").write(text)
+        validate_pom(target)
         print(f"written: {target}")
     else:
         print(f"(dry-run;--write 才落盘,目标 {target})")

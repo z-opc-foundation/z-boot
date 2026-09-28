@@ -49,7 +49,7 @@
              存在的版本；fleet 内容变了就抬这一格并重发 fleet 文件夹。 -->
         <z-boot-fleet.version>1.0.0</z-boot-fleet.version>
         <!-- z-boot 自家 starter 的落点：与本 parent 自己的 <version> 同格（同一个仓、一起发版）。
-             由 gen_fleet_bom.py --write-parent 逐件对 repo1 复核后落笔，别手改。 -->
+             由 gen_fleet_bom.py 的 write-parent 逐件对 repo1 复核后落笔，别手改。 -->
         <z-boot.version>1.0.19</z-boot.version>
 
         <java.version>1.8</java.version>
@@ -80,7 +80,123 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- BEGIN z-boot-self (gen_fleet_bom.py --write-parent 维护，勿手改) -->
+            <!-- BEGIN z-boot-self (由 gen_fleet_bom.py 的 write-parent 维护，勿手改) -->
+            <!-- z-boot 1.0.19:清单取自 z-boot-starter + z-boot-integration-starters 的 <modules>,版本逐件核过 repo1 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-agent-proxy-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-agent-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-base</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-bot-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-cache-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-config-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-ctc-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-datasource-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-graph-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-gw-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-jackson-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-kb-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-llm-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-mcp-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-mq-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-msg-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-oss-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-rpc-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-schedule-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-script-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-skill-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-vector-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-boot-web-starter</artifactId>
+                <version>${z-boot.version}</version>
+            </dependency>
             <!-- END z-boot-self -->
         </dependencies>
     </dependencyManagement>
