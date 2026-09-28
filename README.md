@@ -372,21 +372,45 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 ### 消费模型：各仓统一继承 `z-boot-parent`（1.0.19 起）
 
-z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再自己维护版本属性表。迁移动作机械到
-可以照抄，四步：
+z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再自己维护版本属性表。
+**下面这套步骤是 2026-09-28 拿 z-cache 当试点量出来的**，四个坑全是当场踩到、当场改掉的，
+不是推演——所以照抄之前先把"尺"那两段跑起来。
 
-1. `<parent>` 换成 `io.github.yuku123:z-boot-parent:1.0.19`（原来是 `com.zifang:z-opc:1.0.0-SNAPSHOT`
-   这类**只在作者 `~/.m2` 里存在**的本地 parent 的仓，这一步顺带把"换台机器就构建不起来"修掉）。
-2. 删掉自家 `<properties>` 里的版本键：`z-util.version` / `util.version` / `zutil.version`
-   （三种命名并存是历史账）、`z-boot.version`、以及每个兄弟仓那一格 `<z-xxx.version>`。
-3. 删掉 `<dependencyManagement>` 里**已经由 fleet/floor 供给**的那些条目与两条 BOM import
-   —— parent 已经 import 过，重复 import 只会把 dm 优先级搅乱。**保留**仓内自家模块的相互依赖版本，
-   以及 fleet 面值确实还没覆盖到的坐标。
-4. `<build>` 里的 compiler/surefire 口径删掉，由 parent 的 `pluginManagement` 下发（Java 8 + `-parameters`）。
+1. **先留底**：`mvn -B -DskipTests clean package dependency:tree`，把 tree 里的
+   `groupId:artifactId:jar:version` 去重排序存成基线。这一步不能省：迁移的判据不是"能构建"，
+   而是"**除了我明确要改的，一件版本都没漂**"。
+2. `<parent>` 换成 `io.github.yuku123:z-boot-parent:1.0.19` + **`<relativePath/>` 留空**
+   （parent 不在磁盘上，在 repo1）。原来是 `com.zifang:z-opc:1.0.0-SNAPSHOT` 这类
+   **只在作者 `~/.m2` 里存在**的本地 parent 的仓，这一步顺带把"换台机器连 pom 都读不动"修掉
+   —— z-cache 那句 `<relativePath>../pom.xml</relativePath>` 指向的是一个**不存在的路径**。
+3. 删掉自家 `<properties>` 里 parent 已供给的版本键（`z-util.version`/`util.version`/
+   `z-boot.version`/`maven.compiler.*`/编码…），并把子模块里引用这些键的 `<version>` 整条删掉，
+   改由 DM 下发。**与地板面值不同的那一格必须留着**（z-cache 的 `log4j2.version=2.17.2`
+   对地板 2.25.4 是刻意的零漂移选择，删掉就是悄悄换实现）。
+4. 在仓根 `<dependencyManagement>` 里给**自家每个模块**补一条 `${project.version}`。
+   这条不是装饰：继承来的 DM 会改写**传递依赖**的版本，而 fleet 里本仓那一格钉的是 repo1 的
+   **旧发布件** ⇒ 不补这格，`z-cache-server` 的 shade fat jar 会把 `z-cache-common` 的
+   **1.3.5 字节码**打进 1.3.6 的包里（迁移前被 z-opc 的 DM 压成 1.3.4，一样是错的）。
+   补上后 tree 与 shaded jar 都回到 1.3.6（实测 `Including …:1.3.6 in the shaded jar`）。
+5. ⚠ **dm 优先级反直觉的一处**：`<scope>import</scope>` 进来的 BOM **顶不过**从 parent
+   继承来的**直接** DM 条目。z-cache 保留了 `log4j-bom:2.17.2` 的 import，实测 4 件
+   log4j 仍然漂到地板的 2.25.4 ⇒ 要压回去必须按坐标逐条写**直接**条目（`log4j-api` /
+   `log4j-core` / `log4j-jul` / `log4j-slf4j-impl`）。同理 `snakeyaml`：monorepo 那侧钉 2.0
+   （CVE-2022-1471），地板跟 spring-boot 2.7.18 给 1.30，不显式写就静默降版本。
+6. ⚠ **悬空属性**：z-cache 的 javadoc 插件写着 `${compile.version}`，全仓 11 个 pom 引用这个键、
+   只有它没定义、父链里也没有 ⇒ 传进插件的是字面量 `"${compile.version}"`，而 `failOnError=false`
+   把它吞了，所以这处点伤一直没现形。迁移会换掉父链，**这类借自旧 parent 的属性一定当场炸**，
+   正好是一次清账：`grep -oE '\$\{[a-zA-Z0-9_.-]+\}'` 逐仓对一遍定义。
 
-改完必须**干净跑一遍**再推：`mvn -B clean test`（`clean` 不能省，增量编译会伪装成功），并且回读
-`target` 里的 class-file major 确认还是 52。任何一格抬不过去（例如 fleet 的 `z-ctc` 只有 1.0.1 而该仓
-要 1.0.2）都在仓内 `<dependencyManagement>` 里显式覆盖并写明为什么——父级 dm 赢过 import 的 BOM。
+**判据（两遍都要跑）**：
+- 复跑步骤 1 那条命令，与基线 diff ⇒ 允许出现的差异**只有你明确决定要改的那几行**
+  （试点那一轮的完整 diff 是 1 行：`z-cache-common 1.3.4 → 1.3.6`）。
+- 干净机器复跑：`mvn -B -s <repo1-only settings> -Dmaven.repo.local=<空目录> clean test`。
+  这一步才是迁移的目的本身——本机 `~/.m2` 里有旧 parent 时，"换台机器构建不起来"是测不出来的。
+- 顺手回读 6 份 `.flattened-pom.xml`：`<parent>` 应当是 0（对外仍是自包含 pom，发布形状没变），
+  且不含 `com.zifang`、不含悬空 `${...}`。
+
+### 聚合 POM (3 个) + 两个独立 pom
 
 ### 聚合 POM (3 个) + 两个独立 pom
 
