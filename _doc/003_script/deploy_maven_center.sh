@@ -7,6 +7,7 @@
 #                         folder 可用短名 parent / deps / fleet / starter / integration
 #   verify     验证 Maven Central 上能否搜到 io.github.yuku123
 #   gpg-init   首次发布前生成 GPG 密钥并写 .env
+#   bundle     点件：<path>/central-bundle.zip 逐坐标核 pom/jar/sources/javadoc + .asc
 #   readme     打印 z-boot 发布摘要（前置凭证 + 按文件夹发布）
 #   help       显示此帮助
 #
@@ -14,7 +15,8 @@
 #   ./deploy_maven_center.sh                       # 全发（按序）
 #   ./deploy_maven_center.sh publish fleet          # 只发兄弟仓版本权威（抬一格 L3 版本的日常动作）
 #   ./deploy_maven_center.sh publish --dry fleet    # 只 mvn verify：编译+sources+javadoc+gpg 签名，不打包不上传
-#   ./deploy_maven_center.sh publish --bundle fleet # bundle 演练：按发布态打包，只把上传掐死，打印包内坐标
+#   ./deploy_maven_center.sh publish --bundle fleet # bundle 演练：按发布态打包，只把上传掐死，逐坐标点件
+#   ./deploy_maven_center.sh bundle /tmp/xxx/central-publishing/central-bundle.zip  # 点别的仓的包
 #   ./deploy_maven_center.sh gpg-init          # 首次必须先跑
 #   ./deploy_maven_center.sh verify
 #   ./deploy_maven_center.sh readme            # 看发布指引摘要
@@ -42,7 +44,7 @@ die()  { err "$*"; exit 1; }
 
 # ---------- 帮助 ----------
 print_help() {
-    sed -n '2,16p' "$0"
+    sed -n '2,22p' "$0"
 }
 
 # ---------- 切到 z-boot 根目录(本脚本住在 _doc/003_script/,别在原地跑 mvn) ----------
@@ -180,6 +182,47 @@ print(v)")
     [[ "$code" == "200" || "$code" == "206" ]]
 }
 
+# 逐坐标点 4 件套（pom/jar/sources.jar/javadoc.jar + 各自 .asc）。
+# 为什么必须有这一步：零源码模块会让 source/javadoc 插件静默不产件，mvn 依然 BUILD
+# SUCCESS，只数 bundle 总文件数看不见 —— 而 Central 是按坐标逐个数件的，缺一件整批判
+# FAILED，且这一步只在上传之后才暴露，等于把失败推到一小时滞后的队列里去发现。
+bundle_audit() {
+    python3 - "$1" <<'PY'
+import sys, zipfile
+from collections import defaultdict
+
+P = "io/github/yuku123/"
+coords = defaultdict(set)
+with zipfile.ZipFile(sys.argv[1]) as z:
+    for n in z.namelist():
+        if n.endswith("/") or not n.startswith(P):
+            continue
+        q = n[len(P):].split("/")
+        if len(q) >= 3:
+            coords[(q[0], q[1])].add("/".join(q[2:]))
+
+bad = 0
+for key in sorted(coords):
+    a, v = key
+    files, out = coords[key], []
+    b = a + "-" + v
+    need = [b + ".pom"]
+    if b + ".jar" in files:
+        need += [b + "-sources.jar", b + "-javadoc.jar"]
+    out += ["缺 " + x[len(b):].lstrip("-.") for x in need if x not in files]
+    out += ["缺 .asc: " + x for x in need if x + ".asc" not in files]
+    out += ["多出 maven-metadata"] if any("maven-metadata" in x for x in files) else []
+    if out:
+        bad += 1
+        print("      ✗ %s/%s  %s" % (a, v, "; ".join(out)))
+    else:
+        print("      ✅ %s/%s  %s 齐" % (a, v,
+              "pom" if b + ".jar" not in files else "pom+jar+sources+javadoc"))
+print("   坐标 %d 个 / 缺件 %d 个" % (len(coords), bad))
+sys.exit(1 if bad or not coords else 0)
+PY
+}
+
 cmd_publish() {
     load_env
     check_deps
@@ -237,8 +280,7 @@ cmd_publish() {
             local zip="$f/target/central-publishing/central-bundle.zip"
             if [[ -f "$zip" ]]; then
                 log "   📦 $f bundle = $(unzip -l "$zip" | tail -1 | awk '{print $2}') 个文件 / $(du -h "$zip" | cut -f1)"
-                unzip -l "$zip" | grep -oE 'yuku123/[^/]+/[0-9][^/]*/' | sed 's#/$##' | sort -u |
-                    sed 's#^#      #'
+                bundle_audit "$zip" || { rc=1; err "   ✗ $f bundle 有点件缺口，见上"; }
             else
                 rc=1; err "   ✗ $f 没打出 bundle —— tail -30 of $logf:"; tail -30 "$logf" | sed 's/^/      /'
             fi
@@ -337,7 +379,9 @@ cmd_readme() {
     不打真实上传就能验排除生效的路子。
   ✗ 零源码模块（纯聚合 starter，src 下连 package-info 都没有）会让 maven-source-plugin /
     maven-javadoc-plugin 静默不产 -sources.jar / -javadoc.jar，BUILD SUCCESS 照样绿，
-    bundle 里却只有 pom+jar —— 只有 --bundle 后 unzip -l 逐坐标数 4 件套才看得见。
+    bundle 里却只有 pom+jar —— 只有逐坐标数 4 件套才看得见，所以 publish --bundle 已经
+    内置点件（bundle_audit），缺件直接 rc=1；拿到别人的包也能点：
+      ./deploy_maven_center.sh bundle <path>/central-bundle.zip
     repo1 上 1.0.17/1.0.18 的 z-boot-agent-starter 就是这个形状（被收下了），
     但别把"这次被收下"当"规则允许"。
   ✗ 探活不能用 HEAD —— repo1/Fastly 对 HEAD 不给 200，用 curl -r 0-0（200/206 才算活着）。
@@ -366,6 +410,9 @@ shift 2>/dev/null || true
 case "$SUBCMD" in
     publish)   cmd_publish "$@" ;;
     verify)    cmd_verify ;;
+    bundle)
+        [[ -f "${1:-}" ]] || die "用法：./deploy_maven_center.sh bundle <central-bundle.zip>"
+        bundle_audit "$1" ;;
     gpg-init)  cmd_gpg_init ;;
     readme)    cmd_readme ;;
     help|-h|--help) print_help ;;
