@@ -111,6 +111,31 @@ def repo_modules(repo):
     return [a for a in arts if a]
 
 
+def ref_sites(repo, poms, keys, supply_dm, supply_props):
+    """每个 ${key} 到底挂在哪些坐标上 —— 只按**键名**判"父链供不供"会误判：
+    z-vector 的 zutil.version 被报成"父链没供给"，可 fleet 其实管着 z-util-core/math/ml 三格
+    且面值同为 1.0.13 ⇒ 正确动作是"删键 + 连带删掉这 4 处 <version>"，不是留着键自己钉。
+    反过来 protobuf-java-util 父链真的不管 ⇒ 删键当场悬空。两种情况在报表里必须长得不一样，
+    否则派出去的代理就会只删键不删引用（本仓实测坏过一次，mvn validate rc=1）。"""
+    out = {}
+    for p in poms:
+        rel = os.path.relpath(p, repo)
+        try:
+            r = load(p)
+        except Exception:
+            continue
+        for tag in ("dependency", "plugin"):
+            for d in r.iter(NS + tag):
+                v = (d.findtext(NS + "version", "") or "").strip()
+                m = re.fullmatch(r"\$\{([^}]+)\}", v)
+                if not m or m.group(1) not in keys:
+                    continue
+                gid = d.findtext(NS + "groupId", "") or "(继承)"
+                aid = d.findtext(NS + "artifactId", "")
+                out.setdefault(m.group(1), []).append((rel, f"{gid}:{aid}", tag))
+    return out
+
+
 def report(repo, supply_props, supply_dm):
     poms = all_poms(repo)
     root = load(os.path.join(repo, "pom.xml"))
@@ -174,6 +199,22 @@ def report(repo, supply_props, supply_dm):
     print("  · 3 迁移后要在本仓 DM 钉 ${project.version} 的自家坐标："
           + ", ".join(repo_modules(repo)))
     print("  · 4 现存 BOM import：" + ("; ".join(imports) or "无"))
+    watch = {k for k, _ in missing} | {k for k, _, _ in same} | {k for k, _ in differ}
+    sites = ref_sites(repo, poms, watch, supply_dm, supply_props)
+    hang = [(k, f, c, t) for k, lst in sites.items() for f, c, t in lst if k in dict(missing)]
+    if hang:
+        print("  ⚠ 5 挂在「父链没供给的键」上的 <version> 引用点（删键必须连带处理每一处）：")
+        for k, f, c, t in sorted(hang):
+            dv = supply_dm.get(c.split(":")[-1], ("", None, ""))[1]
+            own_v = dict(version_keys).get(k, "")
+            verdict = (f"父链按坐标供 {dv}" + ("（同值：删掉这行即可）" if dv == own_v else "（不同值！）")
+                       if dv else "父链不供这个坐标：留着键，或改成字面量")
+            print(f"      ${{{k}}}  {c}  ← {f} [{t}]  ⇒ {verdict}")
+    sup = [(k, f, c, t) for k, lst in sites.items() for f, c, t in lst if k in {x for x, _, _ in same}]
+    if sup:
+        print("  · 5 挂在「同值可删键」上的引用点：" + "; ".join(
+            f"${{{k}}}×{sum(1 for x, _, _, _ in sup if x == k)}处({','.join(sorted({f for kk, f, _, _ in sup if kk == k}))})"
+            for k in sorted({k for k, _, _, _ in sup})))
     return len(dangling), len(differ)
 
 

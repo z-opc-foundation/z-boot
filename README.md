@@ -374,7 +374,9 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 
 z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再自己维护版本属性表。
 **下面这套步骤是 2026-09-28 拿 z-cache 当试点量出来的**，四个坑全是当场踩到、当场改掉的，
-不是推演——所以照抄之前先把"尺"那两段跑起来。
+不是推演——所以照抄之前先把两把尺跑起来：`python3 _doc/003_script/parent_preflight.py --repo <仓>`
+（迁前：哪些键可删/必须留/悬空，以及**每个 `${key}` 挂在哪些坐标上**，见它的第 5 节）和
+`python3 _doc/003_script/central_pom_scan.py`（迁后：发布态 pom 的合法性）。
 
 1. **先留底**：`mvn -B -DskipTests clean package dependency:tree`，把 tree 里的
    `groupId:artifactId:jar:version` 去重排序存成基线。这一步不能省：迁移的判据不是"能构建"，
@@ -387,6 +389,9 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
    `z-boot.version`/`maven.compiler.*`/编码…），并把子模块里引用这些键的 `<version>` 整条删掉，
    改由 DM 下发。**与地板面值不同的那一格必须留着**（z-cache 的 `log4j2.version=2.17.2`
    对地板 2.25.4 是刻意的零漂移选择，删掉就是悄悄换实现）。
+   判"供不供"要按**坐标**判，不是按键名：z-vector 的 `zutil.version` 键名父链没有，但 fleet
+   按坐标管着 `z-util-core/math/ml` 且面值同为 1.0.13 ⇒ 该删；而 `protobuf-java-util` 地板
+   真的不管（只字面管 `protobuf-java`）⇒ 删键当场悬空。preflight 的第 5 节逐处给出这个结论。
 4. 在仓根 `<dependencyManagement>` 里给**自家每个模块**补一条 `${project.version}`。
    这条不是装饰：继承来的 DM 会改写**传递依赖**的版本，而 fleet 里本仓那一格钉的是 repo1 的
    **旧发布件** ⇒ 不补这格，`z-cache-server` 的 shade fat jar 会把 `z-cache-common` 的
