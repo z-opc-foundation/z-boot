@@ -335,6 +335,11 @@ cmd_readme() {
     excludeArtifacts（按 artifactId 精确匹配），并且先拿不可达的 centralBaseUrl 演练一次，
     unzip -l target/central-publishing/central-bundle.zip 看命中数是否为 0 —— 这是唯一
     不打真实上传就能验排除生效的路子。
+  ✗ 零源码模块（纯聚合 starter，src 下连 package-info 都没有）会让 maven-source-plugin /
+    maven-javadoc-plugin 静默不产 -sources.jar / -javadoc.jar，BUILD SUCCESS 照样绿，
+    bundle 里却只有 pom+jar —— 只有 --bundle 后 unzip -l 逐坐标数 4 件套才看得见。
+    repo1 上 1.0.17/1.0.18 的 z-boot-agent-starter 就是这个形状（被收下了），
+    但别把"这次被收下"当"规则允许"。
   ✗ 探活不能用 HEAD —— repo1/Fastly 对 HEAD 不给 200，用 curl -r 0-0（200/206 才算活着）。
   ✗ 上传返 500/errorCode 10500 别急着怀疑自己的包。差分实测：错凭证 → 401 "Invalid token"，
     空 body → 同一个 500。也就是说 10500 出现在鉴权之后、与负载无关，是 Sonatype 侧故障；
