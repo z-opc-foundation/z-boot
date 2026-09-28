@@ -9,7 +9,7 @@ central_pom_scan.py — 上传前静态点伤：把 Central 会"整批判 FAILED
 只认"会被打 bundle 的 pom"：从仓根 pom 的 `central` profile + central-publishing-maven-plugin
 出发，按 Maven 自己的口径解析 <modules> 递归出 reactor（被注释掉的 module 因为 XML 解析天然
 跳过 —— 这正是踩过的坑：靠 grep 判断模块在不在 reactor 里会误报）。z-boot 那种"根 pom 无
-<modules>、四个文件夹各自独立成工程、central profile 只在根上被继承"的拓扑也认。
+<modules>、五个文件夹各自独立成工程、central profile 只在根上被继承"的拓扑也认。
 
 缺陷类：
   A  无 central profile / 不发 Central            → 只报 excludeArtifacts 清单，不判缺陷
