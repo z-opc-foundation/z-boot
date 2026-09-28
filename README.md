@@ -920,19 +920,45 @@ z-opc (主后端)              ← 消费者
 一键脚本在仓内：`_doc/003_script/deploy_maven_center.sh`（凭证读 `.env`，密钥环 `./.gnupg`，两者都被 `.gitignore` 排除）。
 
 ```bash
-./_doc/003_script/deploy_maven_center.sh readme            # 摘要：前置 + 文件夹语义 + 判据
-./_doc/003_script/deploy_maven_center.sh publish --dry fleet   # 只 mvn verify，不签名不上传
-./_doc/003_script/deploy_maven_center.sh publish fleet         # 只发一个文件夹
-./_doc/003_script/deploy_maven_center.sh publish               # 按序全发 parent→deps→fleet→starter→integration
+./_doc/003_script/deploy_maven_center.sh readme                # 摘要：前置 + 文件夹语义 + 判据
+./_doc/003_script/deploy_maven_center.sh publish --dry fleet    # 只 mvn verify：编译+sources+javadoc+gpg 签名，不打包不上传
+./_doc/003_script/deploy_maven_center.sh publish --bundle fleet # bundle 演练：连打包都跑，只把上传目标指到不可达域名
+./_doc/003_script/deploy_maven_center.sh publish fleet          # 只发一个文件夹
+./_doc/003_script/deploy_maven_center.sh publish                # 按序全发 parent→deps→fleet→starter→integration
 ```
 
 1.0.19 起**发布粒度 = 文件夹**：脚本按 `FLEET_ORDER` 逐文件夹 `mvn -f <folder>/pom.xml deploy -Pcentral`，
 每个文件夹先回读 repo1，**同版本已上线就跳过**（Central 不允许覆盖，硬重发只会 400）；如果你只发子文件夹
 而当版 parent 还没上线，脚本自动把 parent 前置。日志 `/tmp/z-boot-deploy-<folder>.log`。
 
+`--dry` 到 verify 为止，**看不出 bundle 里到底装了什么**：pom-only 模块少件、`*-admin` 这类"永不发布"的模块
+混进包里，都只在打包那步现形 —— 所以有 `--bundle`：staging/签名/打包全按发布态真跑，只把 `centralBaseUrl`
+指到解析不了的域名，于是一件都发不出去，但可以 `unzip -l <folder>/target/central-publishing/central-bundle.zip`
+看个清楚。动过 flatten 配置、`excludeArtifacts` 或新加文件夹时先走一遍它（2026-09-28 就是这么验掉 z-ctc 的
+`z-ctc-admin` 排除生效的：102 个文件里 admin 命中 0）。
+
+⚠ **`maven.deploy.skip` 拦不住 Central** —— `central-publishing-maven-plugin` 不认这个属性，实测照样把
+admin 的 pom/jar/exec fat jar 全打进 bundle。要挡只能用插件自己的 `excludeArtifacts`（按 artifactId 精确匹配）。
+
 抬一格兄弟仓 L3 版本的完整动作只有三条命令：`gen_fleet_bom.py --write` → `publish --dry fleet` → `publish fleet`。
 以前这件事要重发整个 z-boot（27 个坐标），因为版本格住在根 pom 的 `<properties>`、经
 `z-boot-integration-starters` 的 36 行 `<dependencyManagement>` 下发。
+`--write` 现在带守卫：只要有格在 repo1 上还取不到（PENDING），就拒绝落盘并 exit 2 —— 把不存在的版本钉进
+BOM 是"烧格子"，Central 不许覆盖，只能靠抬版本号重发来收拾（`--allow-pending` 才放行）。
+
+**上传成功 ≠ 收下**：`Uploaded bundle successfully … will publish automatically` 之后 Central 还要异步校验整批
+组件，任何一个 pom 不合格整批 FAILED，而 mvn 侧早就 BUILD SUCCESS 了（z-ctc 1.0.2 就是这么挂了 2.5 小时：
+repo1 一直 404，实际 17:36 那批已判 FAILED，错误只有一行 `Project name is missing` 挂在 `z-ctc-admin` 上）。
+查法：
+
+```bash
+curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
+  'https://central.sonatype.com/api/v1/publisher/deployments?page=1&size=5'
+# 逐件看 deploymentState / deploymentComponents[].errors
+```
+
+这份清单有一小时量级的滞后（刚发的那几条不在里面），`/publisher/status?key=` 实测一律返 500，别指望它。
+最终判据还是 repo1 回读。
 
 （以前这里写的 `lead/003_辅助能力/maven-central-publish` skill 和 `z-util/发布指引.md` 都不是仓内可依赖的入口：
 后者 `find` 零命中，前者是另一台机器的文档。发布手册从此以本脚本 + 本节为准。）

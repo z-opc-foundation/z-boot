@@ -13,7 +13,8 @@
 # 用法：
 #   ./deploy_maven_center.sh                       # 全发（按序）
 #   ./deploy_maven_center.sh publish fleet          # 只发兄弟仓版本权威（抬一格 L3 版本的日常动作）
-#   ./deploy_maven_center.sh publish --dry fleet    # 只 verify 不上传
+#   ./deploy_maven_center.sh publish --dry fleet    # 只 mvn verify：编译+sources+javadoc+gpg 签名，不打包不上传
+#   ./deploy_maven_center.sh publish --bundle fleet # bundle 演练：按发布态打包，只把上传掐死，打印包内坐标
 #   ./deploy_maven_center.sh gpg-init          # 首次必须先跑
 #   ./deploy_maven_center.sh verify
 #   ./deploy_maven_center.sh readme            # 看发布指引摘要
@@ -22,7 +23,7 @@
 #   - 所有凭证从 ./.env 读，.env 已被 .gitignore 排除
 #   - GPG 密钥环用仓库根的 .gnupg（load_env 里 export GNUPGHOME），不污染 ~/.gnupg
 #   - 不带参数 = 按 FLEET_ORDER 全发，且是不可撤销的对外发布 ⇒ 只在明确要发版时裸跑
-#   - 先验不发用 publish --dry <folder>（只 mvn verify，不签名不上传）
+#   - 先验不发用 publish --dry <folder>（到 verify 为止）；要看 bundle 的真实内容用 --bundle
 #   - 已发布的版本 Central 不允许覆盖，脚本对每个文件夹先回读 repo1，已 200 的直接跳过
 #
 # 详细口径见仓根 README 的「发布」一节（1.0.19 起 z-boot 无 ${revision}，按文件夹字面版本发）。
@@ -183,10 +184,11 @@ cmd_publish() {
     load_env
     check_deps
 
-    local dry=0 want=()
+    local dry=0 bundle=0 want=()
     for a in "$@"; do
         case "$a" in
             --dry) dry=1 ;;
+            --bundle) bundle=1 ;;
             *) want+=("$(alias_folder "$a")") ;;
         esac
     done
@@ -197,8 +199,11 @@ cmd_publish() {
         already_live "." || { log "parent 未发布 → 前置 ."; want=( "." "${want[@]}" ); }
     fi
 
+    local mode=deploy
+    [[ $dry == 1 ]] && mode='dry-run(verify)'
+    [[ $bundle == 1 ]] && mode='bundle 演练(不上传)'
     log "═══════════════════════════════════════════════════════════════"
-    log " 即将发布 z-boot 到 Maven Central   mode=$(if [[ $dry == 1 ]]; then echo 'dry-run(verify)'; else echo deploy; fi)"
+    log " 即将发布 z-boot 到 Maven Central   mode=$mode"
     log "  groupId : io.github.yuku123"
     log "  folders : ${want[*]}"
     log "  GPG KEY : ${GPG_KEY_ID:-?}"
@@ -206,30 +211,50 @@ cmd_publish() {
 
     local goal=deploy rc=0 f logf
     [[ $dry == 1 ]] && goal=verify
+    # --bundle 把上传目标指到一个解析不了的域名：staging / 签名 / 打包全按发布态真跑，
+    # 只有一件不发出去 —— 上传。这是唯一能"不上传就验掉 bundle 内容"的路子
+    # （excludeArtifacts 有没有生效、pom-only 模块少没少件，肉眼在 verify 里都看不见）。
+    local extra=()
+    [[ $bundle == 1 ]] && extra=(-DcentralBaseUrl=https://central-rehearsal.invalid)
     for f in "${want[@]}"; do
         [[ -f "$f/pom.xml" ]] || die "找不到 $f/pom.xml（可用名：parent deps fleet starter integration）"
         # 根文件夹是 "."，basename 出来是一个点，日志名会成 z-boot-deploy-..log
         logf="/tmp/z-boot-deploy-$( [[ "$f" == "." ]] && echo parent || basename "$f" ).log"
-        if [[ $dry == 0 ]] && already_live "$f"; then
+        if [[ $dry == 0 && $bundle == 0 ]] && already_live "$f"; then
             warn "跳过 $f —— 该版本已在 repo1（Central 不允许覆盖已发布版本）"
             continue
         fi
         rm -rf "$f/target/central-staging" "$f/target/central-publishing" "$f/target/central-deferred" 2>/dev/null
-        log "── $f : mvn -B $goal -Pcentral"
+        log "── $f : mvn -B $goal -Pcentral${extra:+ ${extra[*]}}"
         mvn -B -U -Dmaven.legacyLocalRepo=true "$goal" \
             -Pcentral \
             -DskipTests \
             -Dgpg.passphrase="$CENTRAL_GPG_PASSPHRASE" \
-            -f "$f/pom.xml" > "$logf" 2>&1 || rc=1
-        if grep -q "BUILD SUCCESS" "$logf"; then
+            ${extra[@]+"${extra[@]}"} \
+            -f "$f/pom.xml" > "$logf" 2>&1 || true
+        if [[ $bundle == 1 ]]; then
+            # 这一模式里 mvn 必然非 0（上传被 DNS 掐死），判成功只认 bundle 有没有打出来
+            local zip="$f/target/central-publishing/central-bundle.zip"
+            if [[ -f "$zip" ]]; then
+                log "   📦 $f bundle = $(unzip -l "$zip" | tail -1 | awk '{print $2}') 个文件 / $(du -h "$zip" | cut -f1)"
+                unzip -l "$zip" | grep -oE 'yuku123/[^/]+/[0-9][^/]*/' | sed 's#/$##' | sort -u |
+                    sed 's#^#      #'
+            else
+                rc=1; err "   ✗ $f 没打出 bundle —— tail -30 of $logf:"; tail -30 "$logf" | sed 's/^/      /'
+            fi
+        elif grep -q "BUILD SUCCESS" "$logf"; then
             log "   ✅ $f SUCCESS"
         else
+            rc=1
             err "   ✗ $f FAILURE —— tail -30 of $logf:"
             tail -30 "$logf" | sed 's/^/      /'
+            log "   查 Central 收下没有（有约一小时滞后，看不到不等于没进队列）:"
+            log "   curl -u \"\$CENTRAL_USERNAME:\$CENTRAL_TOKEN\" 'https://central.sonatype.com/api/v1/publisher/deployments?page=1&size=5'"
         fi
     done
-    [[ $rc == 0 ]] || die "有文件夹发布失败，见 /tmp/z-boot-deploy-*.log"
+    [[ $rc == 0 ]] || die "有文件夹失败，见 /tmp/z-boot-deploy-*.log"
     [[ $dry == 1 ]] && { log "dry-run 完成（跑了编译 + sources + javadoc + gpg 签名，未上传）"; return 0; }
+    [[ $bundle == 1 ]] && { log "bundle 演练完成（按发布态打了包，一件都没上传）"; return 0; }
     log ""
     log "✅ 全部文件夹发布流程结束"
     log "Central Portal 控制台：https://central.sonatype.com/publishing/deployments"
@@ -277,9 +302,13 @@ cmd_readme() {
     z-boot-integration-starters   20 个 L3 聚合 starter
   所以发版 = 选文件夹，不是全仓重发：
 
-    ./deploy_maven_center.sh publish --dry fleet   # 先只 mvn verify（不签名不上传）
-    ./deploy_maven_center.sh publish fleet         # 真发一个文件夹
-    ./deploy_maven_center.sh publish               # 全发（按 parent→deps→fleet→starter→integration）
+    ./deploy_maven_center.sh publish --dry fleet     # 只 mvn verify：编译+sources+javadoc+gpg 签名都跑，不打包不上传
+    ./deploy_maven_center.sh publish --bundle fleet  # bundle 演练：连打包都跑，只把上传目标指到不可达域名
+    ./deploy_maven_center.sh publish fleet           # 真发一个文件夹
+    ./deploy_maven_center.sh publish                 # 全发（按 parent→deps→fleet→starter→integration）
+
+  --dry 看不出 bundle 里到底有什么（pom-only 模块少件、admin 这类"永不发布"模块混进来，
+  都要到打包那步才现形）⇒ 改了 flatten / excludeArtifacts / 新加文件夹时先 --bundle 再真发。
 
   脚本会：逐文件夹回读 repo1，同版本已上线的直接跳过（Central 不可覆盖，重发只会 400）；
   若 parent 当版还没上线而你要发子文件夹，自动把 parent 前置。日志落 /tmp/z-boot-deploy-<folder>.log。
@@ -293,6 +322,19 @@ cmd_readme() {
 【判据】
 
   ✗ BUILD SUCCESS ≠ 已可见。repo1 有 5~50 分钟无 SLA 的索引期，判发布只认 repo1 回读。
+  ✗ 上传成功 ≠ 收下。"Uploaded bundle successfully … Deployment will publish automatically"
+    之后 Central 还会异步校验整批组件，任何一个 pom 不合格就整批 FAILED，而 mvn 侧已经
+    BUILD SUCCESS 收工了 —— 404 挂了很久时先查校验结果，别当成索引慢：
+      curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
+        'https://central.sonatype.com/api/v1/publisher/deployments?page=1&size=5'
+    逐件看 deploymentState / deploymentComponents[].errors（实测 1.0.2 那批就是这么定位到
+    z-ctc-admin 的 "Project name is missing"）。注意这份清单有一小时量级的滞后，
+    刚发的那几条不在里面；/publisher/status?key= 现在一律返 500，别指望它。
+  ✗ maven.deploy.skip 拦不住 Central。central-publishing-maven-plugin 不认这个属性，
+    admin/bootstrap 类"永不发布"模块照样进 bundle（还捎带 exec fat jar）。要挡就用它自己的
+    excludeArtifacts（按 artifactId 精确匹配），并且先拿不可达的 centralBaseUrl 演练一次，
+    unzip -l target/central-publishing/central-bundle.zip 看命中数是否为 0 —— 这是唯一
+    不打真实上传就能验排除生效的路子。
   ✗ 探活不能用 HEAD —— repo1/Fastly 对 HEAD 不给 200，用 curl -r 0-0（200/206 才算活着）。
   ✗ 不要把 CENTRAL_TOKEN / GPG passphrase 贴到对话或提交进仓。
   ✓ z-boot-fleet 的 flatten 必须 override 成 resolveCiFriendliesOnly；oss 模式会把整个

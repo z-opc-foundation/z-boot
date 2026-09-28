@@ -5,7 +5,7 @@
 z-opc-foundation 的 Spring Boot Starter 仓。版本权威分两层（1.0.19 起）：
 
 - `z-boot-dependencies` — **第三方**版本地板（156 条受管项，`io.github.yuku123` 坐标 0 条）
-- `z-boot-fleet` — **兄弟仓 `z-*`** 版本格（164 条受管项，由脚本生成，勿手改）
+- `z-boot-fleet` — **兄弟仓 `z-*`** 版本格（163 条受管项，由脚本生成，勿手改）
 
 1.0.19 起根 pom 只是发布用 parent，**没有 `<modules>`**：四个文件夹各自是独立 Maven 工程，
 `<parent>` 与自身 `<version>` 都写字面量（不再有 `${revision}`），所以能只发一个文件夹。
@@ -37,7 +37,9 @@ mvn -B -f z-boot-integration-starters/pom.xml package -DskipTests   # 只验 20 
 
 - 第三方 → 改 `z-boot-dependencies/pom.xml`，发 `publish deps`（引它的 starter 要跟着重发）
 - 兄弟仓 `z-*` → **不手改 pom**：改 `_doc/003_script/gen_fleet_bom.py` 的 `FAMILIES` 表 →
-  `--write` 重算 → `publish fleet`。脚本只收 repo1 实测存在的版本，所以 fleet 允许滞后于兄弟仓 HEAD。
+  `--write` 重算 → `publish fleet`。脚本只收 repo1 实测存在的版本，所以 fleet 允许滞后于兄弟仓 HEAD；
+  有格还是 PENDING（本地装过、repo1 取不到）时 `--write` 直接 exit 2 拒绝落盘 —— 钉一个不存在的版本
+  等于烧格子，Central 不许覆盖，只能抬版本号重发收拾。
 
 ## 不要做的事
 
@@ -51,12 +53,17 @@ mvn -B -f z-boot-integration-starters/pom.xml package -DskipTests   # 只验 20 
 ## 发布
 
 ```bash
-./_doc/003_script/deploy_maven_center.sh publish --dry fleet   # 先只 verify（编译+sources+javadoc+gpg，不上传）
-./_doc/003_script/deploy_maven_center.sh publish fleet         # 只发一个文件夹
-./_doc/003_script/deploy_maven_center.sh publish               # 按 parent→deps→fleet→starter→integration 全发
+./_doc/003_script/deploy_maven_center.sh publish --dry fleet     # 只 verify（编译+sources+javadoc+gpg，不打包不上传）
+./_doc/003_script/deploy_maven_center.sh publish --bundle fleet  # 打包照打，上传掐死：看 bundle 真实内容
+./_doc/003_script/deploy_maven_center.sh publish fleet           # 只发一个文件夹
+./_doc/003_script/deploy_maven_center.sh publish                 # 按 parent→deps→fleet→starter→integration 全发
 ```
 
 凭证在仓根 `.env`，密钥环在仓根 `.gnupg`（两者都被 `.gitignore` 排除）。
 已发布版本 Central 不允许覆盖，脚本对每个文件夹先回读 repo1，同版本已上线就跳过。
 `BUILD SUCCESS` ≠ 已可见：判发布只认 repo1 回读，且探活要用 ranged GET（repo1 对 HEAD 不给 200）。
+`上传成功` 也 ≠ 收下：Central 会异步校验整批，一个 pom 不合格整批 FAILED 而 mvn 侧看不出来 ——
+用 `curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" 'https://central.sonatype.com/api/v1/publisher/deployments?page=1&size=5'`
+读 `deploymentComponents[].errors`（清单有一小时量级滞后）。
+`maven.deploy.skip` 挡不住这个插件，"永不发布"的模块要用 `excludeArtifacts` 排，改完用 `--bundle` 验。
 详细口径见仓根 `README.md` 的「发布」一节。

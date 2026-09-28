@@ -8,6 +8,7 @@
 用法:
     python3 _doc/003_script/gen_fleet_bom.py            # 只打印报告,不写文件
     python3 _doc/003_script/gen_fleet_bom.py --write     # 写 z-boot-fleet/pom.xml
+                                                       # 有 PENDING 格时拒绝落盘,除非加 --allow-pending
 """
 import concurrent.futures as cf
 import os
@@ -28,18 +29,17 @@ FAMILIES = {
     "z-cache":   ("z-cache",   "1.3.5"),
     "z-mq":      ("z-mq",      "1.3.0"),
     "z-gw":      ("z-gw",       "1.0.4"),
-    "z-kb":      ("z-kb",       "1.0.2"),
+    "z-kb":      ("z-kb",       "1.0.3"),
     "z-vector":  ("z-vector",   "1.0.4"),
     # 1.0.6 是"移植中途发出去的半成品"(api/protocol=52 而 core/bolt/starter=61),Central 不许覆盖
-    # ⇒ 永久作废。1.0.7 是 Java 8 线的那一版,由 z-graph 仓另行发布;repo1 上还没有之前,fleet 只能钉
-    # 已发布的 1.0.5(全 61,内部一致)。1.0.7 上 Central 后重跑本脚本抬这一格即可(只重发 fleet)。
-    "z-graph":   ("z-graph",    "1.0.5"),
+    # ⇒ 永久作废。1.0.7 是 Java 8 线的那一版,z-graph 仓 2026-09-28 发到 repo1(实测 200),已抬。
+    "z-graph":   ("z-graph",    "1.0.7"),
     "z-rpc":     ("z-rpc",      "1.0.3"),
     "z-oss":     ("z-oss",      "1.0.3"),
     "z-schedule":("z-schedule", "1.0.5"),
     "z-msg":     ("z-msg",      "1.2.1"),
     "z-script":  ("z-script",   "1.0.0"),
-    "z-util":    ("z-util",     "1.0.12"),
+    "z-util":    ("z-util",     "1.0.13"),
     "z-agent-kernel": ("z-agent-kernel", "0.1.1"),
     "z-llm":     ("z-llm",      "0.1.6"),
     "z-mcp":     ("z-mcp",      "0.1.2"),
@@ -54,7 +54,12 @@ EXTRA = {
     "z-bot": ["z-bot-core"],
 }
 # 不作为受管坐标发布的模块后缀(示例/引导/前端)
-SKIP_ARTIFACTS = {"z-gw-examples", "z-rpc-examples", "bootstrap-gennerate"}
+# z-msg-example 是示例工程(兄弟仓自己 install 过所以本地能查到),从来不上 Central —— 留在清单里
+# 只会永久挂一个 PENDING,把 --write 的守卫变成噪音。
+# z-ctc-admin 同理:2026-09-28 起被 z-ctc 的 excludeArtifacts 挡在 bundle 外,永不发布。
+# (其余 *-admin / *-examples 是 repo1 上 MISSING,天然被丢掉了 —— 写明白省得下回靠运气)
+SKIP_ARTIFACTS = {"z-gw-examples", "z-rpc-examples", "bootstrap-gennerate",
+                  "z-msg-example", "z-ctc-admin"}
 
 
 def art_text(p):
@@ -189,6 +194,17 @@ def main():
     print(f"\nfleet 合计 {total} 个受管坐标 / {len(FAMILIES)} 个版本格")
     target = os.path.join(REPO_ROOT, "z-boot-fleet", "pom.xml")
     if write:
+        pending = {}
+        for r in results:
+            if r[3] == "PENDING":
+                pending.setdefault(r[0], []).append(r[1])
+        if pending and "--allow-pending" not in sys.argv:
+            print("\n✗ 拒绝落盘:下面这些格在 repo1 上还取不到(已上传未进索引,或压根没发出去),"
+                  "写进 fleet 就是钉一个不存在的版本 —— 消费方解析失败,而 Central 不许覆盖已发布版本,"
+                  "作废这一格只能靠抬版本号重发。\n"
+                  + "\n".join(f"    {k}: {','.join(v)}" for k, v in pending.items())
+                  + "\n  等索引(用 ranged GET 复核 200)后重跑;确认承担风险才加 --allow-pending。")
+            sys.exit(2)
         os.makedirs(os.path.dirname(target), exist_ok=True)
         open(target, "w", encoding="utf-8").write(text)
         print(f"written: {target}")
