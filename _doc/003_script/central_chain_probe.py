@@ -16,6 +16,11 @@ central_chain_probe.py — 查"repo1 上 206 但其实读不动"的那一类发�
 parent 链按 Maven 的解析顺序逐跳取，任意一跳 404 ⇒ 判 POISONED；链上出现 com.zifang ⇒ 单独
 标注（那些 groupId 从没上过中央）。只读，不写任何东西。
 
+第二类读不动的形状（UNRESOLVED_OWN_VERSION）：仓里版本写 `${revision}` 却没有常开 flatten ⇒
+发出去的 pom 上 `<project><version>` 就是字面的 `${revision}`，Maven 解析使用方的依赖时补不出
+这个值。实测 io.github.yuku123:z-agent-proxy:0.1.0 中央上就是这形状（本机永远绿，因为本机直接读工作区 pom）。
+Central 不可覆盖 ⇒ 同样只能抬号，且抬之前得先把 flatten 补上。
+
 用法：
   python3 z-boot/_doc/003_script/central_chain_probe.py                 # 只查 fleet
   python3 z-boot/_doc/003_script/central_chain_probe.py --repo z-kb     # fleet + 该仓字面格
@@ -28,9 +33,11 @@ import re
 import sys
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 
 BASE = "https://repo1.maven.org/maven2"
 INTERNAL = re.compile(r"^(io\.github\.yuku123|com\.zifang)$")
+NS = "{http://maven.apache.org/POM/4.0.0}"
 MAX_DEPTH = 8
 
 
@@ -76,6 +83,16 @@ def resolve_property(pom, value):
     return f.group(0).split(">")[1].split("<")[0].strip() if f else None
 
 
+def own_version(pom):
+    """<project> 直属的 <version>：带 ${...} 就是发布时没 flatten，使用方解析不出这件件。"""
+    try:
+        root = ET.fromstring(pom)
+    except ET.ParseError:
+        return None
+    v = root.find(NS + "version")
+    return (v.text or "").strip() if v is not None else None
+
+
 def probe(coord):
     g, a, v = coord
     chain, seen = [], []
@@ -92,6 +109,11 @@ def probe(coord):
             return coord, verdict, chain
         if cur != (g, a, v) and not INTERNAL.match(cg):
             return coord, "THIRD_PARTY_PARENT_STOP", chain
+        if cur == (g, a, v):
+            ov = own_version(text)
+            if ov and "${" in ov:
+                chain.append(f"自家 <version> 是没展开的 {ov}（发布时没 flatten ⇒ 使用方解析不动）")
+                return coord, "UNRESOLVED_OWN_VERSION", chain
         p = parent_of(text)
         if not p:
             return coord, "SELF_CONTAINED", chain

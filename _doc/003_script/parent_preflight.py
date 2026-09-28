@@ -221,18 +221,20 @@ def report(repo, supply_props, supply_dm):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo")
+    ap.add_argument("repos", nargs="*", help="仓目录名，等价于 --repo，可一次给多个")
     ap.add_argument("--all", action="store_true")
     a = ap.parse_args()
     supply_props, supply_dm = bom_supplied()
     print(f"新父链供给：properties {len(supply_props)} 个 / DM 面值 {len(supply_dm)} 条（按各 BOM 自身属性解出）")
     foundation = os.path.abspath(os.path.join(ZBOOT, ".."))
+    picked = ([a.repo] if a.repo else []) + list(a.repos)
     if a.all:
         targets = [os.path.join(foundation, d) for d in sorted(os.listdir(foundation))
                    if os.path.isfile(os.path.join(foundation, d, "pom.xml"))]
-    elif a.repo:
-        targets = [os.path.abspath(a.repo)]
+    elif picked:
+        targets = [os.path.abspath(p) for p in picked]
     else:
-        ap.error("要 --repo <路径> 或 --all")
+        ap.error("要 --repo <路径> / 直接给仓名 / --all")
     tot_d = tot_v = 0
     for t in targets:
         d, v = report(t, supply_props, supply_dm)

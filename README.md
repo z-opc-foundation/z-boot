@@ -443,6 +443,10 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
    （z-vector 第一个自包含的是 1.0.3/1.0.4，根 pom `<parent>` 计数 0）。这条只有 repo1-only 那遍
    复跑能抓到，本机 `~/.m2` 里恰好有那件快照就一路绿。所以每仓还有一遍必查：
    把自己依赖的每个内部件 `curl` 回来读 pom，`<parent>` 指向 `com.zifang` 的一律抬号。
+   **同一个坑的第二种死法**：`<project><version>` 写 `${revision}` 而仓里没有常开 flatten ⇒
+   发上去的 pom 上那行就是字面的 `${revision}`，使用方一样解析不出（`${project.version}` 反而没事，
+   它能被消费方自己的模型补出来，见上面步骤 3 的实测）。现算工具 `central_chain_probe.py` 把这类判成
+   `UNRESOLVED_OWN_VERSION`：fleet 那 163 格里目前 1 格 = `z-agent-proxy:0.1.0`，同样只能补 flatten 后抬号。
 
 **判据（两遍都要跑）**：
 - 复跑步骤 1 那条命令，与基线 diff ⇒ 允许出现的差异**只有你明确决定要改的那几行**
