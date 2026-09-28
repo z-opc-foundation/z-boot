@@ -410,8 +410,20 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
 **判据（两遍都要跑）**：
 - 复跑步骤 1 那条命令，与基线 diff ⇒ 允许出现的差异**只有你明确决定要改的那几行**
   （试点那一轮的完整 diff 是 1 行：`z-cache-common 1.3.4 → 1.3.6`）。
-- 干净机器复跑：`mvn -B -s <repo1-only settings> -Dmaven.repo.local=<空目录> clean test`。
+  提坐标两边用**同一个** `grep -oE 'g:a:jar:v'`，别一个 4 段一个 3 段——那样比出来的
+  "138 项变动"是格式差，不是版本漂。
+- 干净机器复跑：`mvn -B -s z-boot/_doc/003_script/repo1-settings.xml -Dmaven.repo.local=<空目录> clean package`。
+  用 `-s` 而不是 `-gs`：这样 `~/.m2/settings.xml` 整个作废，aliyun 镜像和 seenew 那个私有
+  `nexus` profile 都不会注入，只有 repo1 说话。
   这一步才是迁移的目的本身——本机 `~/.m2` 里有旧 parent 时，"换台机器构建不起来"是测不出来的。
+- ⚠ **基线那遍和迁移后那遍必须串行，不能并行**。z-vector 那一轮把 `HEAD~1` 与 `HEAD` 两条
+  `mvn clean package` 同时发出去，两边都在 `ZVectorConfigContractTest` 报**一模一样**的
+  5 条错（10 run / 1 failure / 4 errors），看着像"这仓本来就红"，其实是两边都要绑
+  **写死的** 6334（`ZVectorProperties` 的默认端口）互相踩掉；这台机器还常年跑着平台进程，
+  占着 6334/6379/8091/8888/9085/9090/12888/18180/20880。见到
+  `BindException: Address already in use` 先 `lsof -nP -iTCP:<port> -sTCP:LISTEN` 认人，
+  **别去 kill 在跑的服务**；要判"迁移有没有伤到测"，就在**两边同一条命令里排掉同一个测类**
+  （`-Dtest='!XxxTest' -Dsurefire.failIfNoSpecifiedTests=false`），再把这个测类单独串行跑一遍对比。
 - 顺手回读 6 份 `.flattened-pom.xml`：`<parent>` 应当是 0（对外仍是自包含 pom，发布形状没变），
   且不含 `com.zifang`、不含悬空 `${...}`。
 

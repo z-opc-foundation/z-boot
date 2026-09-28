@@ -1,0 +1,41 @@
+<settings>
+  <!-- 净室复跑用的 settings：只认 repo1。
+       必须用 `mvn -s`（不是 -gs）调用，这样 ~/.m2/settings.xml 整个不生效——
+       aliyun 镜像和 nexus profile（mvn.seenew.info，是个会缓存 404 的滞后镜像）都不再注入。
+       配 -Dmaven.repo.local=<空目录> 一起用，测的就是"换台机器还构不构建得动"。
+       mvn -B -s z-boot/_doc/003_script/repo1-settings.xml \
+           -Dmaven.repo.local=/tmp/m2-<仓>-clean clean package
+       snapshots 一律关掉：本组织对外发布件都该在 repo1 上取到，取不到就是没发出去。 -->
+  <profiles>
+    <profile>
+      <id>repo1only</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>repo1</id>
+          <url>https://repo1.maven.org/maven2</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>repo1-plugins</id>
+          <url>https://repo1.maven.org/maven2</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+</settings>
