@@ -494,6 +494,17 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
     （后者要去 central.sonatype.com 的门户点 Publish，插件没有触发发布的 API）。
     ⇒ **判"发没发成功"永远不能只看 deploy 的 rc**，要么点 `/deployments` 的 `deploymentState`
     （`central_deployment_status.py`），要么点 `repo1_census.py` 的可见性。
+    ⇒ 已经停在 VALIDATED 而 repo1 上**整号缺席**的那批，正确处置是**同号重发**（中央只禁覆盖已进索引的版本，
+    没公开的槽不是烧号）：实测四仓重发后新 deployment `54e4d511`/`5f941884`/`dc779a6f`/`bac502cf`
+    措辞全变 `Deployment will publish automatically`，几分钟内进 `PUBLISHING`。
+
+15. ⚠ **发中央的 mvn 命令必须带 `-Dgpg.passphrase="$CENTRAL_GPG_PASSPHRASE"`**。
+    z-boot 自己的发布件把 `--pinentry-mode loopback` 写死在 pom 的 `gpgArguments` 里（`pom.xml:139-158`），
+    但兄弟仓的 `central` profile 只声明插件、没有那三行 ⇒ maven-gpg-plugin 只有在**拿到** `gpg.passphrase`
+    时才自己补 loopback，两者都缺就退化成 `gpg: signing failed: No pinentry`。实测 2026-09-29 一次四仓
+    全在 3~4 秒 rc=1，而 flatten/source/javadoc 都已跑完，看起来像"上传坏了"，其实是签名第一步就死。
+    命令口径（走串行闸门，别绕）：
+    `bash _doc/003_script/mvn_gate.sh -B -f <repo>/pom.xml deploy -Pcentral -DskipTests -Dgpg.passphrase="$CENTRAL_GPG_PASSPHRASE"`
 
 **判据（两遍都要跑）**：
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
