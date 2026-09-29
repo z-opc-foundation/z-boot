@@ -142,7 +142,7 @@ def report(repo, quiet):
     if not flat:
         print(f"{os.path.basename(repo):<15} parent={pname:<16} 盘上无 .flattened-pom.xml ⇒ 没跑过构建，判不了（先 package 一遍）")
         return
-    rows, counts = [], {"NEW": 0, "SAME": 0, "BUMP": 0, "SHAPE": 0, "SKIP": 0, "UNREAD": 0, "UNPARSED": 0}
+    rows, counts = [], {"NEW": 0, "SAME": 0, "BUMP": 0, "SHAPE": 0, "SKIP": 0, "UNREAD": 0, "UNPARSED": 0, "REDUCED": 0}
     for f in flat:
         try:
             loc = ET.parse(f).getroot()
@@ -156,6 +156,20 @@ def report(repo, quiet):
         if a in ex:
             counts["SKIP"] += 1
             continue
+        # maven-shade-plugin 会在模块目录里落一份 dependency-reduced-pom.xml，并且**实际上传的就是它**
+        # （实测 z-mist 1.0.4 的部署日志：`Installing …/dependency-reduced-pom.xml to ~/.m2/…/z-mist-sdk-1.0.4.pom`）。
+        # 于是拿 .flattened-pom.xml 去比会看见"盘上有 z-mist-client/z-mist-web 两格、中央那份没有"⇒ 误判 BUMP，
+        # 而真相是 fat-jar 把这两件打进 jar 了、按口径要从对外 pom 里摘掉。误判的代价是真金白银：
+        # 按"有一格 BUMP 就整仓抬号"的规矩，z-mist 会被白白抬到 1.0.5。⇒ 有 reduced 文件就以它为准。
+        reduced = os.path.join(os.path.dirname(f), "dependency-reduced-pom.xml")
+        is_reduced = False
+        if os.path.isfile(reduced):
+            try:
+                loc = ET.parse(reduced).getroot()
+                is_reduced = True
+                counts["REDUCED"] += 1
+            except ET.ParseError:
+                pass
         url = f"{REPO1}/{g.replace('.', '/')}/{a}/{v}/{a}-{v}.pom"
         code, body = fetch(url)
         local_parent = has_parent(loc)
@@ -261,7 +275,7 @@ def main():
         if r:
             for k, v in r.items():
                 tot[k] = tot.get(k, 0) + v
-    print(f"\n合计 {len(targets)} 仓：" + " ".join(f"{k}={tot.get(k,0)}" for k in ("NEW", "SAME", "BUMP", "SHAPE", "SKIP", "UNREAD", "UNPARSED")))
+    print(f"\n合计 {len(targets)} 仓：" + " ".join(f"{k}={tot.get(k,0)}" for k in ("NEW", "SAME", "BUMP", "SHAPE", "SKIP", "UNREAD", "UNPARSED", "REDUCED")))
     if tot.get("BUMP"):
         print("⚠ 有件的对外 pom 与中央同号那份**面值不同** ⇒ 批量发布前逐仓决定抬号；不抬就发不出去。")
     if tot.get("SHAPE") and not tot.get("BUMP"):
