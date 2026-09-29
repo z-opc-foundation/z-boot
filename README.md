@@ -566,6 +566,34 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       （实测 z-oss-core / z-qa-core 那份 flattened 里还是 `z-boot-web-starter:1.0.19`、mtime 差一整个下午，
       与中央同号那份逐字相同 ⇒ 报 SAME，可盘上的 `<parent>` 早已是 1.0.21）。判账必须在构建矩阵跑完
       之后再跑一遍。
+    - 验证覆盖面（33 仓一个不漏，**级别按仓记清，别糊成"33 仓全净室"**）：`tierA_matrix.sh` 30 仓串行
+      `clean package -DskipTests` ⇒ 29 PASS + 那只 FAIL（`z-schedule` 修完 warm 复跑 43.2s SUCCESS，
+      4 模块全绿含 admin）；矩阵里故意排除的 3 仓各走别的一遍 —— `z-report` 走**净室**（空本地仓 +
+      repo1-only：`Downloading from repo1` 761 行 / `from central` 0 行，15:01 min BUILD SUCCESS），
+      `z-gw` 10s / `z-wf` 13s 走 warm。⚠ 净室那一遍在 `z-schedule` 上**中途卡死被停掉**：日志 14 分钟
+      零增长、`lsof` 里 6 条到 `127.0.0.1:7896` 的连接全在 `CLOSE_WAIT`（本机代理掉了，不是仓库损坏），
+      所以那一仓只有 warm 级别。
+    - ✅ **撤钉之后，中央已发布件里的旧面值会不会咬消费者 —— 对认 parent 的消费者：不会**。探针
+      只继承 `z-boot-parent:1.0.21`、只引中央已发布的 `z-config-core:1.0.9`（那份发布 pom 里
+      `z-boot-web-starter` / `z-boot-datasource-starter` 都**写死 1.0.19**），`dependency:tree` 实测
+      两支都落 **1.0.21**、整棵树 `1.0.19` **0 命中**（父链直接 DM 管得住传递件的面值）。
+      ⇒ 消费者"吃到地板那一刀"的条件**只有 `<parent>` 抬到 1.0.21 这一条**；已发布 pom 里那批 1.0.19
+      面值是**账目/对外契约债**（只有不认 parent 的外部消费者会按 pom 字面拿到没有 log4j2 排除的旧聚合件），
+      不是本组织身上的活雷 ⇒ 它**不该再作为"必须现在重发"的理由**，更不值得为它单独起一条
+      fleet 1.0.2 → parent 1.0.22 → 26 个自家件齐抬的梯子；攒进下一次真实发版批次一起做。
+    - ⚠ **真还在咬人的是根上那一格，不是聚合件转发**：同一棵探针树里
+      `z-util-core:1.0.14 → log4j-slf4j2-impl:2.26.1` 是**直接 compile 传递**，而
+      `spring-boot-starter-log4j2:2.7.18` 同时供 `log4j-slf4j-impl:2.25.4`。步骤 16 那一刀只断了
+      "聚合件替消费者转发"这一环，`z-util-{core,media,monitor,proxy,source}` 与 `z-gw-core` 自己的
+      发布 pom 仍带绑定 ⇒ 用默认 logback 的外部应用只要引 `z-util-core` 就还是会在 `SpringApplication`
+      初始化炸 `log4j-slf4j2-impl cannot be present with log4j-to-slf4j`。修它要动 z-util 的**发布形状**
+      （改 provided / 把绑定拆成单独件），是功能级发版 ⇒ 与地板那几处待裁口径同批做，别在消费者轮里顺手改。
+    - 抬号账（矩阵跑完后重测，不吃假阴）：`NEW=43 / SAME=168 / BUMP=37 / SHAPE=0 / REDUCED=1 / SKIP=4 /
+      UNREAD=0`，**15 个仓**至少一件 BUMP（绝大多数是 `z-util 1.0.13→1.0.14`、`z-graph 1.0.7→1.0.8`、
+      `z-vector 1.0.4→1.0.5` 这类兄弟仓随 fleet 抬的面值）；其中 **7 个仓、13 件**的对外 pom 里
+      `z-boot-*` 还写死 1.0.19（z-config / z-indexer / z-mist / z-msg / z-oss / z-qa / z-script）——
+      这 13 件就是"重发批次"的清单。⚠ 口径：这里数的是**件**，步骤 16 那句"8 仓 14 格"数的是**格子**，
+      两次测法不同（一次扫中央 pom 的依赖条目、一次比 flattened 与中央的差集），别互相抄。
 
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
   它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
