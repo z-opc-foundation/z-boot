@@ -594,6 +594,47 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       `z-boot-*` 还写死 1.0.19（z-config / z-indexer / z-mist / z-msg / z-oss / z-qa / z-script）——
       这 13 件就是"重发批次"的清单。⚠ 口径：这里数的是**件**，步骤 16 那句"8 仓 14 格"数的是**格子**，
       两次测法不同（一次扫中央 pom 的依赖条目、一次比 flattened 与中央的差集），别互相抄。
+18. **消费者轮收尾（2026-09-29 夜）：撤三处死钉 / 悬空键，并把"发布 pom 的兄弟依赖边"变成量具**。
+    三处都是现测出来的，不是猜的：
+    - `z-opcs` 仓根 5 条 `z-cache-*` / `z-mq-*` 直接 DM 条目 + `z-opcs-server` 2 条 starter 字面
+      `<version>1.0.2</version>` ⇒ **删掉，面值交继承来的 fleet（1.3.6 / 1.3.1）**。理由：repo1 现读的
+      `io.github.yuku123:z-cache:1.0.2` 与 `:z-mq:1.0.2` 都写着
+      `<parent>com.zifang:z-opc:1.0.0-SNAPSHOT</parent>`，中央从来没有那件 parent ⇒ 这台机器之外
+      **整条 1.0.2 线连 pom 都读不动**（原先那两条注释写的"解法在 z-cache 侧重发新号"这一判已下：
+      新号 1.3.6 / 1.3.1 早就在中央）。往下压到 1.0.2 是当时为了灭"半新半旧"选错了方向 ——
+      往上交给 fleet 才对。兼容性量过：本仓只用 `ZmqTemplate` 一支，四参 `syncSend(topic,tag,key,body)`
+      在 1.3.1 源码 `ZmqTemplate.java:83` 仍在，调用点 `EventPublisher.java:80` 走
+      `ObjectProvider.getIfAvailable()`（拿不到就降级进程内总线），z-cache 的类零引用（锁走
+      spring-data-redis 的 `StringRedisTemplate`）。
+    - `z-schedule/z-schedule-admin` 的 `z-util.version` **1.0.13 → 1.0.14**：同一 reactor 其余模块由
+      fleet 供 1.0.14，admin 留 1.0.13 就是仓内半新半旧，且它打的镜像吃旧字节码。键**必须留**
+      （步骤 17 那条 `spring-boot-starter-parent` 前置条件坑），这里只抬面值。
+    - `z-opc` 根的 `util.version=1.0.13` **死键删除**：那条注释说"全仓 13 个 pom 引用 ⇒ 删键当场悬空"，
+      而消费者轮已把引用点逐个清掉了 —— 现测全仓 pom **剥掉 XML 注释**后 `${util.version}` 引用 0 处
+      （⚠ 不剥注释会数出 5 处，全是注释里的字面文本；这就是步骤 17 那条"注释里有假 `<parent>` 块"
+      的同一个坑在 z-util 键名上的复发）。
+    - 验证：`mvn_gate.sh` 真跑 `clean package -DskipTests` ⇒ z-opcs 19.1s / z-schedule 25.4s，
+      两仓各 4 模块全 SUCCESS、6 处 `Compiling`（不是增量跳过）；`dependency:tree` 实测
+      z-opcs-server 全线 `z-cache-*:1.3.6` + `z-mq-*:1.3.1`、`1.0.2:` 0 命中，
+      z-schedule-admin 落 `z-util-core:1.0.14`；z-opc `validate` 全模块通过、z-agent 树落 `z-util-*:1.0.14`。
+      收尾后全仓再数一遍 z-util 键名：**只剩 `z-util.version` 一种**（fleet 与 z-schedule-admin 两处 DEF，
+      同值 1.0.14），`util.version` / `zutil.version` 归零 ⇒ 待办里那条"8 仓三种键名"结清。
+    - 新量具 `_doc/003_script/published_graph_audit.py`：查**发布 pom 里的兄弟依赖边**在中央取不取得动。
+      这一层另两个量具都覆盖不到 —— `central_chain_probe` 走 `<parent>` 链、`repo1_census` 数坐标在不在，
+      而"聚合件指向一个中央没有的 starter 版本"这种形状两边都不报，消费者却当场炸。
+      三处口径必须先做对，否则全是假报警（第一版就踩了前两条）：① 版本 `${...}` 与本仓 DM 的
+      **无版本依赖**要沿中央回读的父链补值（fleet/地板/自家根 pom 的 DM 都是合法供值处，
+      现测 z-ctc-core:1.0.2 那 9 条无版本依赖全由 `z-ctc:1.0.2 → z-boot-parent:1.0.19` 供上 ⇒ 不是缺陷），
+      链上也补不出才算 `NO_VERSION_UNMANAGED`；② `packaging=pom` 的聚合件**没有 jar 是正常形状**
+      （`z-util-all` / `z-util-serialize` 各被误报过一次）；③ repo1 有秒级超时（同一 jar 先 `JAR_0`
+      后 206）⇒ `code=0` 一律重试 3 次并单列，不判断链。
+      实测结论（238 个自家坐标 / 628 条内部边，去重后逐条点）：**使用点 361 条 0 断**、登记位 267 条
+      只有一格悬空 —— `z-ctc:1.0.2` 的 DM 登记了 `z-ctc-admin:1.0.2`，而 admin 是本仓
+      `<excludeArtifacts>` 刻意永不上中央的 ⇒ 消费者不去引它就无感，属账目形状不是活雷。
+      另有 **46 种"指向旧号"的边**（最大头：30 个发布件的 `z-util-core` 还写 1.0.13、
+      11/12 个写死 `z-boot-web-starter` / `z-boot-datasource-starter:1.0.19`、
+      `z-agent-kernel-*` 0.1.0/0.1.1 vs 现 0.2.1）⇒ 与步骤 17 那 13 件同一族，全是**账目债**，
+      攒进下一次发版批次，别为它单独起梯子。
 
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
   它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
