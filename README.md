@@ -521,10 +521,21 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       （config / gw / kb / msg / rpc / schedule / script / vector，逐路径见 `--repo` 版量具），只给这 8 个的
       兄弟件直属依赖加 `<exclusions>` —— 不在地板上下通配，那会重演步骤 5 那次 logback 全场消失。
       要 log4j2 后端请引 `z-boot-web-starter`（它经 `spring-boot-starter-log4j2` 正规地带绑定）。
-    净室前后逐坐标 diff 就这些：移除 `simpleclient:0.8.1` 与 `log4j-slf4j2-impl:2.25.4`、新增 4 格
-    prometheus tracer、其余只是自家 4 格 `1.0.20→1.0.21`。
+    净室前后逐坐标 diff 就这些（129 格 → 131 格）：移除 `simpleclient:0.8.1` 与
+    `log4j-slf4j2-impl:2.25.4`；新增的是 `simpleclient` 落 **0.15.0**（同坐标换号，不是多出来）
+    加三格 `simpleclient_tracer_{common,otel,otel_agent}:0.15.0`；其余只是自家 4 格 `1.0.20→1.0.21`。
+    ⚠ 比这两遍时**只认树行**（`g:a:jar:v:scope` 五段），别对整个 log 提四段：`mvn` 那句
+    `Artifact commons-logging:commons-logging:jar:1.2 is present in the local repository…` 是下载噪声，
+    按四段提会平白多出一格"新增依赖"，看着像这次改动带来的副作用（这次就先把它写进了账）。
     ⇒ **修在链上 ⇒ 消费者必须把 `<parent>` 抬到 1.0.21 才吃得到**；本组织那四格过渡性的
     `simpleclient(-common)=0.16.0` 直接 DM（z-gw / z-opc / z-indexer / z-lc）随之可撤。
+    发完在**空本地仓 + repo1-only** 那遍复测过（`-Dmaven.repo.local` 全新目录，日志里
+    `Downloading from repo1:` 257 行才算净室）：131 格里 `simpleclient` 落 **0.15.0**（含
+    `simpleclient_common` 与三格 tracer），`log4j-slf4j2-impl` **0 命中**，而正规绑定
+    `log4j-slf4j-impl:2.25.4` 经 `spring-boot-starter-log4j2:2.7.18` 照样到场 ⇒ 不是"把日志搞没了"。
+    Central 侧另外三处对账：`repo1_census` 29 坐标 / 98 件 / 缺件 0；`central_chain_probe` 175/175 读得通；
+    逐件比 1.0.20→1.0.21 的对外 `<dependency>` 格，8 个目标聚合件各多一条排除、
+    `z-boot-cache-starter` 那一类非目标件**一行不差**（正向对照），floor 两份发布 pom 只差那格 + 自身号。
 
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
   它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
