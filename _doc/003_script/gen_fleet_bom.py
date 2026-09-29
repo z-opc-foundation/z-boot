@@ -31,38 +31,60 @@ FOUNDATION = os.path.abspath(os.path.join(REPO_ROOT, ".."))
 BASE = "https://repo1.maven.org/maven2/io/github/yuku123/"
 
 # 兄弟仓 -> (fleet property 名, 目标版本)。property 名即 <z-xxx.version>。
+#
+# 【这一版把每一格抬到 repo1 现读的 max release】四特性审计（2026-09-29）实测 fleet:1.0.0 的 21 格
+# 相对中央**一格都不领先、全部落后**（P4 同版率 0/21），后果是"继承 parent 的仓拿到的兄弟版永远比
+# 中央旧一号"。抬每一格前先按 maven-metadata.xml 复量，别照抄下面这列。
+#
+# 【新增了四族】z-mist / z-qa / z-wf / z-indexer：前三族中央上早就有发布件（1.0.4 / 1.0.1 / 1.0.6，
+# maven-metadata 现读），却从来没进过 FAMILIES ⇒ 消费方 import fleet 也拿不到它们的版本格，
+# 只能各仓自己钉字面值（z-opc 那份 DM 里 z-mist-web 1.0.2、z-wf-starter 1.0.5 就是这么来的，
+# 而且一钉就是落后三版）。漏登记不是"这些仓不重要"，是清单手抄的账 —— 见本脚本顶部注释。
 FAMILIES = {
-    "z-config":  ("z-config",  "1.0.8"),
-    # 1.0.2 在 z-ctc 仓的 pom 里是 <revision>,但 repo1 实测 404(z-ctc-1.0.2.pom 与
-    # z-ctc-core-1.0.2.pom 都是;1.0.1 探活 206) ⇒ 那一版没落进 Central。fleet 只能钉实测存在的
-    # 版本,等 z-ctc 真发出 1.0.2/1.0.3 再重算抬格。
-    "z-ctc":     ("z-ctc",     "1.0.1"),
-    "z-cache":   ("z-cache",   "1.3.5"),
-    "z-mq":      ("z-mq",      "1.3.0"),
-    "z-gw":      ("z-gw",       "1.0.4"),
-    "z-kb":      ("z-kb",       "1.0.3"),
-    "z-vector":  ("z-vector",   "1.0.4"),
+    "z-config":  ("z-config",  "1.0.9"),
+    # 1.0.1 那格的旧注释（"repo1 实测 404 ⇒ 那一版没落进 Central"）已经不成立：
+    # z-ctc/maven-metadata.xml 现读 latest=release=1.0.2 ⇒ 1.0.19 批次里 z-ctc 真发出去了，
+    # 这一格跟着抬。（z-ctc-admin 仍不发布，见 SKIP_ARTIFACTS。）
+    "z-ctc":     ("z-ctc",     "1.0.2"),
+    "z-cache":   ("z-cache",   "1.3.6"),
+    "z-mq":      ("z-mq",      "1.3.1"),
+    "z-gw":      ("z-gw",      "1.0.5"),
+    # 1.0.5 是缺陷 2 的那一版：AutoConfiguration.imports 从伪 src 路径搬进各模块的
+    # src/main/resources，两个 spring.factories（正文只有裸类名、没有 key，加载器根本读不到）
+    # 换成 .imports ⇒ 本仓 starter 第一次能"引入即装配"。1.0.4 已在中央但内容是坏的，
+    # Central 不许覆盖，只能抬号重发。
+    "z-kb":      ("z-kb",       "1.0.5"),
+    "z-vector":  ("z-vector",   "1.0.5"),
     # 1.0.6 是"移植中途发出去的半成品"(api/protocol=52 而 core/bolt/starter=61),Central 不许覆盖
     # ⇒ 永久作废。1.0.7 是 Java 8 线的那一版,z-graph 仓 2026-09-28 发到 repo1(实测 200),已抬。
-    "z-graph":   ("z-graph",    "1.0.7"),
-    "z-rpc":     ("z-rpc",      "1.0.3"),
-    "z-oss":     ("z-oss",      "1.0.3"),
-    "z-schedule":("z-schedule", "1.0.5"),
-    "z-msg":     ("z-msg",      "1.2.1"),
-    "z-script":  ("z-script",   "1.0.0"),
-    "z-util":    ("z-util",     "1.0.13"),
-    "z-agent-kernel": ("z-agent-kernel", "0.1.1"),
-    "z-llm":     ("z-llm",      "0.1.6"),
-    "z-mcp":     ("z-mcp",      "0.1.2"),
-    "z-skill":   ("z-skill",    "0.2.0"),
-    "z-agent":   ("z-agent",    "0.1.2"),
-    "z-bot":     ("z-bot",      "0.1.0"),
-    "z-agent-proxy": ("z-agent-proxy", "0.1.0"),
+    "z-graph":   ("z-graph",    "1.0.8"),
+    "z-rpc":     ("z-rpc",      "1.0.4"),
+    "z-oss":     ("z-oss",      "1.0.4"),
+    "z-schedule":("z-schedule", "1.0.6"),
+    "z-msg":     ("z-msg",      "1.2.2"),
+    "z-script":  ("z-script",   "1.0.1"),
+    "z-util":    ("z-util",     "1.0.14"),
+    "z-agent-kernel": ("z-agent-kernel", "0.2.1"),
+    "z-llm":     ("z-llm",      "0.1.7"),
+    # 0.2.1 = 发布 pom 改 flattenMode oss 的那一版（缺陷 3：resolveCiFriendliesOnly 留下的
+    # <parent> + 无版本 dependency 要消费者自己走父链）。中央现存 0.2.0 是旧形状。
+    "z-mcp":     ("z-mcp",      "0.2.1"),
+    "z-skill":   ("z-skill",    "0.2.2"),
+    "z-agent":   ("z-agent",    "0.1.4"),
+    "z-bot":     ("z-bot",      "0.2.0"),
+    "z-agent-proxy": ("z-agent-proxy", "0.1.1"),
+    "z-mist":    ("z-mist",     "1.0.4"),
+    "z-qa":      ("z-qa",       "1.0.1"),
+    "z-wf":      ("z-wf",       "1.0.6"),
+    # 首发（缺陷 7：中央 404，因为本仓原来既没有 central profile 也没有仓级元数据，
+    # 根本没有发布通道）。z-indexer-server 是进程模块，见 SKIP_ARTIFACTS。
+    "z-indexer": ("z-indexer",  "1.0.0"),
 }
 # fleet 自己的版本号。⚠ 每次 --write 改了内容，这一格必须一起抬：Central 不许覆盖已发布
 # 版本，重发同号只会 400，而 400 之前你已经把一个"发不出去的 fleet"当权威用了一轮。
 # 落盘前脚本会回读 repo1 确认这一格还空着(见 main 的守卫)。
-FLEET_VERSION = "1.0.0"
+# 1.0.1：内容变了（21 格全部抬到 repo1 现读值 + 新增 4 族）⇒ 必须抬号。
+FLEET_VERSION = "1.0.1"
 
 # 这些仓不是"目录=模块"的形状,坐标由人工登记(单模块仓或 artifactId 与仓名不同)。
 EXTRA = {
@@ -73,9 +95,18 @@ EXTRA = {
 # z-msg-example 是示例工程(兄弟仓自己 install 过所以本地能查到),从来不上 Central —— 留在清单里
 # 只会永久挂一个 PENDING,把 --write 的守卫变成噪音。
 # z-ctc-admin 同理:2026-09-28 起被 z-ctc 的 excludeArtifacts 挡在 bundle 外,永不发布。
+# z-indexer-server 同理:可执行进程（application.yaml + 59MB 内置工具链），被 z-indexer 根 pom
+# central profile 的 excludeArtifacts 挡在 bundle 外，永不发布 —— 但 sibling_artifacts() 是扫
+# 目录的，不看 excludeArtifacts，不登记这里就会永久挂一个 MISSING 让守卫变成噪音。
+# z-script-admin / z-wf-admin 是 2026-09-29 现读到的两格：两个仓的根 pom 都写了 excludeArtifacts
+# (z-script/pom.xml:381、z-wf/pom.xml:294)，可 sibling_artifacts() 的目录扫描照旧把它们端上来，
+# 而 ~/.m2 里有上一轮 install 的旧件 ⇒ exists() 判 PENDING，直接把 --write 的守卫卡在"你钉了一个
+# 永不发布的坐标"上。MISSING 的那些 admin（z-config/z-rpc/z-schedule/z-mist）没人 install 过，
+# 天然被丢掉，所以只有这两格需要点名。
 # (其余 *-admin / *-examples 是 repo1 上 MISSING,天然被丢掉了 —— 写明白省得下回靠运气)
 SKIP_ARTIFACTS = {"z-gw-examples", "z-rpc-examples", "bootstrap-gennerate",
-                  "z-msg-example", "z-ctc-admin"}
+                  "z-msg-example", "z-ctc-admin", "z-indexer-server",
+                  "z-script-admin", "z-wf-admin"}
 
 
 def art_text(p):
