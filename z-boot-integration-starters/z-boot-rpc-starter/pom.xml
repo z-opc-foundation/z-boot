@@ -6,13 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.20</version>
+        <version>1.0.21</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-rpc-starter</artifactId>
-    <version>1.0.20</version>
+    <version>1.0.21</version>
     <name>z-boot-rpc-starter</name>
     <description>z-boot RPC 聚合 starter — 一行 import 集成 z-rpc 分布式 RPC 框架 (服务端 + 客户端)。</description>
     <licenses>
@@ -54,7 +54,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-dependencies</artifactId>
-                <version>1.0.19</version>
+                <version>1.0.20</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -74,6 +74,16 @@
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-rpc-spring-boot-starter</artifactId>
             
+            <exclusions>
+                <!-- 不替消费者把 log4j2 到 slf4j2 的绑定摊出去：z-util-core / z-gw-core 的发布 pom 里
+                     log4j-slf4j2-impl 是 compile 直接依赖，用默认 logback 的 Boot 应用在
+                     SpringApplication 初始化就抛 log4j-slf4j2-impl cannot be present with log4j-to-slf4j。
+                     要 log4j2 后端请引 z-boot-web-starter（它经 spring-boot-starter-log4j2 正规地带绑定）。 -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j2-impl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

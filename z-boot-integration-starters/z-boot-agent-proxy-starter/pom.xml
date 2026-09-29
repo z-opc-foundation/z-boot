@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.20</version>
+        <version>1.0.21</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-agent-proxy-starter</artifactId>
-    <version>1.0.20</version>
+    <version>1.0.21</version>
     <name>z-boot-agent-proxy-starter</name>
     <description>z-boot 三方 agent 适配代理聚合 starter — 一行 import 集成 z-agent-proxy (Cursor/Operator/Aider 三方协议 → kernel.agent.Agent)。</description>
 
@@ -54,7 +54,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-dependencies</artifactId>
-                <version>1.0.19</version>
+                <version>1.0.20</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

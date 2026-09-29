@@ -13,7 +13,7 @@
 
 
     <artifactId>z-boot-integration-starters</artifactId>
-    <version>1.0.20</version>
+    <version>1.0.21</version>
     <packaging>pom</packaging>
     <name>z-boot-integration-starters (Aggregator)</name>
     <description>

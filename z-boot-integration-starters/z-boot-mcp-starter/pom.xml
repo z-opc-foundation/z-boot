@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.20</version>
+        <version>1.0.21</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-mcp-starter</artifactId>
-    <version>1.0.20</version>
+    <version>1.0.21</version>
     <name>z-boot-mcp-starter</name>
     <description>z-boot MCP 平台聚合 starter — 一行 import 集成 z-mcp (Model Context Protocol 工具/服务注册中心)。</description>
 
@@ -54,7 +54,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-dependencies</artifactId>
-                <version>1.0.19</version>
+                <version>1.0.20</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

@@ -506,7 +506,26 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
     命令口径（走串行闸门，别绕）：
     `bash _doc/003_script/mvn_gate.sh -B -f <repo>/pom.xml deploy -Pcentral -DskipTests -Dgpg.passphrase="$CENTRAL_GPG_PASSPHRASE"`
 
-**判据（两遍都要跑）**：
+16. ⚠ **地板不再钉 `io.prometheus:simpleclient`，聚合件不再替消费者带 log4j2→slf4j2 绑定**
+    （2026-09-29，CEO 裁定「两件都进地板 1.0.20」；落点 = floor 1.0.20 + parent 1.0.21）。
+    两条都是"编译期隐身、启动期现形"，入口是一个只继承 parent 的最小外部工程（净室量出来的）：
+    - floor 1.0.19 里那条按坐标写的直接条目 `simpleclient=0.8.1` **顶穿**了 `simpleclient_common:0.15.0`
+      自己父 pom（`simpleclient_bom`）供的 0.15.0 ⇒ 树变成
+      `micrometer-registry-prometheus:1.9.17 → simpleclient_common:0.15.0 → simpleclient:0.8.1`，而
+      `PrometheusMeterRegistry` 引用的 `io.prometheus.client.exemplars.ExemplarSampler` 从 0.15.0 起才有
+      ⇒ 启动报 `NoClassDefFoundError`。删掉那格（连同 `<simpleclient.version>` 那条没人引用的属性）后
+      同一棵树落 **0.15.0** + 三个 `simpleclient_tracer_*`，不需要地板再钉。
+    - `z-util-core` / `z-gw-core` 的**发布 pom** 把 `log4j-slf4j2-impl` 写成 compile 直接依赖，顺着聚合件摊给
+      消费者；用默认 logback 的 Boot 应用在 `SpringApplication` 初始化就抛
+      `log4j-slf4j2-impl cannot be present with log4j-to-slf4j`。现测 20 个聚合件里**恰好 8 个**有这条路径
+      （config / gw / kb / msg / rpc / schedule / script / vector，逐路径见 `--repo` 版量具），只给这 8 个的
+      兄弟件直属依赖加 `<exclusions>` —— 不在地板上下通配，那会重演步骤 5 那次 logback 全场消失。
+      要 log4j2 后端请引 `z-boot-web-starter`（它经 `spring-boot-starter-log4j2` 正规地带绑定）。
+    净室前后逐坐标 diff 就这些：移除 `simpleclient:0.8.1` 与 `log4j-slf4j2-impl:2.25.4`、新增 4 格
+    prometheus tracer、其余只是自家 4 格 `1.0.20→1.0.21`。
+    ⇒ **修在链上 ⇒ 消费者必须把 `<parent>` 抬到 1.0.21 才吃得到**；本组织那四格过渡性的
+    `simpleclient(-common)=0.16.0` 直接 DM（z-gw / z-opc / z-indexer / z-lc）随之可撤。
+
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
   它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
   ranged 只拿 1 字节比不了内容）。中央 404 ⇒ `NEW`（首次发，不涉及抬号）；200 且逐字相同 ⇒ `SAME`；

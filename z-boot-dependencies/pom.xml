@@ -12,7 +12,7 @@
     
 
     <artifactId>z-boot-dependencies</artifactId>
-    <version>1.0.19</version>
+    <version>1.0.20</version>
     <packaging>pom</packaging>
     <name>z-boot-dependencies (BOM)</name>
     <description>
@@ -78,7 +78,6 @@
         <commons-pool2.version>2.10.0</commons-pool2.version>
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
         <nacos-client.version>2.0.4</nacos-client.version>
-        <simpleclient.version>0.8.1</simpleclient.version>
         <mysql.version>8.4.0</mysql.version>
         <druid.version>1.2.23</druid.version>
 
@@ -621,11 +620,15 @@
                 <artifactId>nacos-client</artifactId>
                 <version>2.0.4</version>
             </dependency>
-            <dependency>
-                <groupId>io.prometheus</groupId>
-                <artifactId>simpleclient</artifactId>
-                <version>0.8.1</version>
-            </dependency>
+            <!-- 2026-09-29 删掉这里的 io.prometheus:simpleclient=0.8.1 直接条目（连同 properties 里
+                 那条没人引用的 <simpleclient.version>）。它按坐标写死，会顶穿 import 进来的任何 BOM，
+                 把 micrometer-registry-prometheus 想要的 simpleclient 压到 0.8.1；而 Boot 2.7.18 的
+                 micrometer 1.9.17 里 PrometheusMeterRegistry 引用了 io.prometheus.client.exemplars.ExemplarSampler
+                 （simpleclient 0.15.0 起才有）⇒ 外部消费者编译期无话、启动期炸
+                 "NoClassDefFoundError: io/prometheus/client/exemplars/ExemplarSampler"。
+                 净室实测：floor 1.0.19 + parent 1.0.20 下 z-boot-gw-starter 的树给
+                 simpleclient_common:0.15.0 → simpleclient:0.8.1；删掉这格后同一棵树落 0.15.0。
+                 0.15.0 是 micrometer 自己那份 simpleclient_bom 供的，不需要地板再钉。 -->
 
             <dependency>
                 <groupId>org.apache.shardingsphere</groupId>
