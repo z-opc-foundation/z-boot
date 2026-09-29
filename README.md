@@ -527,8 +527,10 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
     ⚠ 比这两遍时**只认树行**（`g:a:jar:v:scope` 五段），别对整个 log 提四段：`mvn` 那句
     `Artifact commons-logging:commons-logging:jar:1.2 is present in the local repository…` 是下载噪声，
     按四段提会平白多出一格"新增依赖"，看着像这次改动带来的副作用（这次就先把它写进了账）。
-    ⇒ **修在链上 ⇒ 消费者必须把 `<parent>` 抬到 1.0.21 才吃得到**；本组织那四格过渡性的
-    `simpleclient(-common)=0.16.0` 直接 DM（z-gw / z-opc / z-indexer / z-lc）随之可撤。
+    ⇒ **修在链上 ⇒ 消费者必须把 `<parent>` 抬到 1.0.21 才吃得到**；本组织那批过渡性的
+    `simpleclient(-common)=0.16.0` 直接 DM 实测只有**三个仓、每仓两格**（z-gw / z-indexer / z-opc，
+    共 6 格；z-lc 只在注释里出现过"幻影 0.16.0"，仓里没有实格），2026-09-29 消费者轮随
+    `<parent>` 一起撤掉，解释这两格的注释同步改口成"当时为何写、现在为何撤"。
     发完在**空本地仓 + repo1-only** 那遍复测过（`-Dmaven.repo.local` 全新目录，日志里
     `Downloading from repo1:` 257 行才算净室）：131 格里 `simpleclient` 落 **0.15.0**（含
     `simpleclient_common` 与三格 tracer），`log4j-slf4j2-impl` **0 命中**，而正规绑定
@@ -536,6 +538,34 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
     Central 侧另外三处对账：`repo1_census` 29 坐标 / 98 件 / 缺件 0；`central_chain_probe` 175/175 读得通；
     逐件比 1.0.20→1.0.21 的对外 `<dependency>` 格，8 个目标聚合件各多一条排除、
     `z-boot-cache-starter` 那一类非目标件**一行不差**（正向对照），floor 两份发布 pom 只差那格 + 自身号。
+
+17. ✅ **消费者轮落地：33 仓 `<parent>` 齐到 1.0.21，过渡钉全撤，逐仓真构建收口**（2026-09-29）。
+    三把刀在 `_doc/003_script/` 里留档：`tierA_parent21.py`（抬 `<parent>` + 撤钉，写死每文件期望命中数，
+    全量算完才全量写）、`tierA_comments.py`（把解释被撤钉子的注释改口成"当时为何写、现在为何撤"，
+    ⚠ 这一把**故意匹配注释正文**，所以绝不能像上一把那样先把注释抹成空格）、`tierA_matrix.sh`（逐仓
+    `clean package -DskipTests` 串行矩阵，同一把 `mvn_gate.sh` 锁）。量到的现状：
+    - 覆盖面：**33 个仓**（口径 = 仓根 pom 剥掉注释后 `<parent>` 块指 `io.github.yuku123:z-boot-parent`；
+      注释里的假 `<parent>` 会被普通正则提走，必须先剥注释再提 —— 这一版脚本就为此返过一次工），
+      面值 33/33 都是 **1.0.21**，且 HEAD 与工作区同号（逐仓 `git show HEAD:pom.xml` 与盘上比过）。
+    - 撤钉实测：`simpleclient(-common)=0.16.0` 那批过渡条目**全组织 0 命中**（口径 = 逐 pom 剥注释后提
+      结构，不是 grep 整文件）；`z-report` 删掉 `<z-boot.version>1.0.17</z-boot.version>` 与它压的
+      `z-boot-web-starter` / `z-boot-datasource-starter` 两条直接 DM；`z-wf-admin` 的
+      `<z-boot-fleet.version>` 1.0.0 → 1.0.1。留下的 52 格字面 `z-boot-*` 面值**全部在 z-boot 自己的
+      BOM 管道里**（`z-boot-dependencies:1.0.20` × 23、`z-boot-fleet:1.0.1` × 23、兄弟聚合件 `1.0.21` × 6），
+      消费者仓**一格字面 z-boot 面值都没有** —— 这就是"消费入口只有一个"的可验形状。
+    - ⚠ **撤钉判据有一条硬前置：模块的 parent 链走不走得到 z-boot-parent**。矩阵里唯一那只 FAIL 就是它：
+      `z-schedule/z-schedule-admin` 的 `<parent>` 是 `spring-boot-starter-parent:2.7.12`（建仓就有的独立
+      应用形状，`maven.deploy.skip=true`、永不上 Central）⇒ 它**整条 z-boot-parent 的直接 DM 都不继承**，
+      删面值不是静默降号而是读 pom 阶段就退：`The project io.github.yuku123:z-schedule-admin:1.0.0 has 2
+      errors: 'dependencies.dependency.version' for io.github.yuku123:z-boot-web-starter:jar is missing`
+      （2 秒退出，编译都不开始）。⇒ 这一格只能**抬面值 1.0.17→1.0.21 并留着**，同形状还有一格
+      `z-opc/z-product/**`（没有 `<parent>`、也不在 z-opc `<modules>` 里的独立根 pom，`z-boot.version`
+      = `1.0.0-SNAPSHOT`）：矩阵永远测不到它，别把它当成漏删。
+    - ⚠ **`publish_bump_check` 的 `SAME` 会假阴，`BUMP` 不会**：它比的是盘上 `.flattened-pom.xml`，
+      而 flatten 是 build 阶段产物 ⇒ 抬号一刀之后不重新 `package` 就跑，读到的是**上一轮的旧对外形状**
+      （实测 z-oss-core / z-qa-core 那份 flattened 里还是 `z-boot-web-starter:1.0.19`、mtime 差一整个下午，
+      与中央同号那份逐字相同 ⇒ 报 SAME，可盘上的 `<parent>` 早已是 1.0.21）。判账必须在构建矩阵跑完
+      之后再跑一遍。
 
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
   它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
