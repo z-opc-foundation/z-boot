@@ -637,6 +637,43 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       11/12 个写死 `z-boot-web-starter` / `z-boot-datasource-starter:1.0.19`、
       `z-agent-kernel-*` 0.1.0/0.1.1 vs 现 0.2.1）⇒ 与步骤 17 那 13 件同一族，全是**账目债**，
       攒进下一次发版批次，别为它单独起梯子。
+19. **fleet 版本面归零 + 跨仓幻影 `com.zifang` 钉分三类（2026-09-29 夜第二轮）**。
+    - fleet 侧待办已被实测作废（原先记的是"21 格待抬"）：`z-boot-fleet` 现 **25** 个 `z-*.version` 格，
+      逐格比各仓仓根 `revision` 或 `</parent>` 后第一个 `version` ⇒ **25/25 同值，落后 0 格**；
+      这 25 格展开成的 **175 条依赖格逐件 ranged GET 全 206，404 零、超时零**；键名也只剩 `z-util.version`
+      一种。父链自身在中央可读（`z-boot:1.0.19` / `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.1` /
+      `z-boot-parent:1.0.21` 全 206）—— 根聚合件 `z-boot` 的 1.0.20/1.0.21 是 404，但**没有任何 pom 指它**
+      （子件都显式写 version、父链钉 1.0.19 那一格）⇒ 那不是缺陷，别去"补发根件"。
+      ⚠ 量具口径又修过一次：属性名要连 `.version` 一起捕获再比（fleet 里键是 `z-cache.version`、
+      引用是 `${z-cache.version}`，一边截一边不截就会每条都比成 no-op，"0 格落后"是这么假出来的）。
+      剩下唯一活口是地板四点未拍（mysql 的 Boot exclusion / mybatis-spring / objenesis / kotlin-stdlib），
+      那动的是 `z-boot-dependencies` 不是 fleet。
+    - 跨仓 `com.zifang:*` 依赖**只数真实依赖、不数 DM 登记**（按根 `modules` 树判可达，再按
+      `dependencyManagement` 区间分桶）：**15 处 / 8 种**，分三类才谈得上修：
+      ① **就地换坐标**（发布件同 FQN）—— `z-meta` 3 处 + `z-webide` 2 处的
+      `com.zifang:z-boot-{web,datasource}-starter`：clean-room A/B 实测，同一份不含 `com/zifang` 的
+      本地仓库里改前 `z-meta-core` / `z-tool-webide-core` 都红在
+      `Could not find artifact com.zifang:z-boot-datasource-starter:jar:1.0.0-SNAPSHOT`（webide 那份快照
+      自己的 parent 又是 `com.zifang:z-boot-starter:1.0.0-SNAPSHOT`，第三级幻影），改后
+      z-meta 三件 SUCCESS / z-webide root+6 件 SUCCESS(4:48)，版本一律交父链 `z-boot.version`=1.0.21 下发。
+      换之前先比 jar 类集：本仓对 `com.zifang.z.boot.*` 的 import 只有 `ModuleDataSourceTemplate` 一处
+      （两坐标同名），旧 datasource 独有的 `PageResult` 全仓零引用 ⇒ 换的是来源不是行为。
+      ② **不能换**（换坐标=改代码）—— `z-ext` 的 `com.zifang:z-rpc-core`：旧快照 jar 83 个 class，
+      中央 `io.github.yuku123:z-rpc-core:1.0.4` 只有 11 个，且 `ZRpcExtInvoker.java:3-5` 要的
+      `RpcClient/RpcRequest/RpcResponse` 三个**都不在**新件里 ⇒ 这是 z-rpc API 迁移，不是 pom 手术。
+      ③ **中央没有对应物** —— `z-opc` 6 处（`z-task-core`/`z-task-web`/`z-agent-mcp-core`/`-starter`）
+      + `z-lc` 3 处（`z-agent-llm-gateway-core`）：`z-task` 整仓 groupId 还停在 `com.zifang`，
+      `z-agent-mcp-*` / `z-agent-llm-gateway-*` 与已发布的 `z-mcp-*` / `z-llm-*` 是不同 artifact 名，
+      且全仓 jar 扫描确认 `com.zifang.z.agent.llm.gateway.adapter.UnifiedRequest` 只在幻影快照里存在 ⇒
+      要先进"整仓换 namespace + 首发中央"那一批（#31），别在消费者轮里顺手搬。
+      另有**仅 DM 登记**的 `com.zifang` 格（z-opc 35 种 / z-ext 2 / z-lc 1 / z-meta 3 / z-webide 2）
+      没有真实依赖，以及 `z-boot-integration-starters/z-tool-webide-spring-boot-starter/` 这个
+      **不在 20 个 `module` 里**的孤儿目录（pom 里 import `com.zifang:z-boot-dependencies`）⇒ 归 vendoring 那条待裁。
+    - clean-room 怎么开才算数：`cp -R` 一份**不含 `com/zifang` 树**的本地仓库（现成的
+      `/tmp/m2-zschedule-clean`），`-s repo1-settings.xml -Dmaven.repo.local=<那份>`，改前改后各跑一遍
+      `mvn_gate.sh … clean package -DskipTests`；比"用 `~/.m2` 绿"硬得多，因为幻影正是被 `~/.m2` 遮住的。
+      ⚠ 别把 `_frontend` 那一件算进结论：它要从 nodejs.org 下 node，本机那一跳能卡死，与坐标无关
+      （本轮就为它把 z-meta 的验证改成 `-pl z-meta-api,z-meta-core,z-meta-web`）。
 
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
   它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
