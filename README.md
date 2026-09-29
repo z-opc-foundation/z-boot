@@ -460,6 +460,41 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
     commons-logging 那一族实测**无差**（z-oss 2↔2、z-qa 2↔2、z-indexer 3↔3），所以今天只有 mysql 这条会咬人；
     但换 Boot 版本或者改地板 DM 时，这 14 条要重新数一遍。
 
+11. ⚠ **父链的 pluginManagement 把 surefire 压成 2.22.2，而 2.22.2 不替 JUnit 5 补引擎 ⇒ 测试面静默归零**。
+    z-ctc 实测：基线没钉 surefire（浮动到 3.5.4，3.x 自己会补 engine）跑 `12 tests`；接上 parent 后
+    **同样的依赖声明**跑 **0 个**，`BUILD SUCCESS` 照样绿。根因是本仓只有 `junit-jupiter-api`、
+    没有 `junit-jupiter-engine`。修法=显式加 engine（test 作用域、不写版本，地板 import 的 junit-bom 5.9.3 下发），
+    加完复测 12/12。**判据：逐模块比较基线与迁移后的测试数**（`--- surefire:x.y.z:test (default-test) @ 模块 ---`
+    后面的 `Results:` 那一段，别把"每类一行"和"模块小计"加在一起数），掉到 0 就是这条。
+    反例也有：z-task/z-ext/z-meta 两边每模块相等（前者根 pom 已声明 engine，后两者本来就 0 测），z-webide 151↔151、z-lc 4798↔4798。
+
+12. ⚠ **内部仓（`<parent>` 是 `com.zifang:z-opc` / `com.zifang:z-tool` 那一族幻影）摘掉幻影 parent，
+    会静默降档幻影里那些"直接 DM 条目"**。z-ext / z-task / z-meta 三仓在一小时内各自独立撞上同一格：
+    `org.yaml:snakeyaml` 从 **2.0 掉到 1.30**（那 2.0 只存在于幻影父 pom 的直接条目里，是 CVE-2022-1471 的修法；
+    地板根本不供 snakeyaml，Boot 2.7.18 的 BOM 供 1.30）。z-meta 另撞 `com.mysql:mysql-connector-j` 8.0.33
+    和它的 `protobuf-java` exclusion（就是步骤 10 那条）。**别等 tree diff 告诉你**：先把
+    `~/.m2/repository/com/zifang/z-opc/1.0.0-SNAPSHOT/z-opc-1.0.0-SNAPSHOT.pom`（58KB，**178 条直接 DM**、
+    1 条 floor:1.0.18 import、直接条目上 0 exclusions）里每一格坐标+版本 dump 出来，与新链实解析值逐格比，
+    凡"新链不供"或"新链更低"的都按坐标写直接条目 + 一行实测理由（z-lc 的写法见它根 pom DM 里那段逐格判词：
+    供不到本仓树的格**明确写"不写"**，比默默补齐更好读）。
+
+13. ⚠ **本仓不写 `name/description/url/developers/scm`，flatten `oss` 会把父链的元数据印进每一份发出去的 pom**，
+    而 Central 会因缺 `<name>` 把**整批**判 FAILED（实测 deployment `cafb3434`：`z-ctc-admin@1.0.2` 三条 errors =
+    `Project name is missing` + `Dependency management dependency version information is missing for
+    mybatis-plus-core/extension`）。症状是"读回来的 `<description>` 是 z-boot 那句、`<url>` 变成
+    `…/z-boot/z-boot-dependencies/z-boot-parent/z-ext/z-ext-core` 这种拼出来的路径"（z-ext 与 z-meta 都现测到）。
+    ⇒ 首发/抬号前先确认仓里自有元数据齐，且 DM 里每一条都带版本。
+
+14. ⚠ **发中央必须在 `central` profile 的插件配置里写 `<autoPublish>true</autoPublish>`**。
+    插件默认 `autoPublish=false`：那时 `mvn deploy` 一样是 rc=0、一样打 `Uploaded bundle successfully`、
+    一样 `BUILD SUCCESS`，但 deployment 只会停在 `VALIDATED`、`errors=[]`，构件**永远不公开**。
+    实测 2026-09-29 那批：25 仓里 4 仓（z-agent `731e7f60` / z-agent-proxy `3af5b104` / z-bot `9ea83397` /
+    z-mcp `6baf402c`）没写这行，上传后 40+ 分钟仍停在 VALIDATED，而写了的 21 仓都在十几分钟内 PUBLISHED。
+    日志里的措辞当场就能分辨：`Deployment will publish automatically` ↔ `Deployment will require manual publishing`
+    （后者要去 central.sonatype.com 的门户点 Publish，插件没有触发发布的 API）。
+    ⇒ **判"发没发成功"永远不能只看 deploy 的 rc**，要么点 `/deployments` 的 `deploymentState`
+    （`central_deployment_status.py`），要么点 `repo1_census.py` 的可见性。
+
 **判据（两遍都要跑）**：
 - **抬号判据（迁移过的仓必查，发中央之前）**：`python3 _doc/003_script/publish_bump_check.py`。
   它把盘上每件 `.flattened-pom.xml` 与**中央同号那份全文 pom** 逐坐标比依赖集合（不是 ranged GET，
@@ -468,6 +503,9 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
   （26 个已迁仓）：`NEW=35 / SAME=78 / BUMP=60 / SHAPE=16 / SKIP=3 / UNREAD=0`，16 仓至少一件 BUMP，
   最典型的一格就是 `z-util-core 1.0.10→1.0.13`（正是我们要的升级，但正因为升了才不能占着旧号）。
   z-util 这类 `resolveCiFriendliesOnly` 的仓要盯 `DM…格` 那一段：聚合根 pom 的版本表也是对外契约。
+  **`REDUCED` 不是债**：用 maven-shade-plugin 的仓（实测 z-mist-sdk）实际上传的是 `dependency-reduced-pom.xml`
+  而不是 `.flattened-pom.xml`（shade 把打进 fat-jar 的自家依赖从对外 pom 里摘了），所以"盘上有两格、中央没有"
+  是设计而非漂移 —— 脚本同目录见到 reduced 文件就以它为准并单列 `REDUCED=`，否则会白抬一版。
   **`BUMP` 与 `SHAPE` 是两件事，别合并成一个数字**：`SHAPE` 只报"叶子 pom 带不带 `<parent>` 变了"
   （中央那份带 parent、本地 flatten 成自包含 ⇒ 依赖行从"由 parent 的 DM 补版本"变成写死），
   它不是面值漂。SHAPE 那一版同样发不动，但它的解法有**两条**（抬号 / 把 flatten 改回中央那一版的形状），
