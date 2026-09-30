@@ -1,73 +1,132 @@
+# 发布 z-boot 到 Maven Central。
+#
+# 为什么不再有"从标签解析 ${revision} 再传给 mvn"那一步：1.0.19 起 z-boot 是**按文件夹独立成工程**
+# 的拓扑 —— 根 pom 既没有 ${revision} 也没有 <modules>，六个文件夹各带自己的字面版本（2026-09-30 实测：
+# root z-boot 1.0.19 / z-boot-dependencies 1.0.20 / z-boot-fleet 1.0.1 / z-boot-parent 1.0.21 /
+# z-boot-starter 1.0.21 / z-boot-integration-starters 1.0.21）。一个标签说不出六个版本，
+# 而旧写法 `mvn -B deploy -Pcentral -Drevision=…` 在根 pom 上跑，只会发 root 那一条坐标
+# （当版已上线时是 400），其余五个文件夹一件都不发, 却照样报绿 —— 那是最坏的一种"发布成功"。
+#
+# 所以现在这个 workflow 只做一件事：调仓内的 _doc/003_script/deploy_maven_center.sh，
+# 版本来自 pom，发布顺序 / 同版本已上线就跳过 / root 与 fleet 未发时自动前置 / bundle 演练 +
+# 逐坐标点件，全都由脚本自己判（重复实现一遍等于给未来留第二套口径）。
+#
+# 两道闸在本 workflow 里是**强制**的，顺序不能换：
+#   1) central_pom_scan.py —— 静态点 B/C/D/E 四类 pom 缺陷（Central 整批判 FAILED 的那几类）；
+#   2) publish --bundle    —— 按发布态打包但把上传目标指到不可达域名，逐坐标点 4 件套。
+# 真上传要显式输入 confirm=publish，否则只跑闸 + 演练。
+#
+# 需要的 repository secrets（Settings → Secrets and variables → Actions）：
+#   CENTRAL_USERNAME / CENTRAL_TOKEN   Central Portal 的 User Token
+#   GPG_PRIVATE_KEY                    ASCII-armored：gpg --armor --export-secret-keys <KEYID>
+#   GPG_PASSPHRASE                     本仓那把 key 的口令（无口令就留空串）
+# 口令绝不进 argv：本地走 -Dgpg.passphraseEnvName（脚本里），CI 走 setup-java 写进 settings.xml 的
+# gpg.passphrase 那一段。两者都不是把口令打印出来 —— 同一个 runner 上任何一步 ps 都读得到 argv。
+
 name: publish-maven-central
 
 on:
-  push:
-    tags:
-      - 'v*'   # 任何 v* 标签触发: v1.0.11, v1.0.12 ...
-  workflow_dispatch:    # 手动触发(可选)
-
-permissions:
-  contents: read
-  id-token: write       # OIDC token for Sonatype Central publishing
+  workflow_dispatch:
+    inputs:
+      folders:
+        description: '要发的文件夹短名，空格分隔（root deps fleet parent starter integration）；留空=按序全发'
+        required: false
+        default: ''
+      confirm:
+        description: '填 publish 才真上传；其他值只跑两道闸 + bundle 演练（不可撤销，慎填）'
+        required: false
+        default: 'rehearsal'
+  pull_request:
+    paths:
+      - '**/pom.xml'
+      - '.github/workflows/publish-central.yml'
+      - '_doc/003_script/central_pom_scan.py'
 
 env:
   JAVA_VERSION: '8'
 
-jobs:
-  publish:
-    name: Build + Sign + Deploy to Maven Central
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+permissions:
+  contents: read
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+jobs:
+  gate:
+    name: 静态点伤（B/C/D/E）
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: pom 缺陷扫描
+        run: python3 _doc/003_script/central_pom_scan.py --path "$PWD" -v
+
+  publish:
+    name: 按文件夹发布
+    needs: gate
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # 六个文件夹逐个 mvn + 签名 + 打包，Central 侧 waitUntil=uploaded 最长 30 分钟；
+    # 不给上限的话卡死的上传会一路烧满 Actions 默认的 6 小时。
+    timeout-minutes: 90
+    # setup-java 往 settings.xml 里写的是 ${env.CENTRAL_USERNAME} / ${env.CENTRAL_TOKEN} /
+    # ${env.GPG_PASSPHRASE} 三个**占位**（它刻意不把明文落盘），所以这三个变量必须在真正跑 mvn
+    # 的那些步骤里也存在。挂在 setup-java 那一步的 env: 上只活那一步 —— deploy 时读不到，
+    # 表现是"凭证明明配了却 401/签名等 pinentry"。故提到作业级。
+    env:
+      CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+      CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }} + Central credentials
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
+          # 对应 central profile 里 <publishingServerId>central</publishingServerId>
+          server-id: central
+          server-username-env-var: CENTRAL_USERNAME
+          server-password-env-var: CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase-env-var: GPG_PASSPHRASE
 
-      - name: Import GPG private key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-
-      - name: Resolve revision from tag
-        id: rev
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          VER="${TAG#v}"
-          echo "revision=${VER}" >> "$GITHUB_OUTPUT"
-          echo "Resolved revision from tag ${TAG}: ${VER}"
-
-      - name: Set Maven Central Token (User Token from https://central.sonatype.com/account)
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<EOF
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
-            <servers>
-              <server>
-                <id>central</id>
-                <username>${CENTRAL_USERNAME}</username>
-                <password>${CENTRAL_TOKEN}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-          echo "✅ ~/.m2/settings.xml 已生成"
+      - name: 归一化 folders 入参
+        id: want
+        # 只放行脚本认的短名。输入一律经 env 传给 bash，不用 ${{ }} 直接插进 run: ——
+        # 那一步是模板替换在 shell 之前，拼出来的东西会被当成 shell 语法执行。
         env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-
-      - name: mvn deploy -Pcentral
+          W: ${{ github.event.inputs.folders }}
         run: |
-          mvn -B deploy -Pcentral -DskipTests \
-              -Dgpg.passphrase="${{ secrets.GPG_PASSPHRASE }}" \
-              -Drevision="${{ steps.rev.outputs.revision }}"
+          for t in $W; do
+            case "$t" in
+              root|. |deps|dependencies|fleet|parent|starter|starters|integration|it) ;;
+              *) echo "::error::folders 里有不认识的短名 '$t'（可用：root deps fleet parent starter integration）"; exit 1 ;;
+            esac
+          done
+          echo "folders=$W" >> "$GITHUB_OUTPUT"
 
-      - name: Verify deployment
-        if: success()
+      - name: bundle 演练（按发布态打包，不上传）+ 逐坐标点件
+        env:
+          FOLDERS: ${{ steps.want.outputs.folders }}
+        run: bash _doc/003_script/deploy_maven_center.sh publish --bundle $FOLDERS
+
+      - name: 真发布（confirm=publish 才跑）
+        if: github.event.inputs.confirm == 'publish'
+        env:
+          FOLDERS: ${{ steps.want.outputs.folders }}
+        run: bash _doc/003_script/deploy_maven_center.sh publish $FOLDERS
+
+      - name: 发布后回执与复验口径
+        if: always()
         run: |
-          echo "✅ Published. Verify at: https://central.sonatype.com/artifact/io.github.yuku123/z-boot-msg-starter"
+          echo "判发布只认 repo1 回读（ranged GET，HEAD 不给 200）："
+          echo "  curl -s -o /dev/null -w '%{http_code}\\n' -r 0-0 \\"
+          echo "    https://repo1.maven.org/maven2/io/github/yuku123/<artifact>/<version>/<artifact>-<version>.pom"
+          echo "上传成功 ≠ 收下 —— deployments 清单有一小时量级滞后，逐件看 deploymentState / deploymentComponents[].errors："
+          echo "  curl -u \"\$CENTRAL_USERNAME:\$CENTRAL_TOKEN\" 'https://central.sonatype.com/api/v1/publisher/deployments?page=1&size=5'"
+          echo "控制台：https://central.sonatype.com/publishing/deployments"
+
+      - name: 失败时把脚本日志贴出来
+        if: failure()
+        run: for f in /tmp/z-boot-deploy-*.log; do echo "===== $f"; tail -40 "$f"; done

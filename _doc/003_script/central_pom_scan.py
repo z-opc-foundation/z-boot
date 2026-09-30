@@ -23,6 +23,7 @@ central_pom_scan.py — 上传前静态点伤：把 Central 会"整批判 FAILED
   python3 central_pom_scan.py                 # 扫 ../ 下所有带 central profile 的仓
   python3 central_pom_scan.py --repo z-ctc    # 只扫一个仓
   python3 central_pom_scan.py --base /path    # 换 foundation 根（默认取本脚本所在仓的 ../）
+  python3 central_pom_scan.py --path "$PWD"   # 只点这一个仓根（CI 里没有兄弟仓时用）
 退出码：0=无缺陷，1=有缺陷，2=扫描本身失败（pom 解析不了）。
 """
 import os
@@ -206,8 +207,27 @@ def main():
     # 本脚本住在 <foundation>/z-boot/_doc/003_script/ ⇒ foundation 是 up 三层
     ap.add_argument('--base', default=os.path.dirname(os.path.dirname(os.path.dirname(here))))
     ap.add_argument('--repo', default=None)
+    # CI 里只 checkout 了本仓，没有"foundation 根"可上溯 ⇒ 直接点仓根
+    ap.add_argument('--path', default=None, help='只扫这一个仓根（CI/单仓场景）')
     ap.add_argument('-v', '--verbose', action='store_true')
     args = ap.parse_args()
+
+    if args.path:
+        if not os.path.isfile(os.path.join(args.path, 'pom.xml')):
+            print('找不到仓根 pom：%s' % os.path.join(args.path, 'pom.xml'), file=sys.stderr)
+            return 2
+        try:
+            res = scan_repo(args.path, args.verbose)
+        except Exception as ex:
+            print('扫描失败: %s' % ex, file=sys.stderr)
+            return 2
+        if res is None:
+            print('该仓没有 central profile / central-publishing 插件 —— 不判缺陷')
+            return 0
+        for line in res:
+            print('    ' + line)
+        print('\n带 central profile 的仓: 1  有缺陷的仓: %d' % (1 if res else 0))
+        return 1 if res else 0
 
     if not os.path.isdir(args.base):
         print('找不到 foundation 根：%s' % args.base, file=sys.stderr)

@@ -57,15 +57,20 @@ grep -q "<artifactId>z-boot</artifactId>" pom.xml || die "$PWD 不是 z-boot 根
 
 # ---------- 加载 .env ----------
 load_env() {
-    [[ -f .env ]] || die ".env 不存在。首次发布请先跑：bash _doc/003_script/deploy_maven_center.sh gpg-init"
-    # shellcheck disable=SC1091
-    set -a; source .env; set +a
+    # CI 里没有 .env（凭证由 secrets 注入环境变量），本地才回落到 .env 文件
+    if [[ -f .env ]]; then
+        # shellcheck disable=SC1091
+        set -a; source .env; set +a
+    elif [[ -n "${CENTRAL_USERNAME:-}" && -n "${CENTRAL_TOKEN:-}" ]]; then
+        warn "没有 .env，用环境变量里的 CENTRAL_USERNAME/CENTRAL_TOKEN（CI 路径）"
+    else
+        die ".env 不存在且环境里没有 CENTRAL_USERNAME/CENTRAL_TOKEN。本地首次发布先跑：bash _doc/003_script/deploy_maven_center.sh gpg-init"
+    fi
 
-    [[ -n "${CENTRAL_USERNAME:-}"    ]] || die ".env 缺 CENTRAL_USERNAME"
-    [[ -n "${CENTRAL_TOKEN:-}"       ]] || die ".env 缺 CENTRAL_TOKEN"
-    [[ -n "${CENTRAL_GPG_PASSPHRASE:-}" ]] || die ".env 缺 CENTRAL_GPG_PASSPHRASE（先跑 gpg-init）"
+    [[ -n "${CENTRAL_USERNAME:-}"    ]] || die "缺 CENTRAL_USERNAME（.env 或环境变量）"
+    [[ -n "${CENTRAL_TOKEN:-}"       ]] || die "缺 CENTRAL_TOKEN（.env 或环境变量）"
 
-    export CENTRAL_USERNAME CENTRAL_TOKEN CENTRAL_GPG_PASSPHRASE
+    export CENTRAL_USERNAME CENTRAL_TOKEN
 
     # 密钥环在本仓的 .gnupg 里（~/.gnupg 实测 0 把私钥，不导就直接 gpg 签名失败）
     [[ -d "$PWD/.gnupg" ]] && export GNUPGHOME="$PWD/.gnupg"
@@ -81,9 +86,8 @@ check_deps() {
 
     if [[ -d ./.gnupg ]]; then
         export GNUPGHOME="$PWD/.gnupg"
-    else
-        warn "未找到 ./.gnupg，请先跑 bash _doc/003_script/deploy_maven_center.sh gpg-init"
-        exit 1
+    elif ! gpg --list-secret-keys --with-colons 2>/dev/null | grep -q '^sec:'; then
+        die "既没有 ./.gnupg，当前密钥环里也没有一把私钥：本地先跑 bash _doc/003_script/deploy_maven_center.sh gpg-init；CI 里由 actions/setup-java 的 gpg-private-key 注入"
     fi
 }
 
@@ -286,6 +290,17 @@ cmd_publish() {
     # （excludeArtifacts 有没有生效、pom-only 模块少没少件，肉眼在 verify 里都看不见）。
     local extra=()
     [[ $bundle == 1 ]] && extra=(-DcentralBaseUrl=https://central-rehearsal.invalid)
+    # 签名口令绝不进 argv：mvn 拉起的是 java 进程，命令行在同机 `ps` 上是明文（z-mcp 的 CI 注释
+    # 里点名过这个写法，Actions 官方也一样要求）。本地只把"环境变量名"交给 maven-gpg-plugin 的
+    # gpg.passphraseEnvName（3.2.0+，本仓钉 3.2.7）；CI 里没有 CENTRAL_GPG_PASSPHRASE，口令由
+    # actions/setup-java 写进 settings.xml 的 gpg.passphrase，此时这里一个 -D 都不加。
+    local gpgargs=()
+    if [[ -n "${CENTRAL_GPG_PASSPHRASE:-}" ]]; then
+        export CENTRAL_GPG_PASSPHRASE
+        gpgargs=(-Dgpg.passphraseEnvName=CENTRAL_GPG_PASSPHRASE)
+    elif [[ -z "${GPG_PASSPHRASE:-}" ]] && ! grep -q "gpg.passphrase" ~/.m2/settings.xml 2>/dev/null; then
+        die "签名口令无着落：.env 没有 CENTRAL_GPG_PASSPHRASE，环境里没有 GPG_PASSPHRASE，~/.m2/settings.xml 里也没有 gpg.passphrase"
+    fi
     for f in "${want[@]}"; do
         [[ -f "$f/pom.xml" ]] || die "找不到 $f/pom.xml（可用名：root deps fleet parent starter integration）"
         # 根文件夹是 "."，basename 出来是一个点，日志名会成 z-boot-deploy-..log
@@ -299,7 +314,7 @@ cmd_publish() {
         mvn -B -U -Dmaven.legacyLocalRepo=true "$goal" \
             -Pcentral \
             -DskipTests \
-            -Dgpg.passphrase="$CENTRAL_GPG_PASSPHRASE" \
+            ${gpgargs[@]+"${gpgargs[@]}"} \
             ${extra[@]+"${extra[@]}"} \
             -f "$f/pom.xml" > "$logf" 2>&1 || true
         if [[ $bundle == 1 ]]; then
