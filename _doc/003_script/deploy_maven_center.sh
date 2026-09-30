@@ -48,7 +48,9 @@ print_help() {
 }
 
 # ---------- 切到 z-boot 根目录(本脚本住在 _doc/003_script/,别在原地跑 mvn) ----------
-cd "$(dirname "$0")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
 while [[ ! -f pom.xml && "$PWD" != "/" ]]; do cd ..; done
 [[ -f pom.xml ]] || die "找不到 z-boot 根 pom(应在 z-boot 仓库内运行此脚本)"
 grep -q "<artifactId>z-boot</artifactId>" pom.xml || die "$PWD 不是 z-boot 根目录"

@@ -591,7 +591,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
     `z-boot-cache-starter` 那一类非目标件**一行不差**（正向对照），floor 两份发布 pom 只差那格 + 自身号。
 
 17. ✅ **消费者轮落地：33 仓 `<parent>` 齐到 1.0.21，过渡钉全撤，逐仓真构建收口**（2026-09-29）。
-    三把刀在 `_doc/003_script/` 里留档：`tierA_parent21.py`（抬 `<parent>` + 撤钉，写死每文件期望命中数，
+    三把刀在 [`_doc/003_script/`](_doc/003_script/) 里留档：`tierA_parent21.py`（抬 `<parent>` + 撤钉，写死每文件期望命中数，
     全量算完才全量写）、`tierA_comments.py`（把解释被撤钉子的注释改口成"当时为何写、现在为何撤"，
     ⚠ 这一把**故意匹配注释正文**，所以绝不能像上一把那样先把注释抹成空格）、`tierA_matrix.sh`（逐仓
     `clean package -DskipTests` 串行矩阵，同一把 `mvn_gate.sh` 锁）。量到的现状：
@@ -1478,9 +1478,9 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
 
 ## 文档目录
 
-本仓文档收口在 `_doc/` 下（`find _doc -mindepth 1` 现测：20 个文件 —— `001_arch/` 1 个 + `003_script/` 19 个；
-`002_deploy/` 与 `004_skill/` **目前为空目录**，如实登记 —— 本仓是版本权威 + starter 聚合层，
-不启进程、没有 Dockerfile / compose / k8s，所以部署槽位是空的）。
+本仓文档收口在 `_doc/` 下（`find _doc -mindepth 1 -type f` 现测：21 个文件 —— `001_arch/` 1 个 + `003_script/` 20 个；
+`002_deploy/` 与 `004_skill/` **槽位不建**（`002_项目文档收口规范` 2026-09-30 版：桶按需建，未用不建目录）——
+本仓是版本权威 + starter 聚合层，不启进程、没有 Dockerfile / compose / k8s，所以部署与 skill 槽位是空的）。
 
 - [`_doc/001_arch/`](_doc/001_arch/) — 架构与协作约定：
   - [`AGENTS.md`](_doc/001_arch/AGENTS.md) — AI 协作入口：两层版本权威（地板 / fleet）+ `z-boot-parent`
@@ -1488,7 +1488,11 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
     flatten 模式为何不能是 `oss`）、发布口径。⚠ 它开头那两个受管项读数（156 / 163）已过期，现值以下面
     README「BOM」一节为准：**地板 155 条 / fleet 175 条**。
 
-- [`_doc/003_script/`](_doc/003_script/) — 发布与量具（本仓的"可执行判据"都在这里，共 19 个文件）：
+- [`_doc/003_script/`](_doc/003_script/) — 发布与量具（本仓的"可执行判据"都在这里，共 20 个文件）：
+  - [`doc_audit.py`](_doc/003_script/doc_audit.py) — 全组织文档收口闸门：扫 35 个 z-* 仓的仓根散件（R1）、
+    `_doc/` 根散件（R2）、非编号表目录（R3）、空桶（R4）、README 断链（R5）、脚本仓根定位（R6）。
+    `python3 _doc/003_script/doc_audit.py` 有违规则退出 1；依据是
+    [`002_项目文档收口规范`](../z-opc-foundation-lead/008_组织规范/002_项目文档收口规范.md)。
   - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 一键发布主尺：`publish [folder...]`
     按文件夹发（短名 root / deps / fleet / parent / starter / integration，当版 parent 未上线时自动前置）、
     `--dry` 只到 verify、`--bundle` 打包照打但掐死上传、`bundle <zip>` 逐坐标点四件齐、`gpg-init`、`readme` 摘要
