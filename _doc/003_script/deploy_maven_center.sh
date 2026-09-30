@@ -12,14 +12,14 @@
 #   help       显示此帮助
 #
 # 用法：
-#   ./deploy_maven_center.sh                       # 全发（按序）
-#   ./deploy_maven_center.sh publish fleet          # 只发兄弟仓版本权威（抬一格 L3 版本的日常动作）
-#   ./deploy_maven_center.sh publish --dry fleet    # 只 mvn verify：编译+sources+javadoc+gpg 签名，不打包不上传
-#   ./deploy_maven_center.sh publish --bundle fleet # bundle 演练：按发布态打包，只把上传掐死，逐坐标点件
-#   ./deploy_maven_center.sh bundle /tmp/xxx/central-publishing/central-bundle.zip  # 点别的仓的包
-#   ./deploy_maven_center.sh gpg-init          # 首次必须先跑
-#   ./deploy_maven_center.sh verify
-#   ./deploy_maven_center.sh readme            # 看发布指引摘要
+#   bash _doc/003_script/deploy_maven_center.sh                       # 全发（按序）
+#   bash _doc/003_script/deploy_maven_center.sh publish fleet          # 只发兄弟仓版本权威（抬一格 L3 版本的日常动作）
+#   bash _doc/003_script/deploy_maven_center.sh publish --dry fleet    # 只 mvn verify：编译+sources+javadoc+gpg 签名，不打包不上传
+#   bash _doc/003_script/deploy_maven_center.sh publish --bundle fleet # bundle 演练：按发布态打包，只把上传掐死，逐坐标点件
+#   bash _doc/003_script/deploy_maven_center.sh bundle /tmp/xxx/central-publishing/central-bundle.zip  # 点别的仓的包
+#   bash _doc/003_script/deploy_maven_center.sh gpg-init          # 首次必须先跑
+#   bash _doc/003_script/deploy_maven_center.sh verify
+#   bash _doc/003_script/deploy_maven_center.sh readme            # 看发布指引摘要
 #
 # 设计原则：
 #   - 所有凭证从 ./.env 读，.env 已被 .gitignore 排除
@@ -57,7 +57,7 @@ grep -q "<artifactId>z-boot</artifactId>" pom.xml || die "$PWD 不是 z-boot 根
 
 # ---------- 加载 .env ----------
 load_env() {
-    [[ -f .env ]] || die ".env 不存在。首次发布请先跑：./deploy_maven_center.sh gpg-init"
+    [[ -f .env ]] || die ".env 不存在。首次发布请先跑：bash _doc/003_script/deploy_maven_center.sh gpg-init"
     # shellcheck disable=SC1091
     set -a; source .env; set +a
 
@@ -82,7 +82,7 @@ check_deps() {
     if [[ -d ./.gnupg ]]; then
         export GNUPGHOME="$PWD/.gnupg"
     else
-        warn "未找到 ./.gnupg，请先跑 ./deploy_maven_center.sh gpg-init"
+        warn "未找到 ./.gnupg，请先跑 bash _doc/003_script/deploy_maven_center.sh gpg-init"
         exit 1
     fi
 }
@@ -140,7 +140,7 @@ EOF
         warn "keyserver 上传失败，可手动跑：gpg --keyserver hkps://keys.openpgp.org --send-keys $KEY_ID"
 
     log "完成。.env 已写入 GPG_KEY_ID=$KEY_ID"
-    log "下一步：跑 ./deploy_maven_center.sh publish"
+    log "下一步：跑 bash _doc/003_script/deploy_maven_center.sh publish"
 }
 
 # ---------- 子命令：publish ----------
@@ -327,7 +327,7 @@ cmd_publish() {
     log ""
     log "✅ 全部文件夹发布流程结束"
     log "Central Portal 控制台：https://central.sonatype.com/publishing/deployments"
-    log "逐坐标复核：./deploy_maven_center.sh verify   或   python3 _doc/003_script/gen_fleet_bom.py"
+    log "逐坐标复核：bash _doc/003_script/deploy_maven_center.sh verify   或   python3 _doc/003_script/gen_fleet_bom.py"
 }
 
 # ---------- 子命令：verify ----------
@@ -359,7 +359,7 @@ cmd_readme() {
      Username + Secret 写到 ./ 的 .env（CENTRAL_USERNAME / CENTRAL_TOKEN /
      CENTRAL_GPG_PASSPHRASE / GPG_KEY_ID）—— **不要贴到对话里**
   2. namespace io.github.yuku123 已验证（GitHub Pages 那条 txt），不用重复做
-  3. brew install gnupg；首次跑 ./deploy_maven_center.sh gpg-init（密钥环 ./gnupg，不碰 ~/.gnupg）
+  3. brew install gnupg；首次跑 bash _doc/003_script/deploy_maven_center.sh gpg-init（密钥环 ./gnupg，不碰 ~/.gnupg）
 
 【z-boot 没有 ${revision}】
 
@@ -372,10 +372,10 @@ cmd_readme() {
     z-boot-integration-starters   20 个 L3 聚合 starter
   所以发版 = 选文件夹，不是全仓重发：
 
-    ./deploy_maven_center.sh publish --dry fleet     # 只 mvn verify：编译+sources+javadoc+gpg 签名都跑，不打包不上传
-    ./deploy_maven_center.sh publish --bundle fleet  # bundle 演练：连打包都跑，只把上传目标指到不可达域名
-    ./deploy_maven_center.sh publish fleet           # 真发一个文件夹
-    ./deploy_maven_center.sh publish                 # 全发（按 root→deps→fleet→parent→starter→integration）
+    bash _doc/003_script/deploy_maven_center.sh publish --dry fleet     # 只 mvn verify：编译+sources+javadoc+gpg 签名都跑，不打包不上传
+    bash _doc/003_script/deploy_maven_center.sh publish --bundle fleet  # bundle 演练：连打包都跑，只把上传目标指到不可达域名
+    bash _doc/003_script/deploy_maven_center.sh publish fleet           # 真发一个文件夹
+    bash _doc/003_script/deploy_maven_center.sh publish                 # 全发（按 root→deps→fleet→parent→starter→integration）
 
   --dry 看不出 bundle 里到底有什么（pom-only 模块少件、admin 这类"永不发布"模块混进来，
   都要到打包那步才现形）⇒ 改了 flatten / excludeArtifacts / 新加文件夹时先 --bundle 再真发。
@@ -388,7 +388,7 @@ cmd_readme() {
 
   python3 _doc/003_script/gen_fleet_bom.py            # 只看账：每个坐标 repo1 是 OK / PENDING / MISSING
   python3 _doc/003_script/gen_fleet_bom.py --write    # 重算 z-boot-fleet/pom.xml
-  ./deploy_maven_center.sh publish --dry fleet && ./deploy_maven_center.sh publish fleet
+  bash _doc/003_script/deploy_maven_center.sh publish --dry fleet && bash _doc/003_script/deploy_maven_center.sh publish fleet
 
 【判据】
 
@@ -414,7 +414,7 @@ cmd_readme() {
     maven-javadoc-plugin 静默不产 -sources.jar / -javadoc.jar，BUILD SUCCESS 照样绿，
     bundle 里却只有 pom+jar —— 只有逐坐标数 4 件套才看得见，所以 publish --bundle 已经
     内置点件（bundle_audit），缺件直接 rc=1；拿到别人的包也能点：
-      ./deploy_maven_center.sh bundle <path>/central-bundle.zip
+      bash _doc/003_script/deploy_maven_center.sh bundle <path>/central-bundle.zip
     repo1 上 1.0.17/1.0.18 的 z-boot-agent-starter 就是这个形状（被收下了），
     但别把"这次被收下"当"规则允许"。
   ✗ 探活不能用 HEAD —— repo1/Fastly 对 HEAD 不给 200，用 curl -r 0-0（200/206 才算活着）。
@@ -444,7 +444,7 @@ case "$SUBCMD" in
     publish)   cmd_publish "$@" ;;
     verify)    cmd_verify ;;
     bundle)
-        [[ -f "${1:-}" ]] || die "用法：./deploy_maven_center.sh bundle <central-bundle.zip>"
+        [[ -f "${1:-}" ]] || die "用法：bash _doc/003_script/deploy_maven_center.sh bundle <central-bundle.zip>"
         bundle_audit "$1" ;;
     gpg-init)  cmd_gpg_init ;;
     readme)    cmd_readme ;;

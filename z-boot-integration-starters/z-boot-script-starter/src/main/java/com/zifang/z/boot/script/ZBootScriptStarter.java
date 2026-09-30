@@ -11,7 +11,7 @@ package com.zifang.z.boot.script;
  * <p>
  * 宿主要求（缺一不可）：
  * <ul>
- *   <li>MySQL 已执行 z-script 的 {@code _doc/002_deploy/init.sql}；</li>
+ *   <li>MySQL 已执行 z-script 的 {@code z-script/_doc/002_deploy/init.sql}；</li>
  *   <li>数据源键 {@code z.base.db.script.host/port/database/username/password}
  *       （{@code ModuleDataSourceTemplate} 只读这组键，写 spring.datasource.* 会静默回落 localhost/root）；</li>
  *   <li>宿主是 Web 应用（Controller / Mock 分发挂在 spring-webmvc 上）。</li>

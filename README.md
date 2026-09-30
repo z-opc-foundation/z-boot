@@ -1488,11 +1488,16 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
     flatten 模式为何不能是 `oss`）、发布口径。⚠ 它开头那两个受管项读数（156 / 163）已过期，现值以下面
     README「BOM」一节为准：**地板 155 条 / fleet 175 条**。
 
-- [`_doc/003_script/`](_doc/003_script/) — 发布与量具（本仓的"可执行判据"都在这里，共 20 个文件）：
+- [`_doc/003_script/`](_doc/003_script/) — 发布与量具（本仓的"可执行判据"都在这里，共 21 个文件）：
   - [`doc_audit.py`](_doc/003_script/doc_audit.py) — 全组织文档收口闸门：扫 35 个 z-* 仓的仓根散件（R1）、
-    `_doc/` 根散件（R2）、非编号表目录（R3）、空桶（R4）、README 断链（R5）、脚本仓根定位（R6）。
-    `python3 _doc/003_script/doc_audit.py` 有违规则退出 1；依据是
+    `_doc/` 根散件（R2）、非编号表目录（R3）、空桶（R4）、README 断链（R5）、脚本仓根定位（R6）、
+    运行态件与 `.cache` 忽略（R7）。`python3 _doc/003_script/doc_audit.py` 有违规则退出 1；
+    `--against <ref>` 拿历史树喂它（新判据上线前必须先证明它会红）。依据是
     [`002_项目文档收口规范`](../z-opc-foundation-lead/008_组织规范/002_项目文档收口规范.md)。
+  - [`depth_check.py`](_doc/003_script/depth_check.py) — R6 的补尺：查**按目录深度上溯仓根**的写法
+    （`ZBOT = os.path.join(HERE, os.pardir, …)`、`cd "$SCRIPT_DIR/../.."`）与源码/配置里悬空的
+    `_doc/...` 字面量。搬桶改的是"层数"，这类断链 R6 看不见（2026-09-30 靠它查出 z-bot 48 个驱动）。
+    `python3 _doc/003_script/depth_check.py [仓名…]`，跨仓引用与临时树形状自动跳过，确要留旧写法行尾加 `DC:ignore`。
   - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 一键发布主尺：`publish [folder...]`
     按文件夹发（短名 root / deps / fleet / parent / starter / integration，当版 parent 未上线时自动前置）、
     `--dry` 只到 verify、`--bundle` 打包照打但掐死上传、`bundle <zip>` 逐坐标点四件齐、`gpg-init`、`readme` 摘要

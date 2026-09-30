@@ -12,6 +12,7 @@
     R4 不留空桶（git 不跟踪空目录，留着就是 README 断链的来源）
     R5 README.md 无指向不存在路径的相对链接
     R6 _doc/003_script 下依赖仓根的脚本必须用 REPO_ROOT 上溯定位，不能 cd "$(dirname $0)"
+    R7 运行态/临时件不进 git：一律写 <仓>/.cache/，且 .cache 必须被 ignore
 退出码：有违规则为 1。
 """
 import os
@@ -47,11 +48,31 @@ ROOT_CD = re.compile(r'cd\s+"\$\(\s*dirname[^)]*\$0[^)]*\)')
 # 只有确实按仓根取物（pom.xml / .env / .gnupg / ~/.m2）的脚本，cd 到 _doc/003_script 才算断链
 ROOT_DEP = re.compile(r'(pom\.xml|\.env|\.gnupg|settings\.xml)')
 
+# R7：跑起来才会产生的东西不进 git（E2E 的假 home、字节码缓存、锁、sqlite、日志）
+RUNTIME_SHAPE = re.compile(
+    r'(^|/)__pycache__/|\.pyc$|(^|/)state\.db$|\.lock$|(^|/)checkpoints/'
+    r'|(^|/)logs?/[^/]*\.log$|/out/profile-[^/]+/|(^|/)\.DS_Store$')
 
-def tracked(repo):
-    res = subprocess.run(["git", "-C", os.path.join(ORG, repo), "ls-files", "-z"],
-                         capture_output=True, text=True, check=True)
+
+def tracked(repo, ref=None):
+    if ref:
+        res = subprocess.run(["git", "-C", os.path.join(ORG, repo), "ls-tree", "-r",
+                              "--name-only", "-z", ref],
+                             capture_output=True, text=True, check=True)
+    else:
+        res = subprocess.run(["git", "-C", os.path.join(ORG, repo), "ls-files", "-z"],
+                             capture_output=True, text=True, check=True)
     return [p for p in res.stdout.split("\0") if p]
+
+
+def ignore_blob(repo, ref=None):
+    """.gitignore 全文：ref 模式读历史版本，用于拿已知坏样本喂 R7。"""
+    if ref:
+        res = subprocess.run(["git", "-C", os.path.join(ORG, repo), "show", f"{ref}:.gitignore"],
+                             capture_output=True, text=True)
+        return res.stdout
+    path = os.path.join(ORG, repo, ".gitignore")
+    return open(path, encoding="utf-8", errors="replace").read() if os.path.isfile(path) else ""
 
 
 def docker_build_inputs(repo):
@@ -60,6 +81,8 @@ def docker_build_inputs(repo):
     for p in tracked(repo):
         base = p.rsplit("/", 1)[-1]
         if not (base == "Dockerfile" or base.startswith("Dockerfile.") or base.endswith((".yml", ".yaml"))):
+            continue
+        if not os.path.isfile(os.path.join(ORG, repo, p)):
             continue
         with open(os.path.join(ORG, repo, p), encoding="utf-8", errors="replace") as fh:
             for line in fh:
@@ -78,9 +101,9 @@ def has_ignored_content(repo, bucket):
     return any(p for p in res.stdout.split("\0") if p)
 
 
-def check(repo):
+def check(repo, ref=None):
     bad = []
-    files = tracked(repo)
+    files = tracked(repo, ref)
     top = {p for p in files if "/" not in p}
     exempt = docker_build_inputs(repo)
 
@@ -94,7 +117,7 @@ def check(repo):
 
     doc_files = [p for p in files if p.startswith("_doc/")]
     for p in doc_files:
-        if p.count("/") == 1 and p != "_doc/README.md":
+        if p.count("/") == 1 and p != "_doc/README.md":  # DC:ignore 比的是索引里的路径形状，不是盘上引用
             bad.append(("R2", f"_doc 根散文件 {p}"))
 
     buckets = {p.split("/")[1] for p in doc_files if p.count("/") >= 2}
@@ -123,10 +146,23 @@ def check(repo):
     for p in files:
         if not (p.startswith("_doc/003_script/") and p.endswith(".sh")):
             continue
+        if not os.path.isfile(os.path.join(ORG, repo, p)):
+            continue  # ref 模式下旧路径已不在盘上
         with open(os.path.join(ORG, repo, p), encoding="utf-8", errors="replace") as fh:
             body = fh.read()
         if ROOT_CD.search(body) and "REPO_ROOT" not in body and ROOT_DEP.search(body):
             bad.append(("R6", f"{p} 用 cd \"$(dirname $0)\" 定位，搬到 _doc 后必 die"))
+
+    # R7 运行态件不进 git
+    for p in files:
+        if RUNTIME_SHAPE.search(p):
+            bad.append(("R7", f"运行态件进了 git：{p}（该写 <仓>/.cache/）"))
+    cache_tracked = [p for p in files if p.split("/")[0] == ".cache"]
+    ignores = ignore_blob(repo, ref)
+    if cache_tracked:
+        bad.append(("R7", f".cache/ 里有 {len(cache_tracked)} 个被跟踪文件（例：{cache_tracked[0]}）"))
+    if ("/.cache/" not in ignores and ".cache/" not in ignores):
+        bad.append(("R7", ".gitignore 没有 /.cache/ —— 临时件无处可放"))
 
     return bad
 
@@ -136,10 +172,21 @@ def main():
         d for d in os.listdir(ORG)
         if os.path.isdir(os.path.join(ORG, d, ".git")) and d not in EXCLUDED)
     total = 0
+    ref = None
+    if "--against" in sys.argv:
+        k = sys.argv.index("--against")
+        ref = sys.argv[k + 1]
+        repos = sys.argv[:k] + sys.argv[k + 2:]
+        repos = [r for r in repos if not r.startswith("-")] or [
+            d for d in os.listdir(ORG)
+            if os.path.isdir(os.path.join(ORG, d, ".git")) and d not in EXCLUDED]
     for r in repos:
         if not os.path.isdir(os.path.join(ORG, r, ".git")):
             continue
-        bad = check(r)
+        try:
+            bad = check(r, ref)
+        except subprocess.CalledProcessError:
+            continue
         total += len(bad)
         if bad:
             print(f"=== {r}")
