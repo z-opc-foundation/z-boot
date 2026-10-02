@@ -522,9 +522,13 @@
                 <artifactId>log4j-jul</artifactId>
                 <version>2.25.4</version>
             </dependency>
+            <!-- 原 <artifactId>log4j-slf4j-impl</artifactId> 1.x 桥 DM 已删（2026-10-02）：spring-boot-dependencies
+                 自带那条是 1.x 转接器（artifactId 不带 2），与 slf4j-api 2.x 共存就是 NCDFE 雷。
+                 改用 2.x 桥（artifactId 带 2-），并通过 z-boot-web-starter 的显式
+                 <dependency>log4j-slf4j2-impl</dependency> 落到所有 web 消费方。 -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j-impl</artifactId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
                 <version>2.25.4</version>
             </dependency>
             <dependency>
