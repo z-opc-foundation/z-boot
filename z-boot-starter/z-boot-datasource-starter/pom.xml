@@ -6,13 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-starter</artifactId>
-        <version>1.0.21</version>
+        <version>1.0.22</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-datasource-starter</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.22</version>
     <name>z-boot-datasource-starter</name>
     <description>z-boot 数据源 starter — 一键装配 druid 连接池 + mybatis-plus + mysql 驱动。</description>
     <licenses>

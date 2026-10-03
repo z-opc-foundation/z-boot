@@ -6,13 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-starter</artifactId>
-        <version>1.0.21</version>
+        <version>1.0.22</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-base</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.22</version>
     <name>z-boot-base</name>
     <description>z-boot 基础 starter — 提供 log4j2 日志门面、常用配置基线、通用异常处理入口。</description>
     <licenses>
