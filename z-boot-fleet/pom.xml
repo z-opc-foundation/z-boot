@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>z-boot-fleet</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>pom</packaging>
     <name>z-boot-fleet (L3 Sibling Version Authority)</name>
     <description>
@@ -45,7 +45,7 @@
         <z-schedule.version>1.0.6</z-schedule.version>
         <z-msg.version>1.2.2</z-msg.version>
         <z-script.version>1.0.1</z-script.version>
-        <z-util.version>1.0.14</z-util.version>
+        <z-util.version>1.0.16</z-util.version>
         <z-agent-kernel.version>0.2.1</z-agent-kernel.version>
         <z-llm.version>0.1.7</z-llm.version>
         <z-mcp.version>0.2.1</z-mcp.version>
@@ -667,7 +667,17 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-workflow</artifactId>
+                <artifactId>z-util-wf-kernel</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-wf-executor-java</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-wf-py</artifactId>
                 <version>${z-util.version}</version>
             </dependency>
             <!-- z-agent-kernel 0.2.1 -->
