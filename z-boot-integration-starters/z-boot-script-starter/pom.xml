@@ -7,12 +7,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.21</version>
+        <version>1.0.22</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-script-starter</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.22</version>
     <name>z-boot :: script-starter (z-script 脚本/Mock 引擎内嵌)</name>
     <description>z-boot z-script 聚合 starter — 一行 import 把 z-script 的脚本引擎、HTTP 暴露、
         Mock 分发与 app+AK 鉴权内嵌进业务应用（进程内运行，无需独立部署 z-script-admin）.</description>
@@ -73,12 +73,12 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-datasource-starter</artifactId>
-                <version>1.0.21</version>
+                <version>1.0.22</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-web-starter</artifactId>
-                <version>1.0.21</version>
+                <version>1.0.22</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

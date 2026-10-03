@@ -6,13 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.21</version>
+        <version>1.0.22</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-config-starter</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.22</version>
     <name>z-boot-config-starter</name>
     <description>z-boot Config 聚合 starter — 一行 import 集成 z-config 分布式配置中心 + 服务注册中心客户端。</description>
     <licenses>

@@ -6,13 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.21</version>
+        <version>1.0.22</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-oss-starter</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.22</version>
     <name>z-boot-oss-starter</name>
     <description>z-boot OSS 聚合 starter — 一行 import 集成 z-oss 对象存储抽象层。</description>
     <licenses>

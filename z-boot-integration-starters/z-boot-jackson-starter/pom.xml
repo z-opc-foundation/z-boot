@@ -7,13 +7,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.21</version>
+        <version>1.0.22</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-jackson-starter</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.22</version>
     <name>z-boot-jackson-starter</name>
     <description>z-boot Jackson starter — 提供 spring-web + jackson-databind 自动装配，统一序列化行为。</description>
     <licenses>

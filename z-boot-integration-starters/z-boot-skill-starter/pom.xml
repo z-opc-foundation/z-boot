@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.21</version>
+        <version>1.0.22</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-skill-starter</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.22</version>
     <name>z-boot-skill-starter</name>
     <description>z-boot Skill 平台聚合 starter — 一行 import 集成 z-skill (Skill 注册中心 + Marketplace + frontmatter 解析)。</description>
 
