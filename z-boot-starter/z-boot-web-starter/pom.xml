@@ -116,6 +116,27 @@
             <artifactId>log4j-slf4j2-impl</artifactId>
         </dependency>
 
+        <!-- Long→String 统一序列化（2026-10-03 补上平台接线，此前规则写好了但零个服务继承到）
+             规则本体在 z-boot-jackson-starter 的 GlobalJacksonConfig，它有正规
+             META-INF/spring.factories 自动配置登记，发布件 1.0.22 已实测含
+             longAsStringCustomizer + LongToStringSerializer。问题出在**没人依赖它**：
+             全仓除聚合 pom 外无一处声明该坐标，z-boot-web-starter 也没引，
+             于是所有 web 服务实际都没拿到这条规则——各服务于是各自在本地
+             JacksonConfig 里手写一份（z-team 就是这么长出来的），彼此口径还不一样。
+
+             雪花 ID 是 19 位（~2.1e18），超过 JS Number 的 53 位有效位，
+             后端按 JSON 数字写出时浏览器 JSON.parse 在词法阶段就舍掉末位、原值不可恢复
+             （实测 Number("2096058642985349121") === 2096058642985349000），
+             前端拿抹平后的 ID 回查必然「项目不存在」。
+
+             这条不是「集成型 starter」那种可选能力，是每个 web 服务的底线正确性保证，
+             所以下沉到基础件 z-boot-web-starter：所有 web 服务已经依赖它，加这一条即全体继承，
+             不用每个服务各写一遍、也不会漏。版本由 z-boot-parent 的 ${z-boot.version} 统一管理。 -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-boot-jackson-starter</artifactId>
+        </dependency>
+
         <!-- knife4j / springdoc 的版本由上面 import 的 z-boot-dependencies BOM 唯一供给
              （${knife4j-openapi3.version}）。这里再写一份字面量，就会和 BOM 各说各话：
              消费者按 BOM 编译、本 starter 按这一行装配。 -->
