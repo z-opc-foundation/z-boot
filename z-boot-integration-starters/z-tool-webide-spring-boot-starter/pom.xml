@@ -51,8 +51,13 @@
 
         <dependencyManagement>
         <dependencies>
+            <!-- 2026-10-05 groupId 订正：com.zifang → io.github.yuku123。
+                 组织在 z-webide 仓改名时把根 groupId 定为 io.github.yuku123（Central 上
+                 z-tool-webide-{api,common,docker} 三个坐标都在这个 namespace 下，1.0.0），
+                 本模块的这 4 处是改名前的残留坐标。⚠️ 本模块的 <version>${project.parent.version}</version>
+                 仍指向 1.0.1，而中央 z-boot-dependencies 已是 1.0.20 —— 版本另有一处待收，见台账。 -->
             <dependency>
-                <groupId>com.zifang</groupId>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-dependencies</artifactId>
                 <version>${project.parent.version}</version>
                 <type>pom</type>
@@ -63,15 +68,15 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.zifang</groupId>
+            <groupId>io.github.yuku123</groupId>
             <artifactId>z-tool-webide-docker</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.zifang</groupId>
+            <groupId>io.github.yuku123</groupId>
             <artifactId>z-tool-webide-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.zifang</groupId>
+            <groupId>io.github.yuku123</groupId>
             <artifactId>z-tool-webide-common</artifactId>
         </dependency>
 
