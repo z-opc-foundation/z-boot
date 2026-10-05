@@ -902,8 +902,9 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
   ⇒ 仓内解析零影响；发布侧新构建的扁平件 889 → **882 行**、property **110 → 103 条**，
   少掉的正好是那 7 个键、`<dependencyManagement>` 规范化后逐条同 ⇒ 对外也只是少 7 个没人能读的键。
   ⚠ 这条只落在仓里：**repo1 上的 `z-boot-dependencies:1.0.16` 仍是 110 条**，要等下一次发布才变。
-- ✅ 这条"外部 import 者能不能解析"从此有永久闸：`z-opc/z-middleware-integration-test` 的
-  `ZBootBomExternalResolutionIT`（5 例，见下面「集成测试覆盖」）。
+- ✅ 这条"外部 import 者能不能解析"有闸：各仓的 `_doc/003_script/verify_central.sh`
+  （对真实 Central 跑，见下面「集成测试覆盖」；原 `ZBootBomExternalResolutionIT` 随
+  `z-opc/z-middleware-integration-test` 一并删除）。
 - ✅ 自研 L3 里目前**只有 z-graph 的三个坐标**（引擎侧 `z-graph-{api,core,protocol}`，2026-09-26 补进）
   进了这份 BOM；**连 `z-graph-spring-boot-starter` 本身都不在**，其余 z-* 也仍只在
   `z-boot-integration-starters` 里钉，import 这份 BOM 的消费者拿不到约束
@@ -1151,102 +1152,46 @@ public class MyFeatureAutoConfiguration {
 
 ## 🧪 集成测试覆盖
 
-`z-opc/z-middleware-integration-test` 里现在有两支管 z-boot 对外契约的 IT，整模块
-2026-09-26 21:46 本机跑绿：`Tests run: 57, Failures: 0, Errors: 0, Skipped: 20`（12 个类）。
+> **2026-10-05 起本节描述的测试模块已删除。**
+>
+> 原先承载这些 IT 的是 `z-opc/z-middleware-integration-test` —— 把 z-boot / z-cache /
+> z-mq / z-oss / z-rpc / z-camuda 等十余个中间件的发布件验证集中放在 z-opc 里。位置不对：
+> **每个仓该验自己的发布件**，不该集中到别人的仓里跑（还导致它不在任何 reactor 内、得
+> `mvn -f` 单独跑、版本号抄在本地副本里长期滞后）。
+>
+> 现状：各仓在自己仓里、紧邻各自的 `deploy_maven_center.sh` 放一个 `verify_central.sh`，
+> 对**真实的 Maven Central** 跑，校验 `.pom` / `.jar` / `-sources.jar` / `-javadoc.jar` /
+> `.asc` 签名 / POM metadata（groupId·artifactId·version·name·license·scm·developers）/
+> sources.jar 内含指定类。已落地：z-camuda、z-mq、z-cache、z-oss、z-config、z-boot。
+>
+> ```bash
+> cd <仓> && bash _doc/003_script/verify_central.sh
+> ```
+>
+> 下面保留 2026-09 的历史读数，仅作背景，不再是当前可执行入口。
 
-### `ZBootAggregatorStarterMavenCentralPullIT`（4 例，24.47 s）
+<details>
+<summary>历史：原 z-opc/z-middleware-integration-test 的 IT 清单与读数（2026-09-26）</summary>
 
-- **19 个 z-boot-* 聚合 starter @ 1.0.16**（`VERSION` 已跟版；本轮 IT 文件 md5 `6a1f24aa245d8c66cf68a9b1e4964615`）：逐个拉 `.pom`，HTTP 200 **且**发布件正文里必须出现上表对应的那一个
-  L3 坐标（`<artifactId>z-cache-spring-boot-starter</artifactId>` 整串匹配）。
-  以前只断言"pom 拉得到"、且只覆盖 10 个 ⇒ 现在 19 行全覆盖，第二列从此不能手填。
-- **这张表怎么来的**：不手抄。机械抽取每个 `z-boot-*-starter/pom.xml` 里 `io.github.yuku123` 的**直接**
-  依赖（先剥 XML 注释、再剥 `<dependencyManagement>`）⇒ 20 条 active `<module>` 里 19 条有 ≥1 个 z-* 依赖，
-  只有 `z-boot-jackson-starter` 是 0 个（所以它不在表里）。
-- **表自证**：行数必须等于 19、artifactId 不许重复（重复 = 某个 starter 静默失去覆盖）。
-  三支变异实测（1.0.15 那轮的备份 md5 `a74ccbe3fd7c0c0f88ee6c2cb92df2ee`，还原后回读过）：
-  1. `AGGREGATOR_COUNT` 改 18 ⇒ `EXPECTED_AGGREGATORS 应该有 18 行 … expected: <18> but was: <19>`
-  2. 复制 cache 行**并把 count 一起改成 20**（否则长度守卫先红，重复守卫根本测不到）⇒
-     `有重复 artifactId, 对应 starter 没被真正覆盖: [z-boot-cache-starter]`
-  3. `VERSION` 改成**当时**从未发布的 1.0.16 ⇒ 19 条 URL 全 404，`Tests run: 4, Failures: 1, Errors: 1`
-     （那支 Error 是抽样测试读不到流）。这测试拼的是字面 `https://repo1.maven.org/...` URL、
-     不经过 Maven 解析 ⇒ 404 只可能来自 repo1，不是本地仓库的回声
-  - ⚠ **第 3 支的注入值会随发布自己失效**：1.0.16 现在真发出去了（21:31 上传），下次抬号必须换一个
-    repo1 上还不存在的号——本轮实测 **1.0.17 的 19 条 URL 全 404**，尺仍然抓得住。
-    同理，早先这里那句"本机 m2 里没有 1.0.16"也作废了：`mvn deploy` 的 `install` 阶段会顺手把
-    1.0.16 装进本机 m2（21:30:40 那批目录），已核对 m2 里的父 pom / BOM 与 repo1 **md5 逐字节同**
-    （`eec689f23a7bd8df557ddc293af5797e` / `c6e4141d6b1e41a65a4a0828ff0acbb6`）
-- 命名约定校验 ✅（19 个都符合 `z-boot-{pkg}-starter`、无 `--`）
-- `z-boot-cache-starter` pom 抽样：确认引用 `z-cache-spring-boot-starter` 且 groupId 是 `io.github.yuku123` ✅
+该模块 2026-09-26 21:46 本机跑绿：`Tests run: 57, Failures: 0, Errors: 0, Skipped: 20`（12 个类）。
+其中两支管 z-boot 对外契约：`ZBootAggregatorStarterMavenCentralPullIT`（4 例，24.47 s）验发布件里
+聚合关系对不对、`ZBootBomExternalResolutionIT`（5 例）验外部 import 者能不能解析。
 
-### `ZBootBomExternalResolutionIT`（5 例，4.791 s）—— 1.0.16 新增的永久闸
+⚠ 整模块 57 例里有 20 例是关着的：6 个类级 `@EnabledIfEnvironmentVariable` 开关
+（`RUN_ZCACHE_IT` / `RUN_ZMQ_IT` / `RUN_ZOSS_CENTRAL_IT` / `RUN_ZRPC_CENTRAL_IT` 等）——
+**`BUILD SUCCESS` 不等于那些都被验过**，这是它最大的坑。
 
-它验的是**站在仓外** import 这份 BOM 能拿到什么。这件事在 reactor 里结构上看不见（reactor 的父 pom
-是真的，property 解析得动），所以只能写成一支"从 repo1 拉字节、按消费者视角建模"的 IT。5 例：
+⚠ 该模块 import 的 BOM 停在 1.0.11（本地副本），而盘上 pom 是 `${z-boot-floor.version}` = 1.0.20，
+所以「BOM 对外失效」那个缺陷从来没打到本模块 —— 这也是为什么修完缺陷后只需跟版、不必改判据。
 
-1. 发布件根 pom 仍带 `<properties>`（这条一红，就说明 flatten 那份 `properties>keep` 被摘了）
-2. BOM 的**每一条**受管版本，按消费者视角（BOM 自身 property + 发布出去的父链）都必须解析得出，
-   残留占位符集必须为空
-3. `z-graph` 那条解析出来的版本，要**等于** repo1 上 `z-boot-graph-starter` 发布件里的字面量，
-   且该版本自己的 `.pom` 在 repo1 是 200 ⇒ 这一例不抄任何手写数字，两半都现拉
-4. 死项 `ojdbc6` 不许回来（判据用 property 名，不是坐标字符串——它在注释里也出现）
-5. **自身阳性对照**：同一套判据跑 1.0.15，必须判出"父 pom 0 条 property + 恰好 4 条失效项"
-   （`z-graph-{api,core,protocol}` + `ojdbc6`）。第 1–4 例全绿而这一例不红 = 尺瞎了，所以它常驻。
+它验的是「发布件里聚合关系对不对」，**不验** jar 里有没有 class、也不验 property 抬的版本有没有
+真的进入发布件（那要 `dependency:tree` + 发版）。上面「已发布到 Maven Central」那段的
+84 构件字节普查（`~/.cache/zboot-1016/census2.py`）也不在 IT 里，每轮发版手工跑一次。
 
-六支变异实测（日志 `~/.cache/zboot-1016/mut-M*.log`；每次注入前 `cp` 具名备份、还原只从备份 `cp`，
-还原后 md5 回读 `9dde9c8c683c62c7050bca28b318bec8`）：
-
-| 注入 | 结果 |
-|---|---|
-| M1 `VERSION` → 1.0.15（把闸指回坏版本） | **4 红**（1–4 例全抓回来，报的就是那 4 条） |
-| M2 摘掉"沿父链找 property"那一步 | 1 红：3 条 z-graph 被报失效 |
-| M3 把对照例的期望从 4 改成 3 | 1 红：`expected: <3> but was: <4>` |
-| M4 分母守卫 `> 100` 放宽成 `> 0` | **0 红** |
-| M5 把 `<dependency>` 正则打断（模拟解析器失效） | 2 红：`条目数异常（解析器可能失效了）: 0` |
-| M6 阈值改 100 → 200 | 2 红：`: 132` 与 `: 133`（两份 BOM 各一处） |
-
-M4 那一行是**没达标的一支**，留在这是为了记住它为什么不算数：把守卫放宽，对"解析产出 132 条"
-这个既成事实没有任何影响 ⇒ 它只在解析器归零时才生效，M4 结构上够不着它。所以补了 M5（证明
-"解析产出 0"这个分支可达）和 M6（证明阈值这个数值可判红）。**一条守卫"改坏不红"有两种解释**
-（够不着 / 等价变异），必须再拿一支必然够得着的注入把前者排掉，否则不许说这条守卫有效。
-
-⚠ **`dependency:tree` 不是可用性尺**：同一支 tree 对一个 repo1 上 **404** 的坐标照样打印
-`…:jar:1.0.15:compile` + `BUILD SUCCESS`，只在日志里留一行 `WARNING The POM for … is missing`。
-它答的是"多个候选版本里哪个赢"，"这件到底存不存在"要判 HTTP 状态。上面第 3 例分两半就是这个原因。
-
-⚠ **跑法**：`z-middleware-integration-test` **不在** `z-opc/pom.xml` 的 `<modules>` 里（实测全仓
-`grep -rn z-middleware-integration-test --include=pom.xml .` 只有它自己 pom 的 4 处自引用），
-所以 `mvn -pl z-middleware-integration-test` 当场 `Could not find the selected project in the reactor`，
-必须 `mvn -f z-middleware-integration-test/pom.xml test`。
-
-⚠ **整模块 57 例里有 20 例是关着的**：6 个类级 `@EnabledIfEnvironmentVariable` 开关
-（`RUN_ZCACHE_IT` / `RUN_ZMQ_IT` / `RUN_ZOSS_CENTRAL_IT` / `RUN_ZRPC_CENTRAL_IT` /
-`RUN_ZCAMUDA_CENTRAL_IT` / `RUN_ZCAMUDA_RPC_IT`）默认不给值 ⇒ `BUILD SUCCESS` 不等于那些 L3 被验过。
-
-**本轮顺带修掉一格常红**（不是本次抬号引入的）：`ZConfigMavenCentralPullIT` 的 `VERSION` 停在 **1.0.0**，
-而 1.0.0 从未发布到 Central —— 实测四坐标 × {1.0.0, 1.0.1, 1.0.2, 1.0.4, 1.0.7, 1.0.8} = 24 次 curl，
-1.0.0 那 4 次全 404、其余 20 次全 200。改成该模块 `pom.xml` 自己钉的 1.0.7 后：整模块从
-`52, Failures: 1, Errors: 1, Skipped: 20`（20:36:07）变 `52 / 0 / 0 / 20`（20:38:46），逐类 tally
- **只有 ZConfig 那一行变**（其余 10 行逐字节同）。那是 1.0.15 那轮的 11 个类；1.0.16 起多了
-`ZBootBomExternalResolutionIT` ⇒ 12 个类 / 57 例。
-
-**同时把该模块的 `<z-boot.version>` 1.0.14 → 1.0.15**：抬号前逐个比了发布件，本模块消费的 7 个 starter
-的 pom 在两版之间只差版本字面量、其余逐字节同；`dependency:tree` 两版各 250 行，diff 恰好只有那 7 行
-⇒ 对解析出来的依赖树是 no-op（抬号前后两次整模块逐类 tally md5 同为 `c551dffe3c9173c506814b21554add74`）。
-
-**1.0.16 这一轮同一处再抬一次 `1.0.15 → 1.0.16`，抬号前同样逐个比了发布件**：本模块直接依赖的
-7 个 `z-boot-*-starter`，两版之间的差异**只有** `<version>` 字面量 + 1.0.16 新多出的那个
-`<properties>` 块（6 个是 7 行差异、`z-boot-jackson-starter` 是 8 行，多的那行是它自己声明的
-`jackson-databind.version`），其余逐字节同 ⇒ 对它的依赖解析同样是 no-op。
-而这个模块 import 的那份 BOM 停在 **1.0.11**（`pom.xml` 的 `<z-boot-dependencies.version>`，
-且模块里所有 `io.github.yuku123` 依赖都自带版本号），所以 BOM 那个对外失效的缺陷**从来没打到本模块**——
-这也是为什么修完缺陷后这里只需跟版、不需要改判据。
-
-> 这份 IT 验的是"**发布件里聚合关系对不对**"，不验 jar 里有没有 class、也不验 property 抬的版本
-> 有没有真的进入发布件（那要 `dependency:tree` + 发版）。上面「已发布到 Maven Central」那段的
-> 84 构件字节普查（`~/.cache/zboot-1016/census2.py`，分母取本机 staging 目录、不敲清单）也**不在 IT 里**，
-> 每轮发版手工跑一次。
+</details>
 
 ---
+
 
 ## 📚 详细文档
 
