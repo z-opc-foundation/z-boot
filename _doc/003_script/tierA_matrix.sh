@@ -3,7 +3,7 @@
 #
 # 为什么逐仓跑而不是只看 tree：这一轮动的是"面值来源"（33 个仓根的 <parent>、z-opc 的
 # z-boot-floor.version、三仓撤掉的 simpleclient 压法、z-report/z-schedule-admin 删掉的
-# z-boot.version 直接条目、z-wf-admin 抬的 fleet import）。删格子的失败方式是"属性悬空"
+# z-boot.version 直接条目、z-camuda-admin 抬的 fleet import）。删格子的失败方式是"属性悬空"
 # 和"编译期找不到类"，只有真构建会露出来；tree 只证明解析得到。
 #
 # 口径：`clean package -DskipTests`，串行（每仓一次 mvn_gate 取锁），远端只认 repo1
@@ -27,7 +27,7 @@ mkdir -p "$LOG"
 SUM="$LOG/summary.txt"
 : > "$SUM"
 
-ALL="z-agent z-agent-kernel z-agent-proxy z-bot z-cache z-config z-ctc z-ext z-graph z-gw z-indexer z-kb z-lc z-llm z-mcp z-meta z-mist z-mq z-msg z-opc z-opcs z-oss z-qa z-report z-rpc z-schedule z-script z-skill z-task z-util z-vector z-webide z-wf"
+ALL="z-agent z-agent-kernel z-agent-proxy z-bot z-cache z-camuda z-config z-ctc z-ext z-graph z-gw z-indexer z-kb z-lc z-llm z-mcp z-meta z-mist z-mq z-msg z-opc z-opcs z-oss z-qa z-report z-rpc z-schedule z-script z-skill z-task z-util z-vector z-webide"
 REPOS="${*:-$ALL}"
 
 cd "$ROOT" || exit 2

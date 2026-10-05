@@ -36,9 +36,9 @@ BASE = "https://repo1.maven.org/maven2/io/github/yuku123/"
 # 相对中央**一格都不领先、全部落后**（P4 同版率 0/21），后果是"继承 parent 的仓拿到的兄弟版永远比
 # 中央旧一号"。抬每一格前先按 maven-metadata.xml 复量，别照抄下面这列。
 #
-# 【新增了四族】z-mist / z-qa / z-wf / z-indexer：前三族中央上早就有发布件（1.0.4 / 1.0.1 / 1.0.6，
+# 【新增了四族】z-mist / z-qa / z-camuda / z-indexer：前三族中央上早就有发布件（1.0.4 / 1.0.1 / 1.0.6，
 # maven-metadata 现读），却从来没进过 FAMILIES ⇒ 消费方 import fleet 也拿不到它们的版本格，
-# 只能各仓自己钉字面值（z-opc 那份 DM 里 z-mist-web 1.0.2、z-wf-starter 1.0.5 就是这么来的，
+# 只能各仓自己钉字面值（z-opc 那份 DM 里 z-mist-web 1.0.2、z-camuda-starter 1.0.5 就是这么来的，
 # 而且一钉就是落后三版）。漏登记不是"这些仓不重要"，是清单手抄的账 —— 见本脚本顶部注释。
 FAMILIES = {
     "z-config":  ("z-config",  "1.0.9"),
@@ -75,7 +75,7 @@ FAMILIES = {
     "z-agent-proxy": ("z-agent-proxy", "0.1.1"),
     "z-mist":    ("z-mist",     "1.0.4"),
     "z-qa":      ("z-qa",       "1.0.1"),
-    "z-wf":      ("z-wf",       "1.0.6"),
+    "z-camuda":  ("z-camuda",   "1.0.6"),
     # 首发（缺陷 7：中央 404，因为本仓原来既没有 central profile 也没有仓级元数据，
     # 根本没有发布通道）。z-indexer-server 是进程模块，见 SKIP_ARTIFACTS。
     "z-indexer": ("z-indexer",  "1.0.0"),
@@ -98,15 +98,15 @@ EXTRA = {
 # z-indexer-server 同理:可执行进程（application.yaml + 59MB 内置工具链），被 z-indexer 根 pom
 # central profile 的 excludeArtifacts 挡在 bundle 外，永不发布 —— 但 sibling_artifacts() 是扫
 # 目录的，不看 excludeArtifacts，不登记这里就会永久挂一个 MISSING 让守卫变成噪音。
-# z-script-admin / z-wf-admin 是 2026-09-29 现读到的两格：两个仓的根 pom 都写了 excludeArtifacts
-# (z-script/pom.xml:381、z-wf/pom.xml:294)，可 sibling_artifacts() 的目录扫描照旧把它们端上来，
+# z-script-admin / z-camuda-admin 是 2026-09-29 现读到的两格：两个仓的根 pom 都写了 excludeArtifacts
+# (z-script/pom.xml:381、z-camuda/pom.xml:294)，可 sibling_artifacts() 的目录扫描照旧把它们端上来，
 # 而 ~/.m2 里有上一轮 install 的旧件 ⇒ exists() 判 PENDING，直接把 --write 的守卫卡在"你钉了一个
 # 永不发布的坐标"上。MISSING 的那些 admin（z-config/z-rpc/z-schedule/z-mist）没人 install 过，
 # 天然被丢掉，所以只有这两格需要点名。
 # (其余 *-admin / *-examples 是 repo1 上 MISSING,天然被丢掉了 —— 写明白省得下回靠运气)
 SKIP_ARTIFACTS = {"z-gw-examples", "z-rpc-examples", "bootstrap-gennerate",
                   "z-msg-example", "z-ctc-admin", "z-indexer-server",
-                  "z-script-admin", "z-wf-admin"}
+                  "z-script-admin", "z-camuda-admin"}
 
 
 def art_text(p):

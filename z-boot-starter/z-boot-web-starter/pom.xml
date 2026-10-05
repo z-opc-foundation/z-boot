@@ -101,7 +101,7 @@
                  编译期又指向 slf4j 2.x 类型——NCDFE 爆点。
                  2026-10-02：显式排 1.x 桥并补 log4j-slf4j2-impl（2.x 桥）作 compile 直依赖——
                  每个消费 z-boot-web-starter 的模块都「自然」拿到正确绑定，**不需要**在依赖它的
-                 库（z-mist-web / z-oss-api / z-agent-center-web / z-wf-starter / z-vector-* …）
+                 库（z-mist-web / z-oss-api / z-agent-center-web / z-camuda-starter / z-vector-* …）
                  或最终应用（z-opc main-starter）的 pom 上再手动加 <exclusion>log4j-slf4j-impl</exclusion>
                  。这是「库件不替应用写日志栈」原则的源头在 z-boot 自己的落地。 -->
             <exclusions>

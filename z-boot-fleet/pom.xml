@@ -69,7 +69,7 @@
         <z-agent-proxy.version>0.1.1</z-agent-proxy.version>
         <z-mist.version>1.0.4</z-mist.version>
         <z-qa.version>1.0.1</z-qa.version>
-        <z-wf.version>1.0.6</z-wf.version>
+        <z-camuda.version>1.0.6</z-camuda.version>
         <z-indexer.version>1.0.0</z-indexer.version>
     </properties>
 
@@ -958,21 +958,21 @@
                 <artifactId>z-qa-web</artifactId>
                 <version>${z-qa.version}</version>
             </dependency>
-            <!-- z-wf 1.0.6 -->
+            <!-- z-camuda 1.0.6（自 z-camuda 1.0.6 改名而来；新坐标首登 Central 前需先 publish） -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-wf-core</artifactId>
-                <version>${z-wf.version}</version>
+                <artifactId>z-camuda-core</artifactId>
+                <version>${z-camuda.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-wf-starter</artifactId>
-                <version>${z-wf.version}</version>
+                <artifactId>z-camuda-starter</artifactId>
+                <version>${z-camuda.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-wf-web</artifactId>
-                <version>${z-wf.version}</version>
+                <artifactId>z-camuda-web</artifactId>
+                <version>${z-camuda.version}</version>
             </dependency>
             <!-- z-indexer 1.0.0 -->
             <dependency>

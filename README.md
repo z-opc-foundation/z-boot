@@ -398,7 +398,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 | 模块 | 说明 |
 |---|---|
 | `z-boot-dependencies` | **第三方**版本权威（spring-boot-dependencies 2.7.18 + jackson-databind 2.18.6 + druid 1.2.23 + log4j-core 2.25.4 + netty-bom 4.1.138.Final）。现发行（1.0.20）实测 `<dependencyManagement>` **155 条**（字面 108 / property 42 / BOM import 5；剥注释按 Maven 口径数条目，仓内与 repo1 那份 1.0.20 发布件同读数）、pom 1182 行（发布件扁平化后 1006 行）。1.0.19 发布件是 156 条（字面 109 / property 42 / import 5），少的那一条是 1.0.20 撤掉的 `io.prometheus:simpleclient` 直接条目。1.0.18 及以前它还夹带 3 条 `z-graph-*` 兄弟仓 pin，1.0.19 起全部搬进 fleet，这里只剩第三方 |
-| `z-boot-fleet` | **兄弟仓（L3 `z-*`）**版本权威，1.0.19 新增。25 个版本格 property + **175 条**受管坐标（全部 `${z-*.version}` 形式，字面 0）、pom 979 行。**不手写**：由 `_doc/003_script/gen_fleet_bom.py` 从磁盘上的兄弟仓 pom + repo1 实测存在性重算，抬号 = 重跑脚本。允许滞后于兄弟仓 HEAD，但每一格都有出处。175 而不是更多，是因为脚本的 `SKIP_ARTIFACTS` 里点名了 8 件**永不发布**的模块（`z-gw-examples` / `z-rpc-examples` / `bootstrap-gennerate` / `z-msg-example` / `z-ctc-admin` / `z-indexer-server` / `z-script-admin` / `z-wf-admin`）——后 5 格是 2026-09-28/29 现读的：兄弟仓根 pom 用 `excludeArtifacts` 把它们挡在 bundle 外，但 `sibling_artifacts()` 是扫目录的、不看 `excludeArtifacts`，不登记就会永久挂一个 MISSING/PENDING 把 `--write` 的守卫变成噪音 |
+| `z-boot-fleet` | **兄弟仓（L3 `z-*`）**版本权威，1.0.19 新增。25 个版本格 property + **175 条**受管坐标（全部 `${z-*.version}` 形式，字面 0）、pom 979 行。**不手写**：由 `_doc/003_script/gen_fleet_bom.py` 从磁盘上的兄弟仓 pom + repo1 实测存在性重算，抬号 = 重跑脚本。允许滞后于兄弟仓 HEAD，但每一格都有出处。175 而不是更多，是因为脚本的 `SKIP_ARTIFACTS` 里点名了 8 件**永不发布**的模块（`z-gw-examples` / `z-rpc-examples` / `bootstrap-gennerate` / `z-msg-example` / `z-ctc-admin` / `z-indexer-server` / `z-script-admin` / `z-camuda-admin`）——后 5 格是 2026-09-28/29 现读的：兄弟仓根 pom 用 `excludeArtifacts` 把它们挡在 bundle 外，但 `sibling_artifacts()` 是扫目录的、不看 `excludeArtifacts`，不登记就会永久挂一个 MISSING/PENDING 把 `--write` 的守卫变成噪音 |
 | `z-boot-parent` | **消费入口**，1.0.19 新增，形状照 c2f-boot 的 `c2f-boot-parent`。`<parent>` = `z-boot-dependencies`（白拿地板）+ 自己 import `z-boot-fleet`（白拿兄弟仓）+ **23** 条 `z-boot-*` 自家 starter/base（版本键 `${z-boot.version}`，与本 pom 同一次发行）——自家 DM 合计 **24** 条（1 条 fleet import + 23 条自家件），再加 Java 8 的 `<pluginManagement>`（6 个插件）。用法见上面「方式零」：使用方一行 `<parent>`、依赖零 `<version>`。⚠ 这里的 flatten 必须是 `resolveCiFriendliesOnly`，不能沿用根 pom 的 `oss` —— `oss` 会剥掉整个 `<build>`，发出去的 parent 就只剩版本没有构建口径，而本机永远看不出来 |
 
 > 两个 BOM 的坐标空间**不相交**（floor 只管第三方，fleet 只管 `io.github.yuku123:z-*`），所以消费者把它们
@@ -600,7 +600,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       面值 33/33 都是 **1.0.21**，且 HEAD 与工作区同号（逐仓 `git show HEAD:pom.xml` 与盘上比过）。
     - 撤钉实测：`simpleclient(-common)=0.16.0` 那批过渡条目**全组织 0 命中**（口径 = 逐 pom 剥注释后提
       结构，不是 grep 整文件）；`z-report` 删掉 `<z-boot.version>1.0.17</z-boot.version>` 与它压的
-      `z-boot-web-starter` / `z-boot-datasource-starter` 两条直接 DM；`z-wf-admin` 的
+      `z-boot-web-starter` / `z-boot-datasource-starter` 两条直接 DM；`z-camuda-admin` 的
       `<z-boot-fleet.version>` 1.0.0 → 1.0.1。留下的 52 格字面 `z-boot-*` 面值**全部在 z-boot 自己的
       BOM 管道里**（`z-boot-dependencies:1.0.20` × 23、`z-boot-fleet:1.0.1` × 23、兄弟聚合件 `1.0.21` × 6），
       消费者仓**一格字面 z-boot 面值都没有** —— 这就是"消费入口只有一个"的可验形状。
@@ -621,7 +621,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       `clean package -DskipTests` ⇒ 29 PASS + 那只 FAIL（`z-schedule` 修完 warm 复跑 43.2s SUCCESS，
       4 模块全绿含 admin）；矩阵里故意排除的 3 仓各走别的一遍 —— `z-report` 走**净室**（空本地仓 +
       repo1-only：`Downloading from repo1` 761 行 / `from central` 0 行，15:01 min BUILD SUCCESS），
-      `z-gw` 10s / `z-wf` 13s 走 warm。⚠ 净室那一遍在 `z-schedule` 上**中途卡死被停掉**：日志 14 分钟
+      `z-gw` 10s / `z-camuda` 13s 走 warm。⚠ 净室那一遍在 `z-schedule` 上**中途卡死被停掉**：日志 14 分钟
       零增长、`lsof` 里 6 条到 `127.0.0.1:7896` 的连接全在 `CLOSE_WAIT`（本机代理掉了，不是仓库损坏），
       所以那一仓只有 warm 级别。
     - ✅ **撤钉之后，中央已发布件里的旧面值会不会咬消费者 —— 对认 parent 的消费者：不会**。探针
@@ -1094,7 +1094,7 @@ python3 _doc/003_script/gen_fleet_bom.py --write  # 落成 z-boot-fleet/pom.xml
     <z-graph.version>1.0.8</z-graph.version>   <!-- 1.0.6 作废（api/protocol 是 52=Java 8、core/bolt/starter 是 61=Java 17，
                                                     class major 实测混装）、Central 不许覆盖 ⇒ 只能抬号；1.0.7 是 Java 8 那一版
                                                     （2026-09-28 发到 repo1 实测 200），1.0.8 是 repo1 现读的最高一致版 -->
-    ...                                        <!-- 共 25 格（1.0.1 批次新登记 4 族：z-mist / z-qa / z-wf / z-indexer） -->
+    ...                                        <!-- 共 25 格（1.0.1 批次新登记 4 族：z-mist / z-qa / z-camuda / z-indexer） -->
 </properties>
 ```
 
@@ -1220,7 +1220,7 @@ M4 那一行是**没达标的一支**，留在这是为了记住它为什么不�
 
 ⚠ **整模块 57 例里有 20 例是关着的**：6 个类级 `@EnabledIfEnvironmentVariable` 开关
 （`RUN_ZCACHE_IT` / `RUN_ZMQ_IT` / `RUN_ZOSS_CENTRAL_IT` / `RUN_ZRPC_CENTRAL_IT` /
-`RUN_ZWF_CENTRAL_IT` / `RUN_ZWF_RPC_IT`）默认不给值 ⇒ `BUILD SUCCESS` 不等于那些 L3 被验过。
+`RUN_ZCAMUDA_CENTRAL_IT` / `RUN_ZCAMUDA_RPC_IT`）默认不给值 ⇒ `BUILD SUCCESS` 不等于那些 L3 被验过。
 
 **本轮顺带修掉一格常红**（不是本次抬号引入的）：`ZConfigMavenCentralPullIT` 的 `VERSION` 停在 **1.0.0**，
 而 1.0.0 从未发布到 Central —— 实测四坐标 × {1.0.0, 1.0.1, 1.0.2, 1.0.4, 1.0.7, 1.0.8} = 24 次 curl，

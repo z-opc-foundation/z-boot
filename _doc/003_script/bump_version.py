@@ -100,7 +100,7 @@ def blank_comments(text):
     """把 <!-- ... --> 整段换成等长空格：偏移量不变，但标签栈不会被注释里的假标签带跑。
     必须做这一步：这些 pom 的注释里满是 `<dependencyManagement>`、`<z-llm.version>0.1.6
     </z-llm.version>` 这类字样（还有不配对的半个标签），不排除就会把层级判断带歪 ——
-    z-llm / z-vector / z-wf 第一版就是这样"一处都没改到"的。"""
+    z-llm / z-vector / z-camuda 第一版就是这样"一处都没改到"的。"""
     out = list(text)
     i = 0
     while True:

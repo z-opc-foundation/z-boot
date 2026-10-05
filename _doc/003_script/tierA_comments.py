@@ -47,9 +47,9 @@ OPC_NEW = """          <!-- ===== Prometheus / simpleclient（FEATURE_PROM_FIX�
 
 # z-opc 根 pom 那段"链更低/链不供"的判账：把现在不再成立的结论改成"当时 + 已撤"
 OPC_LINE_A = re.compile(
-    r"[ \t]*z-wf-core/-web/-starter 1\.0\.5、io\.prometheus:simpleclient_common 0\.16\.0）⇒ 删一条\n"
+    r"[ \t]*z-camuda-core/-web/-starter 1\.0\.5、io\.prometheus:simpleclient_common 0\.16\.0）⇒ 删一条\n"
     r"[ \t]*就是让该坐标退回传递解析 ⇒ 逐字留着。")
-OPC_LINE_A_NEW = """                 z-wf-core/-web/-starter 1.0.5、io.prometheus:simpleclient_common 0.16.0）⇒ 当时删一条
+OPC_LINE_A_NEW = """                 z-camuda-core/-web/-starter 1.0.5、io.prometheus:simpleclient_common 0.16.0）⇒ 当时删一条
                  就是让该坐标退回传递解析 ⇒ 那九条逐字留着；simpleclient_common 这条 2026-09-29 随地板 1.0.20
                  撤掉了 —— 它当年不是为了绕"链不供"，而是压 floor 直钉的 0.8.1（现读 1.0.19 发布件），
                  那一格删掉后压法失去对象，详见下面 FEATURE_PROM_FIX 那段。"""
