@@ -1,0 +1,14 @@
+# z-boot 要抽检的类：逐行 `<artifactId>:<该仓 sources.jar 内的路径>`
+# 路径以线上已发布件为准（逐个 unzip -l 过线上 1.0.22 的 sources.jar），不是按源码树推的。
+#
+# 为什么这份清单在 z-boot 尤其重要：z-boot 没有 <modules>，每个子目录独立发版，
+# 各构件版本不同（根 1.0.19 / dependencies 1.0.20 / fleet 1.0.2 / starter 群 1.0.22）。
+# verify_central.sh 已改成按构件解析版本，本清单就是那条路径的实际用例 ——
+# 没有它，第 3 段整段被跳过，section 3 里的按构件取版本逻辑等于没跑过。
+z-boot-base:com/zifang/z/boot/base/ApplicationModuleDescription.java
+z-boot-base:com/zifang/boot/base/package-info.java
+z-boot-cache-starter:com/zifang/z/boot/cache/ZBootCacheAutoConfiguration.java
+z-boot-config-starter:com/zifang/z/boot/config/ZBootConfigAutoConfiguration.java
+z-boot-kb-starter:com/zifang/z/boot/kb/ZBootKbAutoConfiguration.java
+z-boot-mq-starter:com/zifang/z/boot/mq/ZBootMqAutoConfiguration.java
+z-boot-web-starter:com/zifang/Main.java

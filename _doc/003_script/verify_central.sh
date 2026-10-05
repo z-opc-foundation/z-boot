@@ -3,9 +3,18 @@
 # verify_central.sh — 校验本仓发布件在 Maven Central 上真的可拉
 #
 # 用法:
-#   ./verify_central.sh                 # 用 pom 的 <revision>，验本仓全部构件
-#   ./verify_central.sh 1.0.6           # 指定版本
+#   ./verify_central.sh                 # 自动模式：每个构件用自己 pom 里的 <version>
+#   ./verify_central.sh 1.0.6           # 显式模式：全部构件按这个版本验
 #   VERIFY_SKIP_SIGNATURE=1 ./verify_central.sh   # 跳过签名检查
+#
+# ⚠ 为什么默认要「按构件解析版本」，不能只解析一次仓级版本：
+#   z-boot 没有 <modules>，每个子目录都是独立发版的工程，版本线各不相同
+#   （根 1.0.19 / dependencies 1.0.20 / fleet 1.0.2 / integration-starters 1.0.22）。
+#   套仓级版本会让 fleet 被按 1.0.19 查而 404；更隐蔽的是 dependencies 本地
+#   已经是 1.0.20，却按 1.0.19 查成 200 —— 「抬了号忘了发」这种欠账就永远看不见。
+#   有 <modules> 的仓（如 z-kb）全仓共用一个版本，按构件解析得到的也是同一个值，
+#   两种模式等价，所以这个改法对它们是安全的。
+#   显式传参时全仓按传入版本验，保留「我想验某个历史版本」的能力。
 #
 # 校验项（与原 z-middleware-integration-test 的 IT 等价）:
 #   1. 每个构件的 .pom 可达
@@ -41,6 +50,8 @@ cd "$REPO_ROOT"
 FAIL=0   # 先初始化：报错路径上也要能记账，否则 set -u 直接崩、连「失败」都报不出来
 TOTAL=0
 VERSION="${1:-}"
+EXPLICIT=""
+[ -n "$VERSION" ] && EXPLICIT=1
 if [ -z "$VERSION" ]; then
     VERSION=$(python3 - <<'PY'
 import re, sys
@@ -77,24 +88,43 @@ fi
 case "$VERSION" in
     *'${'*) err "版本解析得到的是未展开的串 ${VERSION}；请显式传参 ./verify_central.sh <version>"; exit 1 ;;
 esac
-log "仓: $(basename "$REPO_ROOT")  版本: $VERSION  groupId: $GROUP_ID"
+log "仓: $(basename "$REPO_ROOT")  groupId: $GROUP_ID"
+if [ -n "$EXPLICIT" ]; then
+    log "模式: 显式指定版本 ${VERSION}（全部构件按此版本验）"
+else
+    log "模式: 自动解析（各构件用自己 pom 里的 <version>；仓级 $VERSION 仅作兜底）"
+fi
 
-# ---------- 构件清单 + packaging ----------
+# ---------- 构件清单 + packaging + 各构件自己的版本 ----------
 # 聚合 POM（packaging=pom）没有 jar；其余按 jar 处理。
-read -r -d '' SPEC <<'PY' || true
-PY
-SPEC=$(python3 - "$VERSION" <<'PY'
+SPEC=$(python3 - "$VERSION" "$EXPLICIT" <<'PY'
 import os, re, sys
 import xml.etree.ElementTree as ET
 NS = '{http://maven.apache.org/POM/4.0.0}'
-ver = sys.argv[1]
-root = ET.parse('pom.xml').getroot()
+fallback = sys.argv[1]
+explicit = sys.argv[2] == '1'
+
 def t(e, tag):
     x = e.find(NS + tag)
     return (x.text or '').strip() if x is not None else ''
+
+def own_version(r):
+    """本 pom 声明的版本。拿不到就返回 None，让调用方回退到继承来的。
+    ⚠ 用 ET 的 root.find('version') 而不是正则：它只取 <project> 的直接子节点，
+    天然跳过 <parent> 里那个 —— 仓级解析踩过的「误取 parent」在这里不会再犯。"""
+    props = r.find(NS + 'properties')
+    if props is not None:
+        rev = props.find(NS + 'revision')
+        if rev is not None and rev.text and '${' not in rev.text:
+            return rev.text.strip()
+    v = r.find(NS + 'version')
+    if v is not None and v.text and '${' not in v.text:
+        return v.text.strip()
+    return None
+
 out = []
 seen = set()
-def scan(pom_path, module_hint, allow_dir_scan=True):
+def scan(pom_path, module_hint, inherited, allow_dir_scan=True):
     rp = os.path.realpath(pom_path)
     if rp in seen:          # 防环 + 防重复
         return
@@ -102,14 +132,20 @@ def scan(pom_path, module_hint, allow_dir_scan=True):
     r = ET.parse(pom_path).getroot()
     aid = t(r, 'artifactId')
     pack = t(r, 'packaging') or 'jar'
+    mine = own_version(r)
+    # 显式传参时全仓按那个版本验（保持 verify_central.sh <version> 的既有语义）；
+    # 自动模式下每个构件用自己 pom 里的版本 —— z-boot 每个子目录是独立发版工程，
+    # 套仓级版本会让 z-boot-fleet(1.0.2) 被按 1.0.19 查而 404，
+    # 更糟的是 dependencies 本地 1.0.20 会被按 1.0.19 查成 200 ⇒ 抬号未发也看不出来。
+    ver = fallback if explicit else (mine or inherited or fallback)
     if aid and not aid.endswith('-parent'):
-        out.append((aid, pack, module_hint))
+        out.append((aid, pack, ver))
     mods = [ (m.text or '').strip() for m in r.iter(NS + 'module') ]
     if mods:
         for m in mods:
             p = os.path.join(os.path.dirname(pom_path), m, 'pom.xml')
             if os.path.isfile(p):
-                scan(p, m, allow_dir_scan=False)
+                scan(p, m, ver, allow_dir_scan=False)
     elif allow_dir_scan:
         # 无 <modules> 的仓（如 z-boot：每个子目录是独立可发工程）。
         # 只向下扫一层，且跳过 _ 前缀目录，避免顺着嵌套结构无限下钻。
@@ -118,10 +154,11 @@ def scan(pom_path, module_hint, allow_dir_scan=True):
                 continue
             p = os.path.join(name, 'pom.xml')
             if os.path.isdir(name) and os.path.isfile(p):
-                scan(p, name, allow_dir_scan=False)
-scan('pom.xml', '')
-for aid, pack, _ in sorted(set(out)):
-    print(f"{aid}\t{pack}")
+                scan(p, name, ver, allow_dir_scan=False)
+root_ver = own_version(ET.parse('pom.xml').getroot()) or fallback
+scan('pom.xml', '', root_ver)
+for aid, pack, ver in sorted(set(out)):
+    print(f"{aid}\t{pack}\t{ver}")
 PY
 )
 [ -z "$SPEC" ] && { err "未能从 pom.xml 解析出构件清单"; exit 1; }
@@ -147,14 +184,14 @@ is_excluded() {
 }
 echo ""
 echo "──────── 1. 构件可达性 ────────"
-while IFS=$'\t' read -r aid pack; do
+while IFS=$'\t' read -r aid pack av; do
     [ -z "$aid" ] && continue
     if is_excluded "$aid"; then
         warn "⏭  $aid — 按 $EXCLUDE_FILE 声明不发 Central，跳过"
         continue
     fi
     TOTAL=$((TOTAL+1))
-    base="$CENTRAL/${GROUP_ID//.//}/$aid/$VERSION/$aid-$VERSION"
+    base="$CENTRAL/${GROUP_ID//.//}/$aid/$av/$aid-$av"
     code=$(probe "$base.pom")
     if [ "$code" = "200" ]; then
         extra=""
@@ -169,33 +206,40 @@ while IFS=$'\t' read -r aid pack; do
             [ "$c" = "200" ] || extra="$extra .pom.asc:$c"
         fi
         if [ -n "$extra" ]; then
-            err "$aid — 缺失:$extra"
+            err "$aid $av — 缺失:$extra"
+        elif [ "$av" != "$VERSION" ]; then
+            # 版本与仓级不同的构件（无 <modules>、子工程独立发版的仓，如 z-boot）
+            log "✅ $aid ($pack) @ $av"
         else
             log "✅ $aid ($pack)"
         fi
     else
-        err "$aid — .pom HTTP $code"
+        err "$aid $av — .pom HTTP $code"
     fi
 done <<< "$SPEC"
 
 # ---------- 抽样 POM metadata ----------
 echo ""
 echo "──────── 2. POM metadata ────────"
-SAMPLE=$(echo "$SPEC" | awk -F'\t' '$2=="jar"{print $1}' | while read -r a; do
-    is_excluded "$a" || echo "$a"
+SAMPLE=$(echo "$SPEC" | awk -F'\t' '$2=="jar"{print $1"\t"$3}' | while IFS=$'\t' read -r a v; do
+    is_excluded "$a" || printf '%s\t%s\n' "$a" "$v"
 done | head -1)
 if [ -n "$SAMPLE" ]; then
-    content=$(fetch "$CENTRAL/${GROUP_ID//.//}/$SAMPLE/$VERSION/$SAMPLE-$VERSION.pom")
+    SAMPLE_AID=$(echo "$SAMPLE" | cut -f1)
+    SAMPLE_VER=$(echo "$SAMPLE" | cut -f2)
+    content=$(fetch "$CENTRAL/${GROUP_ID//.//}/$SAMPLE_AID/$SAMPLE_VER/$SAMPLE_AID-$SAMPLE_VER.pom")
     for tag in groupId artifactId version name license scm developers; do
         if echo "$content" | grep -q "<$tag>"; then
-            log "✅ $SAMPLE 含 <$tag>"
+            log "✅ $SAMPLE_AID 含 <$tag>"
         else
-            err "$SAMPLE 缺 <$tag>（Central Portal 强制要求）"
+            err "$SAMPLE_AID 缺 <$tag>（Central Portal 强制要求）"
         fi
     done
-    echo "$content" | grep -q "<version>$VERSION</version>" \
-        && log "✅ $SAMPLE version 与验的版本一致" \
-        || err "$SAMPLE version 与 $VERSION 不一致"
+    # ⚠ ${VAR} 不能写成 $VAR：后面紧跟的全角标点（如「）」）在非 UTF-8 locale 下
+    #   会被 bash 吞进变量名，报 "SAMPLE_VER?: unbound variable"。
+    echo "$content" | grep -q "<version>${SAMPLE_VER}</version>" \
+        && log "✅ ${SAMPLE_AID} version 与验的版本一致（${SAMPLE_VER}）" \
+        || err "${SAMPLE_AID} version 与 ${SAMPLE_VER} 不一致"
 else
     warn "无 jar 构件，跳过 POM metadata 抽检"
 fi
@@ -206,6 +250,13 @@ CLASSPICK="verify-classes.txt"
 SRCJAR=""
 LISTING=""
 CANDIDATE=""
+CANDIDATE_VER=""
+# artifactId → 它自己的版本（自动模式下各构件版本可能不同，如 z-boot 的 fleet 1.0.2）。
+# ⚠ 用 awk 查表而不是 `declare -A` 关联数组：macOS 自带 bash 是 3.2，没有关联数组，
+#   写了会直接 "declare: -A: invalid option" 把整个脚本打断。
+ver_of() {  # $1=artifactId
+    printf '%s\n' "$SPEC" | awk -F'\t' -v a="$1" '$1==a {print $3; exit}'
+}
 if [ -f "$SCRIPT_DIR/$CLASSPICK" ]; then
     echo ""
     echo "──────── 3. sources.jar 内容抽检 ────────"
@@ -223,18 +274,20 @@ if [ -f "$SCRIPT_DIR/$CLASSPICK" ]; then
             err "无法解析 $CLASSPICK 的一行（需为 <artifactId>:<类路径>）：$cls"
             continue
         fi
+        av=$(ver_of "$aid"); av="${av:-$VERSION}"
         if [ "$aid" != "$CANDIDATE" ]; then
             # 换了 artifactId ⇒ 换一份 sources.jar
             [ -n "$SRCJAR" ] && rm -f "$SRCJAR" 2>/dev/null
             CANDIDATE="$aid"
+            CANDIDATE_VER="$av"
             # unzip -l 要求可 seek 的文件，进程替换（/dev/fd/N）会报
             # "End-of-central-directory signature not found" ⇒ 先落临时文件。
             SRCJAR=$(mktemp -t verify-sources.XXXXXX.jar)
             curl -s --max-time 60 -o "$SRCJAR" \
-                "$CENTRAL/${GROUP_ID//.//}/$CANDIDATE/$VERSION/$CANDIDATE-$VERSION-sources.jar"
+                "$CENTRAL/${GROUP_ID//.//}/$CANDIDATE/$av/$CANDIDATE-$av-sources.jar"
             LISTING=$(unzip -l "$SRCJAR" 2>/dev/null)
             if [ -z "$LISTING" ]; then
-                err "$CANDIDATE sources.jar 下载或读取失败（判据本身坏了，该结论不作数）"
+                err "$CANDIDATE $av sources.jar 下载或读取失败（判据本身坏了，该结论不作数）"
                 SRCJAR=""; LISTING=""
             fi
         fi
@@ -253,7 +306,14 @@ fi
 # ---------- 收口 ----------
 echo ""
 if [ "$FAIL" -eq 0 ]; then
-    log "✅ 全绿：$TOTAL 个构件在 Central 上均可拉，版本 $VERSION"
+    if [ -n "$EXPLICIT" ]; then
+        log "✅ 全绿：$TOTAL 个构件在 Central 上均可拉，版本 ${VERSION}（显式指定）"
+    else
+        # 自动模式下各构件版本可能不同，把实际验的版本组合列出来，
+        # 免得"全绿"看不出到底验了哪些号
+        VERSIONS=$(echo "$SPEC" | awk -F'\t' '{print $3}' | sort -u | tr '\n' ' ')
+        log "✅ 全绿：$TOTAL 个构件在 Central 上均可拉（各构件用自己 pom 的版本：${VERSIONS% }）"
+    fi
     exit 0
 else
     err "❌ $FAIL 项失败 / 共 $TOTAL 个构件"
