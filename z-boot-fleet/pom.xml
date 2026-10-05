@@ -45,7 +45,21 @@
         <z-schedule.version>1.0.6</z-schedule.version>
         <z-msg.version>1.2.2</z-msg.version>
         <z-script.version>1.0.1</z-script.version>
-        <z-util.version>1.0.16</z-util.version>
+        <!-- 1.0.14 → 1.0.18：本次抬版本是为了把 z-util 的两个修复真正送到消费者手上。
+             1.0.17/1.0.18 带 JsonUtil 补 java.time 分支与泛型 POJO 反序列化（b3666913）、
+             JsonObject/JsonArray 的 toString() 转义（cfeeb2e8）——后者不修的话
+             JsonUtil.toJsonString 会产出非法 JSON。
+
+             消费者当前的实际解析值是 1.0.14（已发布 fleet 1.0.1 那一格），比源码还低两格。
+             实测升到 1.0.18 的效果（-Dz-util.version=1.0.18 强制覆盖后全量跑）：
+               z-config  37 测：1.0.14 = 2 错（ConfigCallClientTest 两处
+                            InaccessibleObjectException）→ 1.0.18 = 0 错
+               z-opc   1085 测：两个版本都是 0 错，无差异
+             即这次抬版本修掉 z-config 的 2 个错，对 z-opc 无副作用。
+
+             注意：本仓改完只是"准备好"，消费者读的是**已发布**的 fleet。要真正生效还需
+             发布 fleet 1.0.3 → z-boot-parent 抬到引用它 → 各消费者重发，属发版动作。 -->
+        <z-util.version>1.0.18</z-util.version>
         <z-agent-kernel.version>0.2.1</z-agent-kernel.version>
         <z-llm.version>0.1.7</z-llm.version>
         <z-mcp.version>0.2.1</z-mcp.version>
