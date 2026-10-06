@@ -12,7 +12,7 @@
     
 
     <artifactId>z-boot-starter</artifactId>
-    <version>1.0.22</version>
+    <version>1.0.23</version>
     <name>z-boot-starter (Aggregator)</name>
     <packaging>pom</packaging>
 
@@ -28,4 +28,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- 这里**不要** import z-boot-parent 的 BOM（2026-10-06 试过，又撤掉了）。
+         起因是 z-boot-web-starter 曾声明一条"不写版本"的 z-boot-jackson-starter 依赖，
+         而本容器的 parent 链是 z-boot-starter → 根 z-boot，不经过 z-boot-parent ⇒ 版本无从供给。
+         两种解法都试过：import 进来能编过，但 (a) 它只为供这一个版本号，
+         (b) import 依赖不支持 <relativePath>，等于给发布加了"parent 必须先于 starter"的硬顺序约束。
+         最后选的解法是把 jackson 规则**内化进 z-boot-web-starter 本身**（模块已删除），
+         依赖环与缺版本一并消失，这里也就不需要 BOM 了。 -->
 </project>

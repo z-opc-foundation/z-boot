@@ -6,13 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-starter</artifactId>
-        <version>1.0.22</version>
+        <version>1.0.23</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-web-starter</artifactId>
-    <version>1.0.22</version>
+    <version>1.0.23</version>
     <name>z-boot-web-starter</name>
     <description>z-boot Web starter — 装配 spring-boot-starter-web + log4j2 + knife4j OpenAPI 3。</description>
     <licenses>
@@ -62,7 +62,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-fleet</artifactId>
-                <version>1.0.2</version>
+                <version>1.0.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -116,13 +116,8 @@
             <artifactId>log4j-slf4j2-impl</artifactId>
         </dependency>
 
-        <!-- Long→String 统一序列化（2026-10-03 补上平台接线，此前规则写好了但零个服务继承到）
-             规则本体在 z-boot-jackson-starter 的 GlobalJacksonConfig，它有正规
-             META-INF/spring.factories 自动配置登记，发布件 1.0.22 已实测含
-             longAsStringCustomizer + LongToStringSerializer。问题出在**没人依赖它**：
-             全仓除聚合 pom 外无一处声明该坐标，z-boot-web-starter 也没引，
-             于是所有 web 服务实际都没拿到这条规则——各服务于是各自在本地
-             JacksonConfig 里手写一份（z-team 就是这么长出来的），彼此口径还不一样。
+        <!-- Long→String 统一序列化：2026-10-03 规则写好但零个服务继承到（没人依赖它），
+             2026-10-06 由"引一个独立件"改成**直接内化进本模块**。
 
              雪花 ID 是 19 位（~2.1e18），超过 JS Number 的 53 位有效位，
              后端按 JSON 数字写出时浏览器 JSON.parse 在词法阶段就舍掉末位、原值不可恢复
@@ -130,12 +125,19 @@
              前端拿抹平后的 ID 回查必然「项目不存在」。
 
              这条不是「集成型 starter」那种可选能力，是每个 web 服务的底线正确性保证，
-             所以下沉到基础件 z-boot-web-starter：所有 web 服务已经依赖它，加这一条即全体继承，
-             不用每个服务各写一遍、也不会漏。版本由 z-boot-parent 的 ${z-boot.version} 统一管理。 -->
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-boot-jackson-starter</artifactId>
-        </dependency>
+             而所有 web 服务都已经依赖本模块 ⇒ 规则本体（GlobalJacksonConfig）连同它的
+             META-INF/spring.factories 登记一起搬进 src/main，没有中间坐标。
+
+             为什么不是"声明一条依赖 z-boot-jackson-starter"（13154be 当初的做法）：
+             那条依赖 ①版本无从供给——注释说由 z-boot-parent 的 ${z-boot.version} 供，
+             可本模块的 parent 链是 z-boot-starter → 根 z-boot，根本不经过 z-boot-parent
+             （fleet 的 pom 里也明写"z-boot 自家的 z-boot-*-starter 不在这里"），
+             于是从 2026-10-04 起本模块一直编不过；
+             ②就算补上版本，它又会和 script/msg/schedule 三份集成 starter 依赖本模块
+             构成**两个发布容器互相依赖的环**，任何发布顺序都无解
+             （先发 A 缺 jackson-starter，先发 B 缺 web-starter，Maven 不会跨 reactor 排序）。
+             内化之后依赖图回到一条直线：jackson 规则在本模块内 → web → script/msg/schedule。
+             ⇒ 原 z-boot-jackson-starter 模块整体删除（内容已在此处）。 -->
 
         <!-- knife4j / springdoc 的版本由上面 import 的 z-boot-dependencies BOM 唯一供给
              （${knife4j-openapi3.version}）。这里再写一份字面量，就会和 BOM 各说各话：

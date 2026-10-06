@@ -71,12 +71,29 @@ load_env() {
     [[ -n "${CENTRAL_TOKEN:-}"       ]] || die "缺 CENTRAL_TOKEN（.env 或环境变量）"
 
     export CENTRAL_USERNAME CENTRAL_TOKEN
-
-    # 密钥环在本仓的 .gnupg 里（~/.gnupg 实测 0 把私钥，不导就直接 gpg 签名失败）
-    [[ -d "$PWD/.gnupg" ]] && export GNUPGHOME="$PWD/.gnupg"
 }
 
+# 选签名密钥环：取第一个**真的含私钥**的环（解析在 check_deps 里做）。
+# 原来在 load_env/check_deps 里是"看到 ./.gnupg 目录存在就指向它"，这里有个自噬的坑：
+# gpg 会在 GNUPGHOME 不存在时自动建一个空壳（只有 S.gpg-agent 一串 socket，
+# private-keys-v1.d 是空的，0 把私钥），空壳一旦落盘，脚本就永远指向它，
+# 签名必然报 "gpg: no default secret key" —— 而这句话完全指不到真正的原因。
+# 所以判据是"有没有 sec:"，不是"目录在不在"。
+
 # ---------- 依赖检查 ----------
+resolve_gnupghome() {
+    local h
+    for h in "${GNUPGHOME:-}" "$PWD/.gnupg" "$HOME/.gnupg"; do
+        [[ -n "$h" && -d "$h" ]] || continue
+        if GNUPGHOME="$h" gpg --list-secret-keys --with-colons 2>/dev/null | grep -q '^sec:'; then
+            log "签名密钥环：$h"
+            export GNUPGHOME="$h"
+            return 0
+        fi
+    done
+    return 1
+}
+
 check_deps() {
     command -v mvn >/dev/null 2>&1 || die "mvn 未安装"
     command -v gpg >/dev/null 2>&1 || die "gpg 未安装（brew install gnupg）"
@@ -84,11 +101,7 @@ check_deps() {
     [[ -f ~/.m2/settings.xml ]] || die "~/.m2/settings.xml 不存在"
     grep -q '<id>central</id>' ~/.m2/settings.xml || die "~/.m2/settings.xml 缺 <server id=\"central\">"
 
-    if [[ -d ./.gnupg ]]; then
-        export GNUPGHOME="$PWD/.gnupg"
-    elif ! gpg --list-secret-keys --with-colons 2>/dev/null | grep -q '^sec:'; then
-        die "既没有 ./.gnupg，当前密钥环里也没有一把私钥：本地先跑 bash _doc/003_script/deploy_maven_center.sh gpg-init；CI 里由 actions/setup-java 的 gpg-private-key 注入"
-    fi
+    resolve_gnupghome || die "GNUPGHOME / ./.gnupg / ~/.gnupg 里都没有一把私钥：本地先跑 bash _doc/003_script/deploy_maven_center.sh gpg-init；CI 里由 actions/setup-java 的 gpg-private-key 注入"
 }
 
 # ---------- 子命令：gpg-init ----------

@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.22</version>
+        <version>1.0.23</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-msg-starter</artifactId>
-    <version>1.0.22</version>
+    <version>1.0.23</version>
     <name>z-boot-msg-starter</name>
     <description>
         z-boot MSG 聚合 starter — 一行 import 集成 z-msg 多通道消息下发系统
@@ -68,7 +68,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-fleet</artifactId>
-                <version>1.0.1</version>
+                <version>1.0.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -77,12 +77,12 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-datasource-starter</artifactId>
-                <version>1.0.22</version>
+                <version>1.0.23</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-web-starter</artifactId>
-                <version>1.0.22</version>
+                <version>1.0.23</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

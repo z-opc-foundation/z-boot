@@ -53,7 +53,7 @@ FAMILIES = {
     # src/main/resources，两个 spring.factories（正文只有裸类名、没有 key，加载器根本读不到）
     # 换成 .imports ⇒ 本仓 starter 第一次能"引入即装配"。1.0.4 已在中央但内容是坏的，
     # Central 不许覆盖，只能抬号重发。
-    "z-kb":      ("z-kb",       "1.0.5"),
+    "z-kb":      ("z-kb",       "1.0.7"),
     "z-vector":  ("z-vector",   "1.0.5"),
     # 1.0.6 是"移植中途发出去的半成品"(api/protocol=52 而 core/bolt/starter=61),Central 不许覆盖
     # ⇒ 永久作废。1.0.7 是 Java 8 线的那一版,z-graph 仓 2026-09-28 发到 repo1(实测 200),已抬。
@@ -63,7 +63,7 @@ FAMILIES = {
     "z-schedule":("z-schedule", "1.0.6"),
     "z-msg":     ("z-msg",      "1.2.2"),
     "z-script":  ("z-script",   "1.0.1"),
-    "z-util":    ("z-util",     "1.0.14"),
+    "z-util":    ("z-util",     "1.0.18"),
     "z-agent-kernel": ("z-agent-kernel", "0.2.1"),
     "z-llm":     ("z-llm",      "0.1.7"),
     # 0.2.1 = 发布 pom 改 flattenMode oss 的那一版（缺陷 3：resolveCiFriendliesOnly 留下的
@@ -84,7 +84,7 @@ FAMILIES = {
 # 版本，重发同号只会 400，而 400 之前你已经把一个"发不出去的 fleet"当权威用了一轮。
 # 落盘前脚本会回读 repo1 确认这一格还空着(见 main 的守卫)。
 # 1.0.1：内容变了（21 格全部抬到 repo1 现读值 + 新增 4 族）⇒ 必须抬号。
-FLEET_VERSION = "1.0.1"
+FLEET_VERSION = "1.0.3"
 
 # 这些仓不是"目录=模块"的形状,坐标由人工登记(单模块仓或 artifactId 与仓名不同)。
 EXTRA = {
@@ -428,6 +428,46 @@ def main():
                 % (len(stale), FLEET_VERSION)
                 + "".join("    %s\n" % x for x in sorted(stale))
                 + "  改完再跑一次。\n")
+            sys.exit(3)
+        # 守卫〇quater:每份 starter 的 **<parent> 版本必须等于它自己的 <version>**。
+        #
+        # 为什么要独立一条 —— 同一条不变式("starter 与聚合件同版本")有**三个可观测面**:
+        # 字面 import(fleet 那格)、<parent><version>、自身 <version>。守卫〇ter 只断第一个。
+        # 实测 2026-10-06 踩到的就是后两个:23 份 starter 自身全抬到 1.0.23,<parent> 全停在 1.0.22。
+        #
+        # 后果比"版本号没同步"重得多:relativePath 与 <parent> 版本不符时,Maven 会**放弃相对路径**、
+        # 转去仓库解析旧聚合件,子件因此继承到上一版的 dependencyManagement。症状是
+        # "'dependencies.dependency.version' for z-boot-jackson-starter is missing" ——
+        # 跟"版本没同步"看不出任何关系,当年就是这么绕了很久。
+        misparent = []
+        for container in ("z-boot-integration-starters", "z-boot-starter"):
+            cdir = os.path.join(REPO_ROOT, container)
+            if not os.path.isdir(cdir):
+                continue
+            for d, _sub, files in os.walk(cdir):
+                if "pom.xml" not in files:
+                    continue
+                sp = os.path.join(d, "pom.xml")
+                sroot = ET.fromstring(art_text(sp))
+                own = (sroot.findtext(NS + "version", "") or "").strip()
+                par = sroot.find(NS + "parent")
+                if not own or par is None:
+                    continue
+                pa = (par.findtext(NS + "artifactId", "") or "").strip()
+                pv = (par.findtext(NS + "version", "") or "").strip()
+                # 只管 parent 指向本仓两个聚合件的;z-tool-webide 那类外来件不在其列
+                if pa != container or pv == own:
+                    continue
+                misparent.append("%s  <parent>%s:%s  自身 %s"
+                                 % (os.path.relpath(sp, REPO_ROOT), pa, pv, own))
+        if misparent:
+            sys.stderr.write(
+                "✗ 有 %d 份 starter 的 <parent> 版本与自身版本不同格。\n"
+                "  relativePath 与 <parent> 版本不符时 Maven 会放弃相对路径、去仓库解析旧聚合件,\n"
+                "  子件于是继承到上一版的 dependencyManagement(症状是某个依赖 version is missing)。\n"
+                % len(misparent)
+                + "".join("    %s\n" % x for x in sorted(misparent))
+                + "  改成同格再跑一次。\n")
             sys.exit(3)
         pending = {}
         for r in results:
