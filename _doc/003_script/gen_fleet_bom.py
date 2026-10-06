@@ -41,14 +41,17 @@ BASE = "https://repo1.maven.org/maven2/io/github/yuku123/"
 # 只能各仓自己钉字面值（z-opc 那份 DM 里 z-mist-web 1.0.2、z-camuda-starter 1.0.5 就是这么来的，
 # 而且一钉就是落后三版）。漏登记不是"这些仓不重要"，是清单手抄的账 —— 见本脚本顶部注释。
 FAMILIES = {
-    "z-config":  ("z-config",  "1.0.9"),
+    # 2026-10-06 抬 1.0.9→1.0.10：本机仓 pom 与中央 metadata release 都是 1.0.10。
+    # 之前一直没人发现 —— 这一族没人依赖，fleet 一切正常、闸门全绿。
+    "z-config":  ("z-config",  "1.0.10"),
     # 1.0.1 那格的旧注释（"repo1 实测 404 ⇒ 那一版没落进 Central"）已经不成立：
     # z-ctc/maven-metadata.xml 现读 latest=release=1.0.2 ⇒ 1.0.19 批次里 z-ctc 真发出去了，
     # 这一格跟着抬。（z-ctc-admin 仍不发布，见 SKIP_ARTIFACTS。）
     "z-ctc":     ("z-ctc",     "1.0.2"),
     "z-cache":   ("z-cache",   "1.3.6"),
     "z-mq":      ("z-mq",      "1.3.1"),
-    "z-gw":      ("z-gw",      "1.0.5"),
+    # 2026-10-06 抬 1.0.5→1.0.6：本机仓 pom=1.0.6，中央 z-gw:1.0.6 实测 200（release=1.0.6）。
+    "z-gw":      ("z-gw",      "1.0.6"),
     # 1.0.5 是缺陷 2 的那一版：AutoConfiguration.imports 从伪 src 路径搬进各模块的
     # src/main/resources，两个 spring.factories（正文只有裸类名、没有 key，加载器根本读不到）
     # 换成 .imports ⇒ 本仓 starter 第一次能"引入即装配"。1.0.4 已在中央但内容是坏的，
@@ -62,8 +65,12 @@ FAMILIES = {
     "z-oss":     ("z-oss",      "1.0.4"),
     "z-schedule":("z-schedule", "1.0.6"),
     "z-msg":     ("z-msg",      "1.2.2"),
-    "z-script":  ("z-script",   "1.0.1"),
-    "z-util":    ("z-util",     "1.0.18"),
+    "z-script":  ("z-script",   "1.0.2"),
+    # 2026-10-06 抬 1.0.18→1.0.19：**不是照 <latest> 盲抬** —— 本机工作区当时还停在 1.0.18，
+    # 但 `git ls-remote origin main` + `git show FETCH_HEAD:pom.xml` 实测远端 main 的
+    # <revision> 就是 1.0.19（本机落后一个提交），中央 1.0.19 lastUpdated=2026-10-05。
+    # 依据在仓里，不在 <latest> 上。
+    "z-util":    ("z-util",     "1.0.19"),
     "z-agent-kernel": ("z-agent-kernel", "0.2.1"),
     "z-llm":     ("z-llm",      "0.1.7"),
     # 0.2.1 = 发布 pom 改 flattenMode oss 的那一版（缺陷 3：resolveCiFriendliesOnly 留下的
@@ -71,7 +78,7 @@ FAMILIES = {
     "z-mcp":     ("z-mcp",      "0.2.1"),
     "z-skill":   ("z-skill",    "0.2.2"),
     "z-agent":   ("z-agent",    "0.1.4"),
-    "z-bot":     ("z-bot",      "0.2.0"),
+    "z-bot":     ("z-bot",      "0.2.1"),
     "z-agent-proxy": ("z-agent-proxy", "0.1.1"),
     "z-mist":    ("z-mist",     "1.0.4"),
     "z-qa":      ("z-qa",       "1.0.1"),
@@ -84,7 +91,7 @@ FAMILIES = {
 # 版本，重发同号只会 400，而 400 之前你已经把一个"发不出去的 fleet"当权威用了一轮。
 # 落盘前脚本会回读 repo1 确认这一格还空着(见 main 的守卫)。
 # 1.0.1：内容变了（21 格全部抬到 repo1 现读值 + 新增 4 族）⇒ 必须抬号。
-FLEET_VERSION = "1.0.3"
+FLEET_VERSION = "1.0.4"
 
 # 这些仓不是"目录=模块"的形状,坐标由人工登记(单模块仓或 artifactId 与仓名不同)。
 EXTRA = {
@@ -201,19 +208,49 @@ def write_parent(report_only=True):
     parent_ver = (root.findtext(NS + "version", "") or "").strip()
     props = root.find(NS + "properties")
     prop_ver = (props.findtext(NS + "z-boot.version", "") or "").strip() if props is not None else ""
-    if parent_ver != prop_ver:
-        sys.stderr.write("✗ z-boot-parent 的 <version>(%s) 与 <z-boot.version>(%s) 不同格 —— "
-                         "自家 starter 只能和 parent 一起发版,这两处必须同值。\n"
-                         % (parent_ver, prop_ver))
+    if not prop_ver:
+        sys.stderr.write("✗ z-boot-parent 没有 <z-boot.version> —— 自家 starter 的版本无从钉起。\n")
+        return 2
+    # 这里量的是**盘上每个 starter 自己的版本**，不是 parent 自己的版本。
+    #
+    # 曾经写反了：`exists(a, parent_ver)` 拿 parent 自己的号去探 starter，于是被迫加了一条
+    # "parent 自身版本必须 == <z-boot.version>" 的硬错来把两者绑死。可它们本来就是两条
+    # 独立的发版线（2026-10-06 实测：parent 已发 1.0.26，starter 在 1.0.25），
+    # 绑死的代价是 parent 再也追不上、或者逼着把没打算发的版本号发出去。
+    # 真正该成立的不变式只有一条：**盘上每个 starter 都确实在 <z-boot.version> 这一格**，
+    # 否则 parent 钉的就是一个没有任何模块在的版本号。
+    off = []
+    for c in SELF_AGGREGATORS:
+        cd = os.path.join(REPO_ROOT, c)
+        if not os.path.isdir(cd):
+            continue
+        for sd in sorted(os.listdir(cd)):
+            sp = os.path.join(cd, sd, "pom.xml")
+            if not os.path.isfile(sp):
+                continue
+            try:
+                sr = ET.fromstring(art_text(sp))
+            except ET.ParseError:
+                continue
+            aid = (sr.findtext(NS + "artifactId", "") or "").strip()
+            if not (aid.startswith("z-boot-") and aid.endswith("-starter")):
+                continue
+            sv = (sr.findtext(NS + "version", "") or "").strip()
+            if sv != prop_ver:
+                off.append("%s@%s" % (aid, sv))
+    if off:
+        sys.stderr.write("✗ 盘上这些自家 starter 不在 <z-boot.version>(%s) 那一格，parent 钉它们会钉空:%s\n"
+                         "  先把 starter 发到 %s 再重跑。\n" % (prop_ver, "、".join(off), prop_ver))
         return 2
 
     arts = self_starter_artifacts()
     with cf.ThreadPoolExecutor(24) as ex:
-        rows = list(zip(arts, ex.map(lambda a: exists(a, parent_ver), arts)))
+        rows = list(zip(arts, ex.map(lambda a: exists(a, prop_ver), arts)))
     keep = [a for a, s in rows if s in ("OK", "PENDING")]
     pend = [a for a, s in rows if s == "PENDING"]
     drop = [(a, s) for a, s in rows if s == "MISSING"]
-    print("z-boot-parent 自家 starter @%s:盘上 %d 个 / 收 %d 个" % (parent_ver, len(arts), len(keep)))
+    print("z-boot-parent 自家 starter @%s(parent 自身 %s):盘上 %d 个 / 收 %d 个"
+          % (prop_ver, parent_ver, len(arts), len(keep)))
     if pend:
         print("  PENDING(本地有、repo1 还没进索引): %s" % ",".join(pend))
     if drop:
@@ -227,9 +264,27 @@ def write_parent(report_only=True):
                          "钉进 parent 就是让外部消费方 404,而 Central 不许覆盖 —— 只能作废整格重发。\n"
                          "   先把 z-boot-integration-starters 发出去、ranged GET 见 200,再重跑。\n")
         return 2
+    # **静默丢弃才是真病根**。
+    #
+    # 盘上存在的自家 starter 一旦因为"当版还没发到 repo1"被丢出 keep,parent 的这段就永远少一格
+    # —— 而没人会注意到,因为 parent 照样发得出去、闸门照样全绿。
+    # 实测:z-boot-base 当年就是这样从这段里消失的(至今没回来),于是消费者引用 z-boot-base
+    # 时没有版本可用 —— 与 z-boot-jackson-starter 那格同一类洞,只是那一格先被踩到了。
+    #
+    # 所以这里从"打印一行 drop"升级成硬失败:先把那批 starter 发出去,等 ranged GET 见 200,
+    # 再重跑本命令把整段收全。确认接受一个"当版缺失"的 parent 才加 --allow-drop。
+    if drop and "--allow-drop" not in sys.argv:
+        sys.stderr.write(
+            "✗ 盘上有 %d 个自家 starter 在 repo1 的 %s 上取不到,会被丢出 parent 的管理表:%s\n"
+            "  静默丢弃 = parent 永久少这一格,而没人会发现(parent 照样发得出去、闸门全绿)。\n"
+            "  消费者引用它只能手写版本,或者直接 version is missing(与 z-boot-jackson-starter 同类)。\n"
+            "  先把 z-boot-starter / z-boot-integration-starters 发出去、ranged GET 见 200 再重跑;\n"
+            "  确认接受一个残缺的 parent 才加 --allow-drop。\n"
+            % (len(drop), prop_ver, "、".join(a for a, _s in drop)))
+        return 3
 
     block = ["            <!-- z-boot %s:清单取自 %s 的 <modules>,版本逐件核过 repo1 -->"
-             % (parent_ver, " + ".join(SELF_AGGREGATORS))]
+             % (prop_ver, " + ".join(SELF_AGGREGATORS))]
     for a in keep:
         block += ['            <dependency>',
                   '                <groupId>io.github.yuku123</groupId>',
@@ -265,6 +320,75 @@ def live_on_central(aid, ver):
         if code in ("200", "206"):
             return True
     return False
+
+
+def _vkey(s):
+    """版本比较键。取前三段数字，'.' 补齐；非数字段按 0（处理 SNAPSHOT / RC 之类）。"""
+    out = []
+    for part in (s or "").split(".")[:3]:
+        out.append(int(part) if part.isdigit() else 0)
+    return (out + [0, 0, 0])[:3]
+
+
+def sibling_repo_version(repo):
+    """兄弟仓**本机**当前版本；多数仓用 CI-friendly 的 ${revision}，要去 properties 里取。"""
+    p = os.path.join(FOUNDATION, repo, "pom.xml")
+    if not os.path.isfile(p):
+        return None
+    try:
+        r = ET.fromstring(art_text(p))
+    except ET.ParseError:
+        return None
+    v = (r.findtext(NS + "version", "") or "").strip()
+    if v in ("${revision}", "${sha1}", "${changelist}"):
+        props = r.find(NS + "properties")
+        tag = v[2:-1]
+        v = ((props.findtext(NS + tag, "") or "") if props is not None else "").strip()
+    return v or None
+
+
+def central_released_version(repo):
+    """中央 maven-metadata 里的 <release> 与 <versions> 里最高的一版。
+
+    两个都取：Central 的 <latest> 语义是"最后部署"而不是"版本号最大"，只看一个会被它骗。
+    取不到返回 (None, None)，调用方据此把这一格标成 UNKNOWN 而不是"没落后"。
+    """
+    import urllib.request
+    url = f"{BASE}{repo}/maven-metadata.xml"
+    try:
+        with urllib.request.urlopen(url, timeout=25) as f:
+            m = ET.fromstring(f.read())
+    except Exception:
+        return None, None
+    rel = (m.findtext("./versioning/release", "") or "").strip() or None
+    vs = [v.text.strip() for v in m.findall("./versioning/versions/version") if v.text]
+    return rel, (max(vs, key=_vkey) if vs else None)
+
+
+def stale_families():
+    """FAMILIES 里已经落后的格。
+
+    为什么需要它 —— FAMILIES 是**手维护**的表，它不跟兄弟仓的发版自动前进。
+    以前没有任何东西会发现它陈旧：只有"人碰巧走到那一格"才会发现。
+    2026-10-06 实测：清 z-boot-fleet 那笔抬号账时顺手修了 z-kb / z-util 两族，
+    随后拿全表一量才发现还有 **5 族** 落后（z-bot / z-config / z-gw / z-script / z-util），
+    其中 z-gw 1.0.6 / z-config 1.0.10 早就在中央上了 —— 全是"没人依赖那一格所以没人发现"。
+
+    每一格量两个现实：**本机仓当前版本**（要解析 ${revision}）与 **中央已发布最高版**。
+    任一高于 FAMILIES 钉的值就算落后。本机仓不在（z-qa）只按中央那一路判。
+    """
+    out = []
+    for fam, (repo, pinned) in sorted(FAMILIES.items()):
+        disk = sibling_repo_version(repo)
+        rel, mx = central_released_version(repo)
+        cands = [x for x in (disk, rel, mx) if x]
+        if not cands:
+            out.append((fam, repo, pinned, None, None, "UNKNOWN"))
+            continue
+        newest = max(cands, key=_vkey)
+        if _vkey(newest) > _vkey(pinned):
+            out.append((fam, repo, pinned, disk, newest, "BUMP"))
+    return out
 
 
 def validate_pom(path):
@@ -368,8 +492,40 @@ def main():
     print("\n".join(report))
     total = sum(len(v[2]) for v in families.values())
     print(f"\nfleet 合计 {total} 个受管坐标 / {len(FAMILIES)} 个版本格")
+
+    # 陈旧族体检:每次都量,不只在 --write 时。FAMILIES 是手维护的表,它不会自己跟上来。
+    stale = stale_families()
+    bumped = [s for s in stale if s[5] == "BUMP"]
+    unknown = [s for s in stale if s[5] == "UNKNOWN"]
+    if bumped:
+        print(f"\n⚠ 有 {len(bumped)} 族的 FAMILIES 落后于现实(本机仓或中央已更高):")
+        for fam, repo, pinned, disk, newest, _ in bumped:
+            print(f"    {fam:<18} 钉的 {pinned:<10} 本机 {disk or '-':<10} 中央最高 {newest}")
+    if unknown:
+        print(f"\n? 有 {len(unknown)} 族量不到现实(本机仓不在 + 中央 metadata 取不到),结论不作数:")
+        for fam, _repo, pinned, _d, _n, _ in unknown:
+            print(f"    {fam:<18} 钉的 {pinned}")
+    if not stale:
+        print(f"\n✅ {len(FAMILIES)} 族全部与现实一致（本机仓当前版本 / 中央已发布最高版）")
+
     target = os.path.join(REPO_ROOT, "z-boot-fleet", "pom.xml")
     if write:
+        # 守卫〇quinque:FAMILIES 里有没有落后于现实的格。
+        #
+        # 为什么这道闸门必须有 —— FAMILIES 是手维护的,以前**没有任何东西**会发现它陈旧:
+        # 每一格只有"人碰巧走到"才会被发现。2026-10-06 清 fleet 抬号那笔账时顺手修了
+        # z-kb / z-util,事后拿全表一量才发现还有 5 族落后,而 z-gw 1.0.6 / z-config 1.0.10
+        # 早就在中央上了 —— 不是"晚了一步",是从来没被看见。
+        if bumped and "--allow-stale" not in sys.argv:
+            sys.stderr.write(
+                "✗ FAMILIES 有 %d 族落后于现实(本机仓当前版本 / 中央已发布最高版)。\n"
+                "  钉着一个比兄弟仓旧的版本 = 消费者拿到的是过期权威,而 fleet 一切正常、闸门全绿。\n"
+                % len(bumped)
+                + "".join("    %-18s 钉的 %-10s 本机 %-10s 中央最高 %s\n"
+                          % (f, p, d or "-", n) for f, _r, p, d, n, _s in bumped)
+                + "  把 FAMILIES 里这几格抬上去（抬完记得跑 --write 重算并抬 FLEET_VERSION），\n"
+                "  确认承担'有意滞后'的风险才加 --allow-stale。\n")
+            sys.exit(3)
         # 守卫零:fleet 自己那一格还空着吗?Central 不许覆盖,拿一个已发布的版本号重发只会 400,
         # 而 400 之前你已经把这份"发不出去"的清单当权威用了一轮。
         if live_on_central("z-boot-fleet", FLEET_VERSION):

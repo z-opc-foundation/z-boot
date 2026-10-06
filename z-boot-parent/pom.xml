@@ -38,7 +38,7 @@
     </parent>
 
     <artifactId>z-boot-parent</artifactId>
-    <version>1.0.25</version>
+    <version>1.0.26</version>
     <packaging>pom</packaging>
 
     <name>z-boot-parent (Consumer Parent)</name>
@@ -47,10 +47,10 @@
     <properties>
         <!-- fleet 的落点。fleet 是脚本产物（_doc/003_script/gen_fleet_bom.py），只钉 repo1 实测
              存在的版本；fleet 内容变了就抬这一格并重发 fleet 文件夹。 -->
-        <z-boot-fleet.version>1.0.3</z-boot-fleet.version>
+        <z-boot-fleet.version>1.0.4</z-boot-fleet.version>
         <!-- z-boot 自家 starter 的落点：与本 parent 自己的 <version> 同格（同一个仓、一起发版）。
              由 gen_fleet_bom.py 的 write-parent 逐件对 repo1 复核后落笔，别手改。 -->
-        <z-boot.version>1.0.23</z-boot.version>
+        <z-boot.version>1.0.25</z-boot.version>
 
         <java.version>1.8</java.version>
         <maven.compiler.source>8</maven.compiler.source>
@@ -81,7 +81,7 @@
             </dependency>
 
             <!-- BEGIN z-boot-self (由 gen_fleet_bom.py 的 write-parent 维护，勿手改) -->
-            <!-- z-boot 1.0.21:清单取自 z-boot-starter + z-boot-integration-starters 的 <modules>,版本逐件核过 repo1 -->
+            <!-- z-boot 1.0.25:清单取自 z-boot-starter + z-boot-integration-starters 的 <modules>,版本逐件核过 repo1 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-agent-proxy-starter</artifactId>

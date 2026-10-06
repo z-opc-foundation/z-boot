@@ -7,12 +7,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.23</version>
+        <version>1.0.25</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-ctc-starter</artifactId>
-    <version>1.0.23</version>
+    <version>1.0.25</version>
     <name>z-boot :: ctc-starter (4A 安全 HTTP hook 默认实现)</name>
     <description>z-boot CTC 聚合 starter — 一行 import 集成 z-ctc 4A 安全, 提供 HTTP 实现的 CtcAuthHook / CtcAuthorizeHook 默认 bean.</description>
     <url>https://github.com/yuku123/z-boot</url>
@@ -63,7 +63,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-fleet</artifactId>
-                <version>1.0.3</version>
+                <version>1.0.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

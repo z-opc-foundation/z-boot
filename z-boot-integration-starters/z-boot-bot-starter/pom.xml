@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.23</version>
+        <version>1.0.25</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-bot-starter</artifactId>
-    <version>1.0.23</version>
+    <version>1.0.25</version>
     <name>z-boot-bot-starter</name>
     <description>z-boot 本地 agent 应用聚合 starter — 一行 import 集成 z-bot (CLI + HTTP 双通道本地 agent, 对标 cc/Hermes)。</description>
 
@@ -62,7 +62,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-fleet</artifactId>
-                <version>1.0.3</version>
+                <version>1.0.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

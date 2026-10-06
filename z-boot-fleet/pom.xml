@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>z-boot-fleet</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <packaging>pom</packaging>
     <name>z-boot-fleet (L3 Sibling Version Authority)</name>
     <description>
@@ -32,11 +32,11 @@
              ⚠ 抬任何一格都先重跑本脚本:它逐件 HEAD repo1,发不出去/没索引的坐标一律不写进 BOM,
              手抄清单当分叉账在 1.0.16 上翻过车(README 少记 llm/skill 两格)。
              PENDING = 已上传但 Central 尚未进索引,发布 fleet 前必须回看成 200。 -->
-        <z-config.version>1.0.9</z-config.version>
+        <z-config.version>1.0.10</z-config.version>
         <z-ctc.version>1.0.2</z-ctc.version>
         <z-cache.version>1.3.6</z-cache.version>
         <z-mq.version>1.3.1</z-mq.version>
-        <z-gw.version>1.0.5</z-gw.version>
+        <z-gw.version>1.0.6</z-gw.version>
         <z-kb.version>1.0.7</z-kb.version>
         <z-vector.version>1.0.5</z-vector.version>
         <z-graph.version>1.0.8</z-graph.version>
@@ -44,14 +44,14 @@
         <z-oss.version>1.0.4</z-oss.version>
         <z-schedule.version>1.0.6</z-schedule.version>
         <z-msg.version>1.2.2</z-msg.version>
-        <z-script.version>1.0.1</z-script.version>
-        <z-util.version>1.0.18</z-util.version>
+        <z-script.version>1.0.2</z-script.version>
+        <z-util.version>1.0.19</z-util.version>
         <z-agent-kernel.version>0.2.1</z-agent-kernel.version>
         <z-llm.version>0.1.7</z-llm.version>
         <z-mcp.version>0.2.1</z-mcp.version>
         <z-skill.version>0.2.2</z-skill.version>
         <z-agent.version>0.1.4</z-agent.version>
-        <z-bot.version>0.2.0</z-bot.version>
+        <z-bot.version>0.2.1</z-bot.version>
         <z-agent-proxy.version>0.1.1</z-agent-proxy.version>
         <z-mist.version>1.0.4</z-mist.version>
         <z-camuda.version>1.0.6</z-camuda.version>
@@ -60,7 +60,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- z-config 1.0.9 -->
+            <!-- z-config 1.0.10 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-config-client</artifactId>
@@ -179,7 +179,7 @@
                 <artifactId>z-mq-tools</artifactId>
                 <version>${z-mq.version}</version>
             </dependency>
-            <!-- z-gw 1.0.5 -->
+            <!-- z-gw 1.0.6 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-gw-admin</artifactId>
@@ -442,7 +442,7 @@
                 <artifactId>z-msg-ws</artifactId>
                 <version>${z-msg.version}</version>
             </dependency>
-            <!-- z-script 1.0.1 -->
+            <!-- z-script 1.0.2 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-script-core</artifactId>
@@ -463,7 +463,7 @@
                 <artifactId>z-script-web</artifactId>
                 <version>${z-script.version}</version>
             </dependency>
-            <!-- z-util 1.0.18 -->
+            <!-- z-util 1.0.19 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-aop</artifactId>
@@ -984,7 +984,7 @@
                 <artifactId>z-agent-starter</artifactId>
                 <version>${z-agent.version}</version>
             </dependency>
-            <!-- z-bot 0.2.0 -->
+            <!-- z-bot 0.2.1 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-bot-core</artifactId>
