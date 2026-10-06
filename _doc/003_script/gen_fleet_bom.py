@@ -388,6 +388,47 @@ def main():
                 sys.stderr.write("✗ z-boot-parent 的 <z-boot-fleet.version>(%s) 与 fleet 自己要发的版本(%s)不同格。\n"
                                  % (pref or "(缺)", FLEET_VERSION))
                 sys.exit(3)
+        # 守卫〇ter:每一份 starter pom 里那句字面 `import z-boot-fleet:<号>`。
+        #
+        # 为什么必须有这条 —— 守卫〇bis 只看 parent，漏掉了 starter，而**绝大多数消费者走的是
+        # starter**（z-boot-kb-starter / z-boot-cache-starter / … 23 份）。
+        # 实测踩过：cd3cfea 把 fleet 抬到 1.0.2，只改了 fleet 自己的 pom 和
+        # z-boot-web-starter 一处，其余 22 份 starter 字面 import 仍是 1.0.1。
+        # 抬号传播不上去 = 消费方拿到的还是旧权威，而"fleet 已发布"这件事在闸门里是绿的
+        # （它只验该坐标该版本能不能拉到，不验该版本内容新不新）。
+        # 于是只抬 FLEET_VERSION 就能让两道守卫全过、原样把同一个 bug 重演一遍。
+        stale = []
+        for container in ("z-boot-integration-starters", "z-boot-starter"):
+            cdir = os.path.join(REPO_ROOT, container)
+            if not os.path.isdir(cdir):
+                continue
+            # ⚠ starter 的 pom 在 <container>/<starter>/pom.xml，**比 container 深一层**。
+            #   第一版这里只判 os.path.basename(d) in (container,...)，
+            #   于是 22 份 starter 一个都没进循环、守卫静默空转放行（实测撞到）。
+            for d, _sub, files in os.walk(cdir):
+                if "pom.xml" not in files:
+                    continue
+                sp = os.path.join(d, "pom.xml")
+                sroot = ET.fromstring(art_text(sp))
+                sdm = sroot.find(NS + "dependencyManagement")
+                if sdm is None:
+                    continue
+                for dnode in sdm.iter(NS + "dependency"):
+                    a = dnode.find(NS + "artifactId")
+                    v = dnode.find(NS + "version")
+                    if (a is not None and v is not None
+                            and (a.text or "").strip() == "z-boot-fleet"):
+                        lit = (v.text or "").strip()
+                        if lit != FLEET_VERSION:
+                            stale.append("%s  import z-boot-fleet:%s" % (os.path.relpath(sp, REPO_ROOT), lit))
+        if stale:
+            sys.stderr.write(
+                "✗ 有 %d 份 starter pom 里的字面 import 还停在别的版本，与 fleet 要发的 %s 不同格。\n"
+                "  抬 fleet 传播不到走 starter 的消费者（那才是大多数）⇒ 这些字面量必须一起改。\n"
+                % (len(stale), FLEET_VERSION)
+                + "".join("    %s\n" % x for x in sorted(stale))
+                + "  改完再跑一次。\n")
+            sys.exit(3)
         pending = {}
         for r in results:
             if r[3] == "PENDING":

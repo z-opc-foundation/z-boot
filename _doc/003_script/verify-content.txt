@@ -1,0 +1,21 @@
+# 要做**内容级**比对的构件：逐行 `<artifactId>`
+#
+# 为什么需要这一层：verify_central.sh 的前三段验的是「这个坐标这个版本能不能拉到」。
+# 拉得到 200 就绿 —— 但**不验那个版本的 pom 里装的是什么**。
+# 于是有一整类事故它一个都抓不到：
+#   · 改了内容没抬版本 → 线上还是旧内容，闸门照样绿
+#   · 坐标族改名（z-wf → z-camuda）→ 线上仍管旧坐标，闸门照样绿
+#   · 某个 `<z-*.version>` 抬了没发 → 闸门照样绿
+#
+# 实测撞到的三个（本文件存在之前，闸门全绿）：
+#   z-boot-fleet:1.0.2 线上仍管 z-wf-core / z-wf-starter / z-wf-web（已改名的旧坐标），
+#     线上一个 z-camuda 都没有；
+#   同上，<z-kb.version> 线上 1.0.5 / 本地 1.0.7；
+#   同上，<z-util.version> 线上 1.0.16 / 本地 1.0.18。
+#
+# 比对两样东西（都是结构性 diff，不做逐字节比）：
+#   ① dependencyManagement 里受管的 <artifactId> 集合 —— 抓坐标族改名/增删
+#   ② <properties> 里 <z-*.version> 等全部键的值 —— 抓抬号没发
+# 只列 BOM 类构件：jar 构件的发布件内容由 sources/javadoc 抽检那几段覆盖。
+z-boot-fleet
+z-boot-parent

@@ -138,7 +138,11 @@ def scan(pom_path, module_hint, inherited, allow_dir_scan=True):
     # 套仓级版本会让 z-boot-fleet(1.0.2) 被按 1.0.19 查而 404，
     # 更糟的是 dependencies 本地 1.0.20 会被按 1.0.19 查成 200 ⇒ 抬号未发也看不出来。
     ver = fallback if explicit else (mine or inherited or fallback)
-    if aid and not aid.endswith('-parent'):
+    # ⚠ 原先这里有一条 `not aid.endswith('-parent')` 的排除，把 `z-boot-parent` 整个排掉了 ——
+    #   而它正是本仓的**消费入口**（中央上确实发布，1.0.23 实测 200），从来没被第 1 段验过。
+    #   本仓不需要「parent 一律不发」这条例外：根件 artifactId 是 `z-boot`（不带该后缀），
+    #   带上后缀的只有 z-boot-parent 这一个，而它是发的。去掉。
+    if aid:
         out.append((aid, pack, ver))
     mods = [ (m.text or '').strip() for m in r.iter(NS + 'module') ]
     if mods:
@@ -301,6 +305,118 @@ if [ -f "$SCRIPT_DIR/$CLASSPICK" ]; then
     [ -n "$SRCJAR" ] && rm -f "$SRCJAR" 2>/dev/null
 else
     warn "无 ${CLASSPICK}，跳过 sources.jar 抽检；可新建该文件逐行写 <artifactId>:<类路径>"
+fi
+
+# ---------- 发布件内容比对（版本可达 ≠ 内容是最新的） ----------
+# 上面三段验的都是「这个坐标这个版本能不能拉到」。拉得到 200 就绿，但那个版本的 pom 里
+# 装的是什么没人看 —— 于是「改了没发 / 坐标族改名 / 版本格抬了没发」这三类一律漏。
+# 本段把线上 pom 拉下来，与本地源码 pom 做**结构性**比对：
+#   ① dependencyManagement 里受管的 <artifactId> 集合（抓改名、增删）
+#   ② <properties> 各键的值（抓抬号没发）
+# 清单见 verify-content.txt，逐行一个 artifactId。
+CONTENTPICK="verify-content.txt"
+if [ -f "$SCRIPT_DIR/$CONTENTPICK" ]; then
+    echo ""
+    echo "──────── 4. 发布件内容比对 ────────"
+    while IFS= read -r caid || [ -n "$caid" ]; do
+        caid="${caid%%$'\r'}"
+        case "$caid" in ""|\#*) continue ;; esac
+        caid="$(echo "$caid" | tr -d '[:space:]')"
+        [ -z "$caid" ] && continue
+
+        # ① 该构件在仓里是哪个 pom（构建清单时记过 module_hint，这里重新定位）
+        cpom=$(find "$REPO_ROOT" -maxdepth 3 -name pom.xml -not -path "*/target/*" -not -path "*/.*" \
+               -print0 2>/dev/null | xargs -0 grep -l "<artifactId>${caid}</artifactId>" 2>/dev/null | head -1)
+        if [ -z "$cpom" ]; then
+            err "${caid} — 仓里找不到它的 pom.xml（清单与仓不同步？）"
+            continue
+        fi
+        cav=$(ver_of "$caid"); cav="${cav:-$VERSION}"
+
+        livep=$(mktemp -t verify-live.XXXXXX.pom)
+        curl -s --max-time 40 -o "$livep" \
+            "$CENTRAL/${GROUP_ID//.//}/$caid/$cav/$caid-$cav.pom"
+        # ⚠ 判据必须是"能不能解析成 pom 的根元素"，不是看首行含不含 project：
+        #   pom 首行是 `<?xml version="1.0" ...?>`，不含 project ⇒ 早先那版判据恒不成立，
+        #   两个构件都被报成"取不到"，而真相是判据坏了。交给解析器判最稳。
+        if ! python3 -c "
+import sys
+import xml.etree.ElementTree as ET
+try:
+    r = ET.parse(sys.argv[1]).getroot()
+except Exception:
+    sys.exit(1)
+sys.exit(0 if r.tag.endswith('project') else 1)
+" "$livep" 2>/dev/null; then
+            err "${caid} ${cav} 线上 pom 取不到或不是 pom（判据本身坏了，该结论不作数）"
+            rm -f "$livep" 2>/dev/null
+            continue
+        fi
+
+        out=$(python3 - "$cpom" "$livep" <<'PY'
+import sys
+import xml.etree.ElementTree as ET
+NS = '{http://maven.apache.org/POM/4.0.0}'
+
+def load(p):
+    return ET.parse(p).getroot()
+
+def managed(root):
+    dm = root.find(NS + 'dependencyManagement')
+    out = set()
+    if dm is None:
+        return out
+    for d in dm.iter(NS + 'dependency'):
+        a = d.find(NS + 'artifactId')
+        if a is not None and (a.text or '').strip():
+            out.add((a.text or '').strip())
+    return out
+
+def props(root):
+    e = root.find(NS + 'properties')
+    return {c.tag.replace(NS, ''): (c.text or '').strip() for c in e} if e is not None else {}
+
+loc, live = load(sys.argv[1]), load(sys.argv[2])
+lm, vm = managed(loc), managed(live)
+lp, vp = props(loc), props(live)
+
+# 只报「同族」差异：受管坐标是纯版本格（${...}）或兄弟仓坐标，逐个列会淹掉真信号
+lines = []
+only_live = sorted(vm - lm)
+only_local = sorted(lm - vm)
+if only_live:
+    lines.append("  受管坐标只在线上有（改名/下线未传播）: " + ", ".join(only_live[:8])
+                 + (" ..." if len(only_live) > 8 else ""))
+if only_local:
+    lines.append("  受管坐标只在本地有（新增/改名未发布）: " + ", ".join(only_local[:8])
+                 + (" ..." if len(only_local) > 8 else ""))
+for k in sorted(set(lp) & set(vp)):
+    if lp[k] != vp[k]:
+        lines.append("  %s: 线上=%s  本地=%s" % (k, vp[k], lp[k]))
+for k in sorted(set(vp) - set(lp)):
+    lines.append("  %s: 只在线上有（线上=%s，本地已删）" % (k, vp[k]))
+for k in sorted(set(lp) - set(vp)):
+    lines.append("  %s: 只在本地有（本地=%s，线上没有 ⇒ 没发）" % (k, lp[k]))
+if not lines:
+    print("SAME")
+else:
+    print("DIFF")
+    print("\n".join(lines))
+PY
+)
+        rm -f "$livep" 2>/dev/null
+        if [ "$out" = "SAME" ]; then
+            log "✅ ${caid} ${cav} 发布件内容与本地源码一致"
+        elif [ -z "$out" ]; then
+            err "${caid} ${cav} 内容比对没跑出结果（判据坏了，该结论不作数）"
+        else
+            err "${caid} ${cav} 发布件内容与本地源码不一致 —— 改了没抬版本，或抬了没发："
+            printf '%s\n' "$out" | tail -n +2 | while IFS= read -r l; do warn "  ${l}"; done
+        fi
+        sleep 2
+    done < "$SCRIPT_DIR/$CONTENTPICK"
+else
+    warn "无 ${CONTENTPICK}，跳过发布件内容比对；可新建该文件逐行写 <artifactId>"
 fi
 
 # ---------- 收口 ----------

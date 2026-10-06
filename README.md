@@ -1092,14 +1092,25 @@ z-boot/
 >    例：今天把 fleet 的 `<z-kb.version>` 从 1.0.5 抬到 1.0.7，走 `z-boot-cache-starter`
 >    的消费者拿到的仍是 1.0.1 那份（z-kb 1.0.5）；走 `z-boot-web-starter` 的拿到 1.0.2，
 >    但**中央上已发布的 1.0.2 里 `<z-kb.version>` 仍是 1.0.5**（同版本不可重发，改动没发出去）。
-> 2. **`gen_fleet_bom.py --write` 会把 fleet 退回 1.0.1** —— 而 1.0.1 已在中央上（实测 200），
->    跑一次生成器就等于把 1.0.2 悄悄作废。这是目前最危险的一处：**唯一的真源写着一个旧号**。
+> 2. **但 `gen_fleet_bom.py --write` 已经被挡住了**（2026-10-06 实测，不是推理）：
+>    它的守卫零会回读 repo1 发现 `1.0.1` 已占用 ⇒ 退出码 3，**fleet pom 一字未改**
+>    （md5 前后一致，已核对）。所以「跑一次生成器就作废 1.0.2」这条**不成立**。
+>    真正的问题是它**卡住了**：`FLEET_VERSION` 停在 1.0.1 就没法再生成 fleet，
+>    而唯一出路（抬到 1.0.3）本身又是正确的方向。
 > 3. `verify_central.sh` 抓不到这些 —— 它验的是「该坐标该版本能不能拉到」，不验该版本**内容**是不是最新的。
->    fleet 1.0.2 能拉到 200 ⇒ 绿，哪怕它里面的 `<z-kb.version>` 是旧的。
+>    fleet 1.0.2 能拉到 200 ⇒ 绿，哪怕它里面的 `<z-kb.version>` 仍是 1.0.5。
+>    （已补内容级校验，见下节「4. 发布件内容比对」。）
 >
 > 要清这笔账需要一次真正的抬号发布：fleet → 1.0.3（内容含新的 `<z-*.version>`），
 > 同时把 22 个 starter 的字面 import、`z-boot-parent` 的属性、`FLEET_VERSION` 三处一起改，
 > 再连 starter 一起重发。**这不是改文档能解决的。**
+>
+> **已加防呆**：`gen_fleet_bom.py` 原有两道守卫（`live_on_central` 查版本占用、
+> 查 `z-boot-parent` 的属性）**都不看那 22 份 starter** —— 只抬 `FLEET_VERSION` 就能两道全过、
+> 把同一个 bug 原样重演。本轮补了第三道「守卫〇ter」：逐份读 `<container>/<starter>/pom.xml`
+> 里的字面 `import z-boot-fleet:<号>`，与 `FLEET_VERSION` 不一致就退出码 3 并逐条列出。
+> 实测：把 `FLEET_VERSION` 与 parent 临时对齐到 1.0.3（22 份 starter 留在 1.0.1）后跑 `--write`，
+> 被拦下、退出码 3、fleet pom 的 md5 前后一致。
 
 
 ```bash
@@ -1196,6 +1207,24 @@ public class MyFeatureAutoConfiguration {
 > ```bash
 > cd <仓> && bash _doc/003_script/verify_central.sh
 > ```
+>
+> **两个仓特有、别仓没有的加强（2026-10-06）**
+>
+> ① **按构件解析版本**。z-boot 没有 `<modules>`，每个子目录是独立发版工程、版本线各不相同
+>    （根 1.0.19 / dependencies 1.0.20 / fleet 1.0.2 / starter 群 1.0.22）。只解析一次仓级版本
+>    套到全部 28 个构件上，会让 27 个验的是过期号 —— 它绿是因为中央上**曾经**有过那些号，
+>    不是因为当前源码发上去了。有 `<modules>` 的仓全仓共用一个版本，两种模式等价。
+>    收口行会把实际验的版本组合列出来（`各构件用自己 pom 的版本：1.0.19 1.0.2 1.0.20 1.0.22`），
+>    免得"全绿"看不出到底验了什么。
+>
+> ② **第 4 段：发布件内容比对**（清单 `_doc/003_script/verify-content.txt`）。
+>    前三段验的都是「这个坐标这个版本能不能拉到」，**拉得到就绿，不看那个 pom 里装的是什么**。
+>    于是一整类事故全漏：改了没抬版本、坐标族改名、版本格抬了没发。
+>    本段把线上 pom 拉下来与本地源码 pom 做**结构性**比对 ——
+>    ① `dependencyManagement` 里受管的 `<artifactId>` 集合 ② `<properties>` 各键的值。
+>    它在 z-boot 上当场抓到三件（详见上面「fleet 抬号只做了一半」）：
+>    线上 1.0.2 仍管 `z-wf-core`/`z-wf-starter`/`z-wf-web`（已改名的旧坐标）、一个 `z-camuda` 都没有；
+>    `<z-kb.version>` 线上 1.0.5 / 本地 1.0.7；`<z-util.version>` 线上 1.0.16 / 本地 1.0.18。
 >
 > 下面保留 2026-09 的历史读数，仅作背景，不再是当前可执行入口。
 
