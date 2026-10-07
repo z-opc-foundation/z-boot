@@ -172,8 +172,8 @@ SELF_AGGREGATORS = ("z-boot-starter", "z-boot-integration-starters")
 def self_starter_artifacts():
     """z-boot 自家要发布的 starter:取两个聚合 pom 的 <modules>,逐个读 artifactId。
 
-    走 <modules> 而不是扫目录:被注释掉的模块(如 z-tool-webide-spring-boot-starter,它还在
-    等 z-webide 以 io.github.yuku123 发中央)天然跳过 —— 扫目录会把它当成"该发而没发"。
+    走 <modules> 而不是扫目录:盘上若有目录却没进 <module>(历史上是
+    z-tool-webide-spring-boot-starter,2026-10-07 已删),扫目录会把它当成"该发而没发"。
     """
     arts = []
     for agg in SELF_AGGREGATORS:
@@ -611,7 +611,7 @@ def main():
                     continue
                 pa = (par.findtext(NS + "artifactId", "") or "").strip()
                 pv = (par.findtext(NS + "version", "") or "").strip()
-                # 只管 parent 指向本仓两个聚合件的;z-tool-webide 那类外来件不在其列
+                # 只管 parent 指向本仓两个聚合件的;盘上未进 <modules> 的残骸不在其列
                 if pa != container or pv == own:
                     continue
                 misparent.append("%s  <parent>%s:%s  自身 %s"

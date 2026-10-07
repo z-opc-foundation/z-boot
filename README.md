@@ -16,7 +16,7 @@
 |------|-----|
 | **仓库** | `z-boot` — Spring Boot Starter 聚合仓 + 第三方/兄弟仓版本权威（BOM） |
 | **groupId** | `io.github.yuku123`（五个文件夹共用） |
-| **当前发行** | 根 `z-boot:1.0.19` · 地板 `z-boot-dependencies:1.0.20` · 兄弟权威 `z-boot-fleet:1.0.4` · 消费入口 `z-boot-parent:1.0.26` · 全部 starter/聚合器 `1.0.25`（`z-tool-webide-spring-boot-starter` 除外，它不在 reactor 里） |
+| **当前发行** | 根 `z-boot:1.0.19` · 地板 `z-boot-dependencies:1.0.20` · 兄弟权威 `z-boot-fleet:1.0.4` · 消费入口 `z-boot-parent:1.0.26` · 全部 starter/聚合器 `1.0.25`（盘上目录与 reactor 已一一对应，无例外件） |
 | **父项目（磁盘）** | deps / fleet / starter / integration-starters 的 `<parent>` = `io.github.yuku123:z-boot:1.0.19`（`relativePath ../pom.xml`）；`z-boot-parent` 的 `<parent>` = `z-boot-dependencies:1.0.20` |
 | **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.0.21</parent>`，依赖零 `<version>` |
 | **Maven Central（maven-metadata 实测 2026-10-06）** | `z-boot:1.0.19` / `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.2` / `z-boot-parent:1.0.23` / 全部 starter/聚合器 `1.0.22`。根件 `z-boot` 仍只有 1.0.19（1.0.20+ = 404，且没有任何 pom 指它） |
@@ -721,8 +721,8 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       且全仓 jar 扫描确认 `com.zifang.z.agent.llm.gateway.adapter.UnifiedRequest` 只在幻影快照里存在 ⇒
       要先进"整仓换 namespace + 首发中央"那一批（#31），别在消费者轮里顺手搬。
       另有**仅 DM 登记**的 `com.zifang` 格（z-opc 35 种 / z-ext 2 / z-lc 1 / z-meta 3 / z-webide 2）
-      没有真实依赖，以及 `z-boot-integration-starters/z-tool-webide-spring-boot-starter/` 这个
-      **不在 20 个 `module` 里**的孤儿目录（pom 里 import `com.zifang:z-boot-dependencies`）⇒ 归 vendoring 那条待裁。
+      没有真实依赖。同批"归 vendoring 待裁"的 `z-boot-integration-starters/z-tool-webide-spring-boot-starter/`
+      孤儿目录已于 2026-10-07 **裁成删除**（全仓零真实消费方，判据见「项目结构」那节那条）。
     - clean-room 怎么开才算数：`cp -R` 一份**不含 `com/zifang` 树**的本地仓库（现成的
       `/tmp/m2-zschedule-clean`），`-s repo1-settings.xml -Dmaven.repo.local=<那份>`，改前改后各跑一遍
       `mvn_gate.sh … clean package -DskipTests`；比"用 `~/.m2` 绿"硬得多，因为幻影正是被 `~/.m2` 遮住的。
@@ -917,24 +917,24 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
   ——实测无版本声明会被 Maven 直接拒读（见「5 分钟接入」的 ⚠），这条以前写反了
 
 ### 零 z-opc 内部依赖
-- ✅ **reactor 里的 23 条 active `<module>` 都不依赖** `com.zifang:z-opc` (monorepo 内部 parent)——
-  分解：根 **0**（1.0.19 起根 pom 没有 `<modules>`）+ `z-boot-starter` 3 + `z-boot-integration-starters` 20
-  （尺：`grep -cE "^\s*<module>"` 三个 pom 相加 = 0+3+20；1.0.18 及以前是"根 3 + 3 + 20 = 26"）。
-  全仓 `--include=pom.xml` 找**真坐标位** `<groupId>com.zifang`：4 条命中、全在未进反应堆的
-  `z-tool-webide-spring-boot-starter/pom.xml`（55/66/70/74 行），参与构建的 pom 里 0 条
-  （另有几处 `com.zifang` 出现在**注释文字**里——解释 tool-webide 为什么被排除、以及
-  script-starter 提到 z-script 的包名 `com.zifang.z.script`——那不是坐标，别拿"grep 到 com.zifang"当缺陷）
-- ⚠ **树上只剩一个未进 reactor 的目录**：`z-tool-webide-spring-boot-starter`
-  （`z-boot-script-starter` 已经在 1.0.15 补进反应堆并发布，见下面目录树的 ⚠）。
-  这条不是"忘了加"，是**加了就整个 reactor 读不起**——2026-09-26 本机复跑过：放开那行 `<module>`
-  ⇒ `mvn -B -o validate` rc=1、5 条 ERROR 原文与判据记在 `z-boot-integration-starters/pom.xml`
-  那段注释里。要点三条：它 `<parent>` 写死 `1.0.1`（聚合器 `z-boot-integration-starters` 早就是
-  `1.0.21` 了）不吃 `${revision}`；它三条依赖的 groupId 是 `com.zifang`；被包的 L3 源码在 **sibling 仓
-  `z-opc-foundation/z-webide`**（不在 z-opc 里），repo1 上两个 groupId 都 404 ⇒ 今天无解。
-  ⚠ 那段 pom 注释里"本聚合 pom 232-250 行**已经**管了 `io.github.yuku123:z-tool-webide-{common,api,core,docker}`"
-  现在也不成立了：1.0.19 起 `z-boot-integration-starters/pom.xml` 整个 `<dependencyManagement>` 都删了
-  （现读 0 条，版本权威搬进 fleet + parent，见上面「版本从哪来」），所以那四个坐标今天**没人管版本**，
-  不止是 groupId 对不上。再入门条件按那段注释逐条走。
+- ✅ **reactor 里的 22 条 active `<module>` 都不依赖** `com.zifang:z-opc` (monorepo 内部 parent)——
+  分解：根 **0**（1.0.19 起根 pom 没有 `<modules>`）+ `z-boot-starter` 3 + `z-boot-integration-starters` 19
+  （尺：`grep -cE "^\s*<module>"` 三个 pom 相加 = 0+3+19；1.0.18 及以前是"根 3 + 3 + 20 = 26"，
+  其中 20→19 是 2026-10-06 删 `z-boot-jackson-starter` 那一刀）。
+  全仓 `--include=pom.xml` 找**真坐标位** `<groupId>com.zifang`（剥掉 XML 注释后按 Maven 的坐标位取数）：
+  **0 条**。此前那 4 条全在未进反应堆的 `z-tool-webide-spring-boot-starter/pom.xml`，该目录 2026-10-07 已删（见下条）。
+  另有 1 个 pom 在**注释文字**里出现 `com.zifang`（script-starter 说 z-script 的包名
+  `com.zifang.z.script`）——那不是坐标，别拿"grep 到 com.zifang"当缺陷
+- ✅ **树上不再有"盘上有 pom 但未进 `<module>`"的目录**：2026-10-07 删除
+  `z-boot-integration-starters/z-tool-webide-spring-boot-starter/`（3 个文件，git 可复原）。
+  它停在命名空间迁移之前：`<parent>` 与自身 `<version>` 都写死 `1.0.1`（聚合器早已 1.0.25）、
+  DM 用 `${project.parent.version}` 去 import `z-boot-dependencies`（那一格 repo1 上是空的）、
+  三条 `z-tool-webide-*` 依赖无人供版本（fleet 22 族里没有 webide 格）⇒ 放开那行 `<module>`
+  会让整个 reactor 读不起 pom（2026-09-26 本机复跑 `mvn -B -o validate` rc=1、5 条 ERROR）。
+  **删而不是修**的理由有两条：全仓零真实消费方（`z-opc/pom.xml` 只有 6 条 `dependencyManagement`
+  死行，没有任何模块 `dependencies` 它），且 webide 的自动装配本就归被 bind 的仓 ——
+  `z-webide/z-tool-webide-web` 自带 `META-INF/spring.factories`。将来要挂 webide starter，
+  按 `_doc/001_arch/AGENTS.md`「新增 starter」从头开一个，别复活那份旧 pom
 - ✅ **可独立发布到 Maven Central**——现发行 train（2026-09-29）：根 `z-boot:1.0.19` +
   `z-boot-dependencies:1.0.20` + `z-boot-fleet:1.0.4` + `z-boot-parent:1.0.26` +
   两个聚合器与 22 个 starter/base 全 `1.0.25`；29 个坐标的 `.pom` 逐件对 repo1 发 ranged GET 全 206
@@ -1026,8 +1026,7 @@ z-boot/
     ├── z-boot-agent-starter
     ├── z-boot-bot-starter
     └── z-boot-agent-proxy-starter
-（另有 `LICENSE`（MIT）与 `_doc/`，`_doc/` 全清单见文末「文档目录」；
- `z-boot-integration-starters/z-tool-webide-spring-boot-starter/` 目录在、`<module>` 不在，见下面那条 ⚠）
+（另有 `LICENSE`（MIT）与 `_doc/`，`_doc/` 全清单见文末「文档目录」）
 ```
 
 > **1.0.19 是拓扑改动**，不是又一个版本号：以前根 pom 是"顶层聚合"（`<modules>` 挂 3 个文件夹 + 兄弟仓版本
@@ -1039,27 +1038,24 @@ z-boot/
 > 一次发版按 root→deps→fleet→parent→starter→integration 的顺序整条跑（见「发布」那节）。
 
 > 上面这棵树与各 pom 的 active `<module>` 是**逐名对过账的**：`~/.cache/zboot-1016/tree-vs-modules.py`
-> 剥掉 XML 注释后取 `z-boot-starter` 3 + `z-boot-integration-starters` 20 条，与树里的名字求双向差集
-> ⇒ **双向 0 差**；同一条尺报出"磁盘上有 pom 但未进 `<module>`"= 1 个（就是下面那条 webide）。
+> 剥掉 XML 注释后取 `z-boot-starter` 3 + `z-boot-integration-starters` 19 条，与树里的名字求双向差集
+> ⇒ **双向 0 差**；同一条尺报出"磁盘上有 pom 但未进 `<module>`"= **0 个**
+> （此前那 1 个是 webide 残骸，2026-10-07 已删，见下面那条）。
 > 造这把尺时它先假红了两次：注释里也写着 `<module>`（不剥就把排除掉的模块算成在反应堆里），
 > 以及树的第一行 `z-boot/` 没有 `├──` 前缀（漏了它反报"树漏画"）。阳性对照：内存里抹掉
 > `z-boot-script-starter` 一个名字，尺当场报出它。对不上是迟早的事，所以判据留在仓外、不靠眼睛。
 > ⚠ 1.0.19 起这条尺**不再对根 pom 跑**（根没有 `<modules>` 了），"根 3 条"那个读数只属于 1.0.18 及之前。
 
-> ⚠ 唯一没有进 `<modules>` 的 starter：**`z-boot-integration-starters/z-tool-webide-spring-boot-starter`**
-> （注意它在 `z-boot-integration-starters/` 下面，不在仓根 ⇒ 只扫顶层目录的尺会报"零个未进反应堆"，
-> 上面那条尺因此改成递归找 `pom.xml`）。
-> 不是"没排上队"，是**补进去会让整个 reactor 读不起 pom**（`mvn -B package` rc=1，Maven 自己数出来
-> `has 5 errors`；原文按形状抄在 `z-boot-integration-starters/pom.xml` 那段**被注释掉的** `<module>` 上方
-> —— 行号随编辑漂，按"5 条 ERROR 原文"那句话找）。
-> 2026-09-26 对着它自己的 pom 逐行量过，坏在**依赖侧不是坐标侧**：
-> 它的 `<parent>` 写死 `1.0.1`（不吃 `${revision}`，14 行自己那份 `<version>` 同样写死），自身
-> `<groupId>` **已经**是 `io.github.yuku123`（12 行）；`com.zifang` 那 4 条全在依赖里——
-> 55 行 `<dependencyManagement>` import 了 `com.zifang:z-boot-dependencies`（repo1 上 404，这份 BOM
-> 对外只叫 `io.github.yuku123`），66/70/74 行是 `com.zifang:z-tool-webide-{docker,api,common}`；
-> 无 `<version>` 的直接依赖实测 **4 条** = 那 3 条 + `spring-boot-autoconfigure`。
-> 要发它得先把 `z-tool-webide-{docker,api,common}` 发到 Central、把那处 BOM import 换成
-> `io.github.yuku123`、并把写死的版本换成 `${revision}`。
+> **`z-tool-webide-spring-boot-starter` 已于 2026-10-07 删除**（3 个文件，git 可复原），上面那条尺的
+> "未进 `<module>`"因此从 1 个归 0。删的理由与"将来怎么重开"记在 `z-boot-integration-starters/pom.xml`
+> 那段注释里；一句话版：它 `<parent>` 与自身 `<version>` 写死 `1.0.1`（聚合器早已 1.0.25）、DM 按
+> `${project.parent.version}` 去 import 一个 repo1 上并不存在的 `z-boot-dependencies:1.0.1`、三条
+> `z-tool-webide-*` 依赖无人供版本（fleet 22 族里没有 webide 格），而**全仓零真实消费方**
+> （`z-opc/pom.xml` 那 6 条只是 `dependencyManagement` 死行，没有任何模块 `dependencies` 它）
+> ⇒ 修它不如从头开一个，何况 webide 的 `META-INF/spring.factories` 本就在被 bind 的那个仓里
+> （`z-webide/z-tool-webide-web`）。
+> ⚠ 给下一把尺留一条量具教训：这个残骸在 `z-boot-integration-starters/` 下面、不在仓根，
+> **只扫顶层目录的尺会报"零个未进反应堆"** —— 尺必须递归找 `pom.xml`。
 > （另一条 `z-boot-script-starter` 的排除理由 2026-09-26 实测是假的——空仓
 > `dependency:resolve io.github.yuku123:z-script-web:1.0.0` `BUILD SUCCESS`、落地 16 个
 > `io.github.yuku123` jar（其中 z-script 自己的三个坐标 core/engine/web 都在），所以 1.0.15 已补进

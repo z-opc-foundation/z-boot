@@ -47,24 +47,14 @@
         <!-- z-script-web 1.0.0 实测已在 Central（空仓 dependency:resolve BUILD SUCCESS），
              所以 script-starter 从 1.0.15 起进 reactor 一起发。 -->
         <module>z-boot-script-starter</module>
-        <!-- z-tool-webide-spring-boot-starter 不能进 reactor：它的 pom 还停在命名空间迁移之前。
-             2026-09-26 本机复跑（把下面那行 <module> 放开 → `mvn -B -o validate` = rc=1，
-             且是"整个 reactor 读不起"级别，5 条 ERROR 原文）：
-               Non-resolvable import POM: com.zifang:z-boot-dependencies:pom:1.0.1 (absent)  [它的 <parent> 写死 1.0.1，不吃 ${revision}]
-               'dependencies.dependency.version' for com.zifang:z-tool-webide-{docker,api,common}:jar is missing
-               'dependencies.dependency.version' for org.springframework.boot:spring-boot-autoconfigure:jar is missing
-             ⚠ 第二条别读成"这里没管版本"：本聚合 pom 232-250 行**已经**管了
-             io.github.yuku123:z-tool-webide-{common,api,core,docker} = ${project.version}，
-             报 missing 是因为 starter 写的是 com.zifang 组 ⇒ groupId 对不上、约束落不到它身上。
-             被包装的 L3 源码在哪：sibling 仓 z-opc-foundation/z-webide（parent com.zifang:z-tool:1.0.0-SNAPSHOT，
-             模块 common/api/core/docker/web/k8s），repo1 上 com.zifang 和 io.github.yuku123 两个 groupId
-             实测都 404 ⇒ 今天没有任何一条路能把它放进 reactor。
-             再入门条件（放进来前先逐条满足，缺一条就是上面那 5 条红）：
-               1) z-webide 以 io.github.yuku123 发 Central，版本与本仓 <revision> 对齐（`${project.version}` 才管得到）；
-               2) 本 starter pom：三行依赖 groupId 换 io.github.yuku123、<parent> 版本换 ${revision}、
-                  那段 import 换 io.github.yuku123:z-boot-dependencies:${revision}；
-               3) 放开下面这行 <module> 并复跑本仓 README 的 tree-vs-pom 尺（它会把"盘上有 pom 但未进 module"列出来）。 -->
-        <!-- <module>z-tool-webide-spring-boot-starter</module> -->
+        <!-- 2026-10-07 删除 z-tool-webide-spring-boot-starter/（残骸收口）。它停在命名空间迁移之前：
+             <parent> 写死 1.0.1（聚合件早已 1.0.25）、自身 <version>1.0.1</version>、DM 用
+             ${project.parent.version} 去 import z-boot-dependencies（那一格 repo1 上是空的）、三条
+             z-tool-webide-* 依赖无人供版本（fleet 22 族里没有 webide 格）⇒ 放开 <module> 会让整个
+             reactor 读不起 pom。全仓零真实消费方（z-opc 只有 6 条 dependencyManagement 死行）。
+             webide 的自动装配本就归被 bind 的仓：z-webide/z-tool-webide-web 自带
+             META-INF/spring.factories。将来若要在这里挂 starter，按 _doc/001_arch/AGENTS.md
+             「新增 starter」从头开一个，别复活那份旧 pom（旧内容可由 git 找回）。 -->
 
         <!-- FEATURE066: L3 Agent/AI 7 仓聚合 starter -->
         <module>z-boot-llm-starter</module>
