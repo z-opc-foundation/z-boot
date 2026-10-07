@@ -1052,13 +1052,22 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- 本 build 段由 _doc/003_script/gen_fleet_bom.py 逐字生成，改配置要连生成器一起改。
+         2026-10-07 从 resolveCiFriendliesOnly 换成 oss + keep：口径与对账数据见那里。
+         一句话结论 —— 换完发布件里 <parent>io.github.yuku123:z-boot</parent> 消失、
+         groupId/scm 落到件上，消费者 import 这块 BOM 不再需要去 repo1 拉我们的根 pom
+         才知道坐标；DM 与 <properties> 逐条对账零漂移（193 个受管坐标、面值差 0）。 -->
     <build>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
                 <configuration>
-                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <flattenMode>oss</flattenMode>
+                    <pomElements>
+                        <properties>keep</properties>
+                        <dependencyManagement>keep</dependencyManagement>
+                    </pomElements>
                 </configuration>
             </plugin>
         </plugins>

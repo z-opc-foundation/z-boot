@@ -22,6 +22,9 @@
 #   3. 聚合 POM（packaging=pom）只要 .pom + .asc
 #   4. 抽样构件的 POM metadata 完整（groupId/artifactId/version/name/license/scm/developers）
 #   5. 抽样 jar 的 sources.jar 里含指定类
+#   6. 发布件内容比对（BOM 类构件，见 verify-content.txt）
+#   7. [z-boot 专属] fleet 内联版本对账：starter 发布件里内联的兄弟版本 == fleet 当前格
+#      （旁边没有 fleet_inline_check.py 的仓自动跳过）
 #
 # 退出码: 0 全绿 / 1 有 FAIL
 # ============================================================
@@ -417,6 +420,27 @@ PY
     done < "$SCRIPT_DIR/$CONTENTPICK"
 else
     warn "无 ${CONTENTPICK}，跳过发布件内容比对；可新建该文件逐行写 <artifactId>"
+fi
+
+# ---------- 5. fleet 内联版本对账（z-boot 专属，抬了 fleet 号但 starter 没重发） ----------
+# 第 4 段的口径是「同一构件：线上 pom vs 本地源 pom」，比的是 DM 受管坐标集合与 properties 键值。
+# 叶子 starter 两头都没有这两样 —— 源 pom 写 <dependency> 不写 <version>（版本由 import 的
+# z-boot-fleet 供），发布件里才由 flatten 把算出的版本**内联成字面量**。所以第 4 段对 starter
+# 恒判 SAME，而真实事故恰好长在这一格里：fleet 把 <z-gw.version> 1.0.5→1.0.6，starter 没重发，
+# 消费者拉到的发布件里仍写着 1.0.5（Central 不许覆盖，只能抬 starter 版本重发）。
+# 实测这条不是假想病：z-boot-gw-starter 1.0.21/1.0.22/1.0.23 的线上 pom 内联 z-gw=1.0.5、
+# z-boot-script-starter 同三段内联 z-script=1.0.1，而 fleet 源码格已是 1.0.6 / 1.0.2。
+# ⚠ 判据只能读 repo1 的发布件：本地 .flattened-pom.xml 是任何人跑一次 mvn 从同一份源码重算的，
+#   与源码天然自洽 ⇒ 拿它对账是恒等式，锁不住任何欠账。
+if [ -f "$SCRIPT_DIR/fleet_inline_check.py" ]; then
+    echo ""
+    echo "──────── 5. fleet 内联版本对账（starter 发布件 vs fleet 当前格）────────"
+    fic_out=$(python3 "$SCRIPT_DIR/fleet_inline_check.py" 2>&1)
+    fic_rc=$?
+    printf '%s\n' "$fic_out" | while IFS= read -r l; do warn "  ${l}"; done
+    if [ "$fic_rc" -ne 0 ]; then
+        err "fleet 内联对账没通过（见上）—— 要么 fleet 抬号未重发 starter，要么发布件取不到判不了"
+    fi
 fi
 
 # ---------- 收口 ----------

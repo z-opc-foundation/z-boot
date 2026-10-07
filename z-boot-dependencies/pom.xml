@@ -1166,11 +1166,24 @@
     </dependencyManagement>
 
     <!--
-        BOM artifact 必须用 resolveCiFriendliesOnly 而非 oss:
-        oss 模式会把 dependencyManagement 全部剥掉, 造成子模块无法从 BOM 解析第三方版本
-        (例: spring-boot-autoconfigure 缺失 version → Central 校验失败)。
-        resolveCiFriendliesOnly 只解析 ${revision}/${sha1}/${changelist}/${tag},
-        保留 BOM transitive imports, 业务模块继续用 oss 模式产出 self-contained POM。
+        2026-10-07 改口径：这里从 resolveCiFriendliesOnly 换成 oss + <properties>/<dependencyManagement> keep。
+
+        旧注释写的是"oss 会把 dependencyManagement 全部剥掉, 所以 BOM 必须用 resolveCiFriendliesOnly"。
+        那半句是真的(实测裸 oss:本文件 DM 155→0、fleet 193→0)，但结论错在把"oss 默认行为"当成
+        "oss 的全部可能"——flatten 的 <pomElements> 能把 DM 按原样保回来。换完的发布件对着
+        ~/.m2 里线上那份 1.0.20 逐条对账：受管坐标 (groupId,artifactId,version,scope,type) 元组集
+        差 0/0、共有 155 个坐标版本面值差 0、<properties> 键数 105 不变、件内 22 处 ${...} 引用
+        全部由本文件自己的 properties 可解、CI-friendly 占位符(${revision} 那一组)残留 0 条。
+
+        换来的是什么：旧形状里发布件**没有顶层 <groupId>**(INHERIT 自父)、也没有 <scm>，
+        所以任何工程 import 这块地板 BOM，Maven 都必须再去 repo1 拉一份
+        io.github.yuku123:z-boot:1.0.19 才解析得出坐标——我们的内部根 pom 因此在对外链上承重，
+        它一改名/一漏发，地板就跟着 404(2026-10-03「z-boot 版本地板陷阱」那一类)。
+        现在件里带 groupId、带 scm、parent 消失，地板与兄弟仓账两块 BOM 对外彻底自给自足。
+
+        不跟着改的是 z-boot-parent：它的交付物**包含** <build>/<pluginManagement>(Java 8 口径),
+        oss 会把 <build> 整个打掉,那份 parent 就只剩版本没有构建口径 —— 它必须留在
+        resolveCiFriendliesOnly(同一结论见仓根 README 的结构表)。
     -->
     <build>
         <plugins>
@@ -1178,7 +1191,11 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
                 <configuration>
-                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <flattenMode>oss</flattenMode>
+                    <pomElements>
+                        <properties>keep</properties>
+                        <dependencyManagement>keep</dependencyManagement>
+                    </pomElements>
                 </configuration>
             </plugin>
         </plugins>

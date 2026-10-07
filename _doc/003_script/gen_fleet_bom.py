@@ -478,13 +478,26 @@ def main():
                     f'                <version>${{{prop}.version}}</version>',
                     '            </dependency>']
     xml += ['        </dependencies>', '    </dependencyManagement>', '']
-    # BOM 必须用 resolveCiFriendliesOnly:oss 模式会把整个 dependencyManagement 剥掉
-    # (同一个坑见 z-boot-dependencies/pom.xml 尾注),剥掉之后叶子 import 不到任何兄弟仓版本。
+    # 发布件必须自给自足:fleet 的发布 pom 不能挂着 <parent>io.github.yuku123:z-boot</parent>。
+    # 挂着的代价不是内部一致性,是外部的——2026-10-07 读 ~/.m2 里线上那份 z-boot-fleet-1.0.4.pom:
+    # 它没有顶层 <groupId>(INHERIT)、没有 <scm>,所以任何人 import 这块 BOM 都得再去 repo1 拉
+    # 一份 io.github.yuku123:z-boot:1.0.19 才解析得出坐标。root 因此在对外链上承重。
+    # 早先这里写 resolveCiFriendliesOnly,理由是"oss 会把整个 dependencyManagement 剥掉"——
+    # 那半句是真的(实测裸 oss:DM 155→0 / 193→0),但结论错了:pomElements 能把 DM 原样保回来。
+    # 骨架实测(2026-10-07):oss + <dependencyManagement>keep</dependencyManagement> + <properties>keep
+    # 产出的扁平件 vs 线上 1.0.4/1.0.20 —— DM 元组集 (g,a,version,scope,type) 差 0/0、共有 193/155
+    # 个坐标版本面值差 0、properties 键数不变、`${...}` 引用 24/22 条全部本地可解、CI-friendly
+    # 占位符残留 0,而 parent 变 none、groupId/scm 落到件上。z-boot-parent 不在这一改里:它的
+    # 内容**就是**地板,<build> 的 pluginManagement 也是它对外的交付物,换成 oss 会把这两样都打掉。
     xml += ['    <build>', '        <plugins>', '            <plugin>',
             '                <groupId>org.codehaus.mojo</groupId>',
             '                <artifactId>flatten-maven-plugin</artifactId>',
             '                <configuration>',
-            '                    <flattenMode>resolveCiFriendliesOnly</flattenMode>',
+            '                    <flattenMode>oss</flattenMode>',
+            '                    <pomElements>',
+            '                        <properties>keep</properties>',
+            '                        <dependencyManagement>keep</dependencyManagement>',
+            '                    </pomElements>',
             '                </configuration>',
             '            </plugin>', '        </plugins>', '    </build>', '', '</project>', '']
     text = "\n".join(xml)

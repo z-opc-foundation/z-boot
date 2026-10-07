@@ -451,8 +451,16 @@ cmd_readme() {
     这种时候把 bundle 造好放着一件一件重试就行，别去改 pom 或重签名。
     （deployments 清单的顶层键是 deployments，不是 results。）
   ✗ 不要把 CENTRAL_TOKEN / GPG passphrase 贴到对话或提交进仓。
-  ✓ z-boot-fleet 的 flatten 必须 override 成 resolveCiFriendliesOnly；oss 模式会把整个
-    <dependencyManagement> 删掉，发出去的 fleet 就成了空 BOM（本机看不出来，只有外部 import 会炸）。
+  ✓ 两块 BOM（z-boot-dependencies / z-boot-fleet）的 flatten 用 oss，但必须配
+    <pomElements><properties>keep</properties><dependencyManagement>keep</dependencyManagement></pomElements>。
+    裸 oss 会把整个 <dependencyManagement> 删掉（实测 155→0 / 193→0），发出去就成了空 BOM；
+    只加 properties 不够，DM 也得 keep。keep 之后逐条对账：193/155 个受管坐标的
+    (groupId,artifactId,version,scope,type) 与线上旧件差集 0、面值差 0。
+  ✓ 这么配的目的：让发布件**不带 <parent>io.github.yuku123:z-boot**。旧形状里两块 BOM 的发布件
+    没有顶层 <groupId>（INHERIT）也没有 <scm>，消费者 import 地板时必须去 repo1 拉我们的内部根 pom
+    才知道坐标 —— root 因此在对外链上承重，一漏发就 404（2026-10-03「版本地板陷阱」那一类）。
+  ⚠ 但 z-boot-parent 不能跟着换成 oss：它的交付物包含 <build>/<pluginManagement>（Java 8 口径），
+    oss 会把 <build> 整个打掉，那份 parent 就只剩版本没有构建口径。它留在 resolveCiFriendliesOnly。
   ✓ 根 pom 的 <pomElements><properties>keep</properties></pomElements> 不是可选项：
     删了它，外部工程 import z-boot-dependencies 时那些 ${z-*.version} 直接是模型错误。
   ✓ javadoc/sources/GPG 三件套不能跳（Central 硬要求）。
