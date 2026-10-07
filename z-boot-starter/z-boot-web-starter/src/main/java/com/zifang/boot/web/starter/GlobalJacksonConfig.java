@@ -1,4 +1,4 @@
-package com.zifang.boot.jackson.config;
+package com.zifang.boot.web.starter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;

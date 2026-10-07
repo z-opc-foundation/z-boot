@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.zifang.boot.jackson.config.GlobalJacksonConfig
+com.zifang.boot.web.starter.GlobalJacksonConfig
