@@ -73,7 +73,6 @@
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-vector-spring-boot-starter</artifactId>
-            
             <exclusions>
                 <!-- 不替消费者把 log4j2 到 slf4j2 的绑定摊出去：z-util-core / z-gw-core 的发布 pom 里
                      log4j-slf4j2-impl 是 compile 直接依赖，用默认 logback 的 Boot 应用在
