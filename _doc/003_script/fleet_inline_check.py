@@ -31,6 +31,7 @@ fleet_inline_check.py —— 逐件回读 starter **发布件**里内联的兄�
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -43,7 +44,8 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file_
 # 临时件落工作区根、带 _tmp- 前缀（本机 /tmp 会在会话中途被清，不能拿它当下载目录）
 SCRATCH_DIR = os.path.dirname(REPO_ROOT)
 AGGREGATORS = ('z-boot-starter', 'z-boot-integration-starters')
-FLEET_POM = os.path.join(REPO_ROOT, 'z-boot-fleet', 'pom.xml')
+# 火车制（2026-10-08）：fleet pom 已退役，族格真源 = gen_train_bom.py 的 FAMILIES 表
+FAMILIES_SRC = os.path.join(REPO_ROOT, '_doc', '003_script', 'gen_train_bom.py')
 
 
 def txt(elem, tag):
@@ -56,16 +58,14 @@ def parse_xml(blob):
 
 
 def fleet_slots():
-    """fleet 源码里的族格：{z-gw: 1.0.6, ...}（properties 里所有 *.version 键）"""
-    root = parse_xml(open(FLEET_POM, 'rb').read())
-    props = root.find(NS + 'properties')
-    if props is None:
-        die('读不到 %s 的 <properties> —— fleet 源码坏了，本闸无从判起' % FLEET_POM)
-    out = {}
-    for c in props:
-        k = c.tag.replace(NS, '')
-        if k.endswith('.version'):
-            out[k[:-len('.version')]] = (c.text or '').strip()
+    """族格真源：gen_train_bom.py 的 FAMILIES 表。{z-gw: 1.0.6, ...}
+    （fleet pom 已随 2026-10-08 火车制退役，别再回 z-boot-fleet/pom.xml 找。）"""
+    if not os.path.isfile(FAMILIES_SRC):
+        die('读不到 %s —— 族格真源没了，本闸无从判起' % FAMILIES_SRC)
+    src = open(FAMILIES_SRC, encoding='utf-8').read()
+    out = dict(re.findall(r'"(z-[a-z-]+)":\s*\(\s*"z-[a-z-]+",\s*"([^"]+)"\s*\)', src))
+    if not out:
+        die('%s 里解析不到 FAMILIES 表（正则跟表形状对不上了）' % FAMILIES_SRC)
     return out
 
 

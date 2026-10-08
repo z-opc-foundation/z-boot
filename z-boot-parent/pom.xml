@@ -1,87 +1,1566 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    z-boot-parent —— 唯一消费入口 + 唯一慢层权威（2026-10-08 火车制拓扑）。
+
+    本 pom 自 gen_train_bom.py 生成三段：第三方地板（自 z-boot-dependencies 逐字搬运，
+    那个文件夹随本火车退役）、接入面 pin（被跨仓真实声明的 z-* 坐标，机械口径现算）、
+    自家 22 格 starter（${z-boot.version}，与 parent 同火车同号）。
+
+    消费者世界：一行 <parent> + 若干条无版本依赖。真要提前尝鲜某个 client 新版：
+    本仓 dependencyManagement 写直接条目覆盖（DM 就近优先），等下一班火车再回归。
+    server/部署件不在此链上 —— 部署版本是部署侧自己的字面号。
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <!--
-        z-boot-parent —— 消费入口：一行 <parent> 就拿到"地板 + fleet + 构建口径"。
-
-        形状照 c2f-boot 的 c2f-boot-parent → c2f-boot-dependencies 那一层（1.0.19 抄了它的
-        拓扑，但没抄消费模型）：
-          继承 z-boot-dependencies  ⇒ 白拿 156 条第三方地板（spring-boot/netty/jackson/log4j2…）
-          本 pom 再 import z-boot-fleet ⇒ 白拿 163 条兄弟仓 z-* 版本格
-          本 pom 补 pluginManagement ⇒ Java 8 口径、编码、-parameters、surefire/boot 插件版本
-        使用方从此不写 <dependencyManagement>、不写版本属性（现状是每个仓自己起名字：
-        z-util.version 13 仓 / util.version 7 仓 / zutil.version 1 仓，还各自漏钉 z-util）。
-
-        三个和"发布件对外可见"直接相关的决定，改之前先读：
-        1) flatten 在这里覆盖成 resolveCiFriendliesOnly，不用根 pom 的 oss —— oss 会剥掉
-           <build>/<pluginManagement>，那样发出去的 parent 就只剩版本、没有构建口径，
-           而本机永远看不出来（同 fleet 那条"别在 fleet 上用 oss"的教训）。
-        2) z-boot 自家 starter 的版本键必须是**字面 property** <z-boot.version>，不能照
-           spring-boot-dependencies 那样用 ${project.version}：resolveCiFriendliesOnly 只解
-           ${revision}/${sha1}/${changelist}，${project.version} 会原样留在发出去的 pom 里，
-           于是消费方按**它自己的**版本去解析。2026-09-28 在隔离 repo
-           (-Dmaven.repo.local=/tmp/zboot-parent-repo) 实测：一个 version=9.9.9-PROBE 的探针
-           工程从本 parent 拿到的 z-boot-web-starter 就是 9.9.9-PROBE（404），不是 1.0.19。
-        3) 不放 maven.deploy.skip —— 它挡不住任何东西：distributionManagement 只在 -Pcentral 里
-           才有（根 pom 第 92 行），不带 profile 的 `mvn deploy` 本来就报 "repository element
-           was not specified"；而按 central_pom_scan 的 B 类口径，central-publishing 插件"不认
-           skip"，真发布时它同样不生效。留一个两处都不生效的开关只会误导下一个人。
-    -->
     <parent>
         <groupId>io.github.yuku123</groupId>
-        <artifactId>z-boot-dependencies</artifactId>
-        <version>1.0.20</version>
-        <relativePath>../z-boot-dependencies/pom.xml</relativePath>
+        <artifactId>z-boot</artifactId>
+        <version>1.0.19</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-parent</artifactId>
-    <version>1.0.26</version>
+    <version>1.1.0</version>
     <packaging>pom</packaging>
 
     <name>z-boot-parent (Consumer Parent)</name>
-    <description>z-opc-foundation 各仓的统一 parent：继承第三方地板 BOM、导入兄弟仓版本权威 fleet，并下发 Java 8 构建口径</description>
+    <description>z-opc-foundation 各仓统一 parent：第三方地板 + 接入面版本 + 自家 starter 火车 + Java 8 构建口径</description>
 
     <properties>
-        <!-- fleet 的落点。fleet 是脚本产物（_doc/003_script/gen_fleet_bom.py），只钉 repo1 实测
-             存在的版本；fleet 内容变了就抬这一格并重发 fleet 文件夹。 -->
-        <z-boot-fleet.version>1.0.4</z-boot-fleet.version>
-        <!-- z-boot 自家 starter 的落点：与本 parent 自己的 <version> 同格（同一个仓、一起发版）。
-             由 gen_fleet_bom.py 的 write-parent 逐件对 repo1 复核后落笔，别手改。 -->
-        <z-boot.version>1.0.25</z-boot.version>
 
-        <java.version>1.8</java.version>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+<java.version>1.8</java.version>
+<maven.compiler.source>8</maven.compiler.source>
+<maven.compiler.target>8</maven.compiler.target>
+<zifang-boot.version>1.0.0</zifang-boot.version>
+<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+<maven-plugin.version>3.0.0-M5</maven-plugin.version>
+<maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+<jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
+<lombok.version>1.18.20</lombok.version>
+
+<spring-boot.version>2.7.18</spring-boot.version>
+
+<spring-framework.version>5.3.39</spring-framework.version>
+<spring-cloud.version>2.2.6.RELEASE</spring-cloud.version>
+
+<netty.version>4.1.138.Final</netty.version>
+
+<junit-jupiter.version>5.9.3</junit-jupiter.version>
+<jgit.version>5.13.4.202507202350-r</jgit.version>
+<groovy.version>3.0.9</groovy.version>
+<knife4j.version>3.0.3</knife4j.version>
+<knife4j-openapi3.version>4.1.0</knife4j-openapi3.version>
+<swagger.v3.version>2.1.2</swagger.v3.version>
+<springfox-oas.version>3.0.0</springfox-oas.version>
+<springfox-swagger2.version>3.0.0</springfox-swagger2.version>
+<swagger.version>1.6.2</swagger.version>
+<skywalking.version>8.5.0</skywalking.version>
+<dubbo.version>2.7.21</dubbo.version>
+<dom4j.version>2.1.3</dom4j.version>
+<ognl.version>3.2.20</ognl.version>
+<commons-lang3.version>3.18.0</commons-lang3.version>
+<commons-io.version>2.14.0</commons-io.version>
+<commons-beanutils.version>1.11.0</commons-beanutils.version>
+<commons-text.version>1.10.0</commons-text.version>
+<commons-collections.version>3.2.2</commons-collections.version>
+<commons-collections4.version>4.4</commons-collections4.version>
+<commons-logging.version>1.2</commons-logging.version>
+<log4j2.version>2.25.4</log4j2.version>
+<log4j2-ttl-thread-context-map.version>1.3.3</log4j2-ttl-thread-context-map.version>
+<commons-pool2.version>2.10.0</commons-pool2.version>
+<javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+<nacos-client.version>2.0.4</nacos-client.version>
+<mysql.version>8.4.0</mysql.version>
+<druid.version>1.2.23</druid.version>
+
+<mybatis.version>3.5.16</mybatis.version>
+<mybatis-spring.version>2.0.6</mybatis-spring.version>
+<mybatis-spring-boot-starter.version>2.1.4</mybatis-spring-boot-starter.version>
+<mybatis-plus.version>3.5.7</mybatis-plus.version>
+<mybatis-plus-generator.version>3.5.7</mybatis-plus-generator.version>
+<dynamic-datasource-spring-boot-starter.version>3.5.7</dynamic-datasource-spring-boot-starter.version>
+<jsqlparser.version>4.9</jsqlparser.version>
+
+<pagehelper.version>6.1.1</pagehelper.version>
+<sharding-jdbc.version>4.1.1</sharding-jdbc.version>
+<mapstruct.version>1.5.5.Final</mapstruct.version>
+
+<guava.version>32.0.0-jre</guava.version>
+<spring-cloud-starter-alibaba-nacos-config.version>2.2.6.RELEASE
+</spring-cloud-starter-alibaba-nacos-config.version>
+<spring-context-support.version>1.0.11</spring-context-support.version>
+<freemarker.version>2.3.31</freemarker.version>
+<xxl-job.version>3.2.0</xxl-job.version>
+<schedulerx2-spring-boot-starter.version>1.6.0</schedulerx2-spring-boot-starter.version>
+<aliyun-java-sdk-schedulerx2.version>1.1.2</aliyun-java-sdk-schedulerx2.version>
+<redisson.version>3.17.3</redisson.version>
+<rocketmq-spring-boot-starter.version>2.2.0</rocketmq-spring-boot-starter.version>
+<rocketmq.version>4.8.0</rocketmq.version>
+<aliyun-sdk-oss.version>3.17.4</aliyun-sdk-oss.version>
+<esdk-obs-java.version>3.20.6.1</esdk-obs-java.version>
+<qiniu-java-sdk.version>7.4.0</qiniu-java-sdk.version>
+<cos_api.version>5.6.38</cos_api.version>
+<bce-java-sdk.version>0.10.162</bce-java-sdk.version>
+<java-sdk.version>4.2.2</java-sdk.version>
+<minio.version>8.6.0</minio.version>
+<aws-java-sdk-s3.version>1.12.261</aws-java-sdk-s3.version>
+<elasticsearch-rest-high-level-client.version>8.19.8</elasticsearch-rest-high-level-client.version>
+<spring-data-elasticsearch.version>4.0.5.RELEASE</spring-data-elasticsearch.version>
+<HdrHistogram.version>2.1.12</HdrHistogram.version>
+<javassist.version>3.24.1-GA</javassist.version>
+<jetcache.version>2.6.0</jetcache.version>
+<fastjson.version>1.2.83</fastjson.version>
+<jackson.version>2.18.6</jackson.version>
+<transmittable-thread-local.version>2.12.2</transmittable-thread-local.version>
+<objenesis.version>2.6</objenesis.version>
+<checker-qual.version>3.7.0</checker-qual.version>
+<error_prone_annotations.version>2.4.0</error_prone_annotations.version>
+<hutool.version>5.8.22</hutool.version>
+<canal.version>1.1.4</canal.version>
+<aspectjweaver.version>1.9.6</aspectjweaver.version>
+<compileflow.version>1.1.0</compileflow.version>
+<thumbnailator.version>0.4.13</thumbnailator.version>
+<asm.version>9.2</asm.version>
+<zookeeper.version>3.8.6</zookeeper.version>
+<protobuf-java.version>3.25.5</protobuf-java.version>
+<liquibase-core.version>5.0.3</liquibase-core.version>
+<flowable-spring-boot-starter-process.version>6.6.0
+</flowable-spring-boot-starter-process.version>
+<mvel2.version>2.4.7.Final</mvel2.version>
+<sentinel-datasource-nacos.version>1.7.1</sentinel-datasource-nacos.version>
+<sentinel-adapter.version>1.8.2</sentinel-adapter.version>
+<QLExpress.version>3.2.7</QLExpress.version>
+<bouncycastle.version>1.70</bouncycastle.version>
+<reflectasm.version>1.11.9</reflectasm.version>
+<ehcache.version>2.10.8</ehcache.version>
+<javaparser.version>3.23.1</javaparser.version>
+<okio.version>3.9.0</okio.version>
+<okhttp.version>4.12.0</okhttp.version>
+<caffeine.version>2.9.3</caffeine.version>
+<json-path.version>2.9.0</json-path.version>
+<json-smart.version>2.4.9</json-smart.version>
+<zstd.version>1.5.2-5</zstd.version>
+<commons-compress.version>1.26.0</commons-compress.version>
+
+        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <maven-failsafe-plugin.version>2.22.2</maven-failsafe-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
         <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-        <spring-boot.version>2.7.18</spring-boot.version>
-        <!-- 显式钉住：链上的 z-boot-dependencies / z-boot 发布件被 oss 剥过 <build>，没有一处给
-             flatten 兜版本 ⇒ 消费方继承到一条无 version 的插件声明（Maven 直接 WARNING，也就是
-             central_pom_scan 的 E 类）。这一格把链补严。 -->
-        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
+        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- z-agent 0.1.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-agent.version>0.1.4</z-agent.version>
+        <!-- z-agent-kernel 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-agent-kernel.version>0.2.1</z-agent-kernel.version>
+        <!-- z-agent-proxy 0.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-agent-proxy.version>0.1.1</z-agent-proxy.version>
+        <!-- z-bot 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-bot.version>0.2.1</z-bot.version>
+        <!-- z-cache 1.3.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-cache.version>1.3.6</z-cache.version>
+        <!-- z-config 1.0.10（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-config.version>1.0.10</z-config.version>
+        <!-- z-ctc 1.0.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-ctc.version>1.0.2</z-ctc.version>
+        <!-- z-graph 1.0.8（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-graph.version>1.0.8</z-graph.version>
+        <!-- z-gw 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-gw.version>1.0.6</z-gw.version>
+        <!-- z-kb 1.0.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-kb.version>1.0.7</z-kb.version>
+        <!-- z-llm 0.1.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-llm.version>0.1.7</z-llm.version>
+        <!-- z-mcp 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-mcp.version>0.2.1</z-mcp.version>
+        <!-- z-mist 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-mist.version>1.0.4</z-mist.version>
+        <!-- z-mq 1.3.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-mq.version>1.3.1</z-mq.version>
+        <!-- z-msg 1.2.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-msg.version>1.2.2</z-msg.version>
+        <!-- z-oss 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-oss.version>1.0.4</z-oss.version>
+        <!-- z-rpc 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-rpc.version>1.0.4</z-rpc.version>
+        <!-- z-schedule 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-schedule.version>1.0.6</z-schedule.version>
+        <!-- z-script 1.0.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-script.version>1.0.2</z-script.version>
+        <!-- z-skill 0.2.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-skill.version>0.2.2</z-skill.version>
+        <!-- z-util 1.0.19（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-util.version>1.0.19</z-util.version>
+        <!-- z-vector 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-vector.version>1.0.5</z-vector.version>
+        <z-boot.version>1.1.0</z-boot.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+
+
+    
+    <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit-jupiter.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+    </dependency>
+    
+    <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-framework-bom</artifactId>
+        <version>${spring-framework.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-to-slf4j</artifactId>
+        
+        <version>${log4j2.version}</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+        <exclusions>
+            <exclusion>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-to-slf4j</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+    
+    <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-annotation</artifactId>
+        <version>${mybatis-plus.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit</artifactId>
+        <version>${jgit.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.googlecode.javaewah</groupId>
+        <artifactId>JavaEWAH</artifactId>
+        <version>1.1.13</version>
+    </dependency>
+    <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk18on</artifactId>
+        <version>1.78.1</version>
+    </dependency>
+    <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.agent</artifactId>
+        <version>0.8.5</version>
+        
+        <classifier>runtime</classifier>
+    </dependency>
+    <dependency>
+        <groupId>com.squareup.okio</groupId>
+        <artifactId>okio-jvm</artifactId>
+        <version>${okio.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>net.minidev</groupId>
+        <artifactId>accessors-smart</artifactId>
+        <version>${json-smart.version}</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-swagger2</artifactId>
+        <version>${springfox-swagger2.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-swagger-ui</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-core</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-spi</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-schema</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-spring-web</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-spring-webmvc</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-spring-webflux</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-bean-validators</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.springfox</groupId>
+        <artifactId>springfox-oas</artifactId>
+        <version>${springfox-oas.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.swagger</groupId>
+        <artifactId>swagger-annotations</artifactId>
+        <version>1.6.6</version>
+    </dependency>
+    <dependency>
+        <groupId>io.swagger</groupId>
+        <artifactId>swagger-models</artifactId>
+        <version>1.6.6</version>
+    </dependency>
+    <dependency>
+        <groupId>io.github.classgraph</groupId>
+        <artifactId>classgraph</artifactId>
+        <version>4.8.149</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-configuration-processor</artifactId>
+        <version>${spring-boot.version}</version>
+        <optional>true</optional>
+    </dependency>
+
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+        <version>${knife4j-openapi3.version}</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-spring-boot-starter</artifactId>
+        <version>${knife4j.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-spring-boot-autoconfigure</artifactId>
+        <version>${knife4j.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-spring</artifactId>
+        <version>${knife4j.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-spring-ui</artifactId>
+        <version>${knife4j.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-annotations</artifactId>
+        <version>${knife4j.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-core</artifactId>
+        <version>${knife4j-openapi3.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.xiaoymin</groupId>
+        <artifactId>knife4j-openapi3-ui</artifactId>
+        <version>${knife4j-openapi3.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.codehaus.groovy</groupId>
+        <artifactId>groovy</artifactId>
+        <version>3.0.9</version>
+    </dependency>
+    <dependency>
+        <groupId>org.codehaus.groovy</groupId>
+        <artifactId>groovy-jsr223</artifactId>
+        <version>3.0.9</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <version>${spring-boot.version}</version>
+        <exclusions>
+            <exclusion>
+                <artifactId>junit-vintage-engine</artifactId>
+                <groupId>org.junit.vintage</groupId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.2.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.7</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M5</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.0.0-M5</version>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring-boot.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>4.0.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.skywalking</groupId>
+        <artifactId>apm-toolkit-trace</artifactId>
+        <version>8.5.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.skywalking</groupId>
+        <artifactId>apm-agent-core</artifactId>
+        <version>8.5.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.skywalking</groupId>
+        <artifactId>apm-util</artifactId>
+        <version>8.5.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.skywalking</groupId>
+        <artifactId>apm-test-tools</artifactId>
+        <version>8.5.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.skywalking</groupId>
+        <artifactId>apm-toolkit-logging-common</artifactId>
+        <version>8.5.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.skywalking</groupId>
+        <artifactId>apm-toolkit-log4j-2.x</artifactId>
+        <version>8.5.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-logging</artifactId>
+        <version>${spring-boot.version}</version>
+        <exclusions>
+            <exclusion>
+                <groupId>*</groupId>
+                <artifactId>*</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.2</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>2.25.4</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-jul</artifactId>
+        <version>2.25.4</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-slf4j2-impl</artifactId>
+        <version>2.25.4</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>2.25.4</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>log4j2-ttl-thread-context-map</artifactId>
+        <version>1.3.3</version>
+    </dependency>
+
+    <dependency>
+        <artifactId>dubbo</artifactId>
+        <groupId>org.apache.dubbo</groupId>
+        <version>2.7.21</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.dubbo</groupId>
+        <artifactId>dubbo-spring-boot-starter</artifactId>
+        <version>2.7.21</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.dubbo</groupId>
+        <artifactId>dubbo-registry-nacos</artifactId>
+        <version>2.7.21</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.dubbo</groupId>
+        <artifactId>dubbo-spring-boot-actuator</artifactId>
+        <version>2.7.21</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.dubbo</groupId>
+        <artifactId>dubbo-spring-boot-autoconfigure</artifactId>
+        <version>2.7.21</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.dom4j</groupId>
+        <artifactId>dom4j</artifactId>
+        <version>2.1.3</version>
+    </dependency>
+
+    <dependency>
+        <groupId>ognl</groupId>
+        <artifactId>ognl</artifactId>
+        <version>3.2.20</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>3.18.0</version>
+    </dependency>
+    <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.14.0</version>
+    </dependency>
+    <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.11.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-text</artifactId>
+        <version>1.10.0</version>
+    </dependency>
+    <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.2</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-collections4</artifactId>
+        <version>4.4</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        <version>2.2.6.RELEASE
+</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba.nacos</groupId>
+        <artifactId>nacos-client</artifactId>
+        <version>2.0.4</version>
+    </dependency>
+    
+
+    <dependency>
+        <groupId>org.apache.shardingsphere</groupId>
+        <artifactId>sharding-jdbc-spring-boot-starter</artifactId>
+        <version>4.1.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-boot-starter</artifactId>
+        <version>${mybatis-plus.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-extension</artifactId>
+        <version>${mybatis-plus.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-core</artifactId>
+        <version>${mybatis-plus.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-generator</artifactId>
+        <version>${mybatis-plus-generator.version}</version>
+        <exclusions>
+            <exclusion>
+                <artifactId>mybatis-plus-extension</artifactId>
+                <groupId>com.baomidou</groupId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+        <version>${dynamic-datasource-spring-boot-starter.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.jsqlparser</groupId>
+        <artifactId>jsqlparser</artifactId>
+        <version>${jsqlparser.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.github.pagehelper</groupId>
+        <artifactId>pagehelper</artifactId>
+        <version>6.1.1</version>
+    </dependency>
+
+
+    <dependency>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
+        <version>8.4.0</version>
+    </dependency>
+    
+
+    <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>druid-spring-boot-starter</artifactId>
+        <version>1.2.23</version>
+    </dependency>
+    <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>druid</artifactId>
+        <version>1.2.23</version>
+    </dependency>
+    <dependency>
+        <groupId>org.mybatis.spring.boot</groupId>
+        <artifactId>mybatis-spring-boot-starter</artifactId>
+        <version>${mybatis-spring-boot-starter.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.mybatis</groupId>
+        <artifactId>mybatis-spring</artifactId>
+        <version>${mybatis-spring.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.mybatis</groupId>
+        <artifactId>mybatis</artifactId>
+        <version>${mybatis.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.mapstruct</groupId>
+        <artifactId>mapstruct-jdk8</artifactId>
+        <version>${mapstruct.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.mapstruct</groupId>
+        <artifactId>mapstruct-processor</artifactId>
+        <version>${mapstruct.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.mapstruct</groupId>
+        <artifactId>mapstruct</artifactId>
+        <version>${mapstruct.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>32.0.0-jre</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba.spring</groupId>
+        <artifactId>spring-context-support</artifactId>
+        <version>1.0.11</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.freemarker</groupId>
+        <artifactId>freemarker</artifactId>
+        <version>2.3.31</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.xuxueli</groupId>
+        <artifactId>xxl-job-core</artifactId>
+        <version>3.2.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.aliyun.schedulerx</groupId>
+        <artifactId>schedulerx2-plugin-xxljob</artifactId>
+        <version>3.2.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.aliyun.schedulerx</groupId>
+        <artifactId>schedulerx2-spring-boot-starter</artifactId>
+        <version>1.6.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.aliyun</groupId>
+        <artifactId>aliyun-java-sdk-schedulerx2</artifactId>
+        <version>1.1.2</version>
+    </dependency>
+
+
+    <dependency>
+        <groupId>org.redisson</groupId>
+        <artifactId>redisson-spring-boot-starter</artifactId>
+        <version>3.17.3</version>
+        
+        <exclusions>
+            <exclusion>
+                <artifactId>redisson-spring-data-27</artifactId>
+                <groupId>org.redisson</groupId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.redisson</groupId>
+        <artifactId>redisson-spring-data-23</artifactId>
+        <version>3.17.3</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-spring-boot-starter</artifactId>
+        <version>2.2.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-tools</artifactId>
+        <version>4.8.0</version>
+        <exclusions>
+            <exclusion>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-client</artifactId>
+        <version>4.8.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.rocketmq</groupId>
+        <artifactId>rocketmq-acl</artifactId>
+        <version>4.8.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.aliyun.oss</groupId>
+        <artifactId>aliyun-sdk-oss</artifactId>
+        <version>3.17.4</version>
+    </dependency>
+    <dependency>
+        <groupId>com.huaweicloud</groupId>
+        <artifactId>esdk-obs-java</artifactId>
+        <version>3.20.6.1</version>
+    </dependency>
+    <dependency>
+        <groupId>com.qiniu</groupId>
+        <artifactId>qiniu-java-sdk</artifactId>
+        <version>7.4.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.qcloud</groupId>
+        <artifactId>cos_api</artifactId>
+        <version>5.6.38</version>
+    </dependency>
+    <dependency>
+        <groupId>com.baidubce</groupId>
+        <artifactId>bce-java-sdk</artifactId>
+        <version>0.10.162</version>
+    </dependency>
+    <dependency>
+        <groupId>com.upyun</groupId>
+        <artifactId>java-sdk</artifactId>
+        <version>4.2.2</version>
+    </dependency>
+    <dependency>
+        <groupId>io.minio</groupId>
+        <artifactId>minio</artifactId>
+        <version>8.6.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-s3</artifactId>
+        <version>1.12.261</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-pool2</artifactId>
+        <version>2.10.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-high-level-client</artifactId>
+        <version>8.19.8</version>
+    </dependency>
+    <dependency>
+        <groupId>org.elasticsearch</groupId>
+        <artifactId>elasticsearch</artifactId>
+        <version>8.19.8</version>
+    </dependency>
+    <dependency>
+        <groupId>org.elasticsearch.client</groupId>
+        <artifactId>elasticsearch-rest-client</artifactId>
+        <version>8.19.8</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.data</groupId>
+        <artifactId>spring-data-elasticsearch</artifactId>
+        <version>4.0.5.RELEASE</version>
+        <exclusions>
+            <exclusion>
+                <artifactId>transport</artifactId>
+                <groupId>org.elasticsearch.client</groupId>
+            </exclusion>
+            <exclusion>
+                <artifactId>transport-netty4-client</artifactId>
+                <groupId>org.elasticsearch.plugin</groupId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+    <dependency>
+        <groupId>org.hdrhistogram</groupId>
+        <artifactId>HdrHistogram</artifactId>
+        <version>2.1.12</version>
+        <exclusions>
+            <exclusion>
+                <artifactId>*</artifactId>
+                <groupId>*</groupId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+    <dependency>
+        <groupId>org.javassist</groupId>
+        <artifactId>javassist</artifactId>
+        <version>3.24.1-GA</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alicp.jetcache</groupId>
+        <artifactId>jetcache-starter-redis-lettuce</artifactId>
+        <version>2.6.0</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>transmittable-thread-local</artifactId>
+        <version>2.12.2</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.objenesis</groupId>
+        <artifactId>objenesis</artifactId>
+        <version>2.6</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <version>3.7.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.google.errorprone</groupId>
+        <artifactId>error_prone_annotations</artifactId>
+        <version>2.4.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>cn.hutool</groupId>
+        <artifactId>hutool-all</artifactId>
+        <version>5.8.22</version>
+    </dependency>
+    <dependency>
+        <groupId>cn.hutool</groupId>
+        <artifactId>hutool-core</artifactId>
+        <version>5.8.22</version>
+    </dependency>
+
+    <dependency>
+        <groupId>net.coobird</groupId>
+        <artifactId>thumbnailator</artifactId>
+        <version>0.4.13</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba.otter</groupId>
+        <artifactId>canal.client</artifactId>
+        <version>1.1.4</version>
+        <exclusions>
+            <exclusion>
+                <artifactId>logback-classic</artifactId>
+                <groupId>ch.qos.logback</groupId>
+            </exclusion>
+            <exclusion>
+                <artifactId>logback-core</artifactId>
+                <groupId>ch.qos.logback</groupId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+    <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjweaver</artifactId>
+        <version>1.9.6</version>
+    </dependency>
+
+    <dependency>
+        <artifactId>compileflow</artifactId>
+        <groupId>com.alibaba.compileflow</groupId>
+        <version>1.1.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm</artifactId>
+        <version>9.2</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.zookeeper</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>3.8.6</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>3.25.5</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.liquibase</groupId>
+        <artifactId>liquibase-core</artifactId>
+        <version>5.0.3</version>
+    </dependency>
+    <dependency>
+        <groupId>org.flowable</groupId>
+        <artifactId>flowable-spring-boot-starter-process</artifactId>
+        <version>6.6.0
+</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.mvel</groupId>
+        <artifactId>mvel2</artifactId>
+        <version>2.4.7.Final</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        <version>2.2.6.RELEASE</version>
+    </dependency>
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-datasource-nacos</artifactId>
+        <version>1.7.1</version>
+    </dependency>
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-datasource-extension</artifactId>
+        <version>1.7.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-apache-dubbo-adapter</artifactId>
+        <version>1.8.2</version>
+    </dependency>
+    <dependency>
+        <groupId>com.alibaba.csp</groupId>
+        <artifactId>sentinel-core</artifactId>
+        <version>1.8.2</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>QLExpress</artifactId>
+        <version>3.2.7</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk15on</artifactId>
+        <version>1.70</version>
+    </dependency>
+    <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcpkix-jdk15on</artifactId>
+        <version>1.70</version>
+    </dependency>
+    <dependency>
+        <groupId>com.esotericsoftware</groupId>
+        <artifactId>reflectasm</artifactId>
+        <version>1.11.9</version>
+    </dependency>
+
+    <dependency>
+        <groupId>net.sf.ehcache</groupId>
+        <artifactId>ehcache</artifactId>
+        <version>2.10.8</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.github.javaparser</groupId>
+        <artifactId>javaparser-core</artifactId>
+        <version>3.23.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.github.javaparser</groupId>
+        <artifactId>javaparser-symbol-solver-core</artifactId>
+        <version>3.23.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.squareup.okio</groupId>
+        <artifactId>okio</artifactId>
+        <version>${okio.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp</artifactId>
+        <version>${okhttp.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp-sse</artifactId>
+        <version>${okhttp.version}</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.github.ben-manes.caffeine</groupId>
+        <artifactId>caffeine</artifactId>
+        <version>2.9.3</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.jayway.jsonpath</groupId>
+        <artifactId>json-path</artifactId>
+        <version>2.9.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>net.minidev</groupId>
+        <artifactId>json-smart</artifactId>
+        <version>2.4.9</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>1.26.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.github.luben</groupId>
+        <artifactId>zstd-jni</artifactId>
+        <version>1.5.2-5</version>
+    </dependency>
+
+    
+
+
+
+            <!-- ==== 接入面 pin：被跨仓真实声明的坐标（gen_train_bom.py 现算，勿手改） ==== -->
+            <!-- z-agent -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-boot-fleet</artifactId>
-                <version>${z-boot-fleet.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <artifactId>z-agent-starter</artifactId>
+                <version>${z-agent.version}</version>
+            </dependency>
+            <!-- z-agent-kernel -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-agent</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-credential</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-event</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-formatter</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-llm</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-mcp</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-memory</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-message</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-middleware</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-skill</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-tool</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-types</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-workspace</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <!-- z-agent-proxy -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-proxy</artifactId>
+                <version>${z-agent-proxy.version}</version>
+            </dependency>
+            <!-- z-bot -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-bot-core</artifactId>
+                <version>${z-bot.version}</version>
+            </dependency>
+            <!-- z-cache -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-cache-core</artifactId>
+                <version>${z-cache.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-cache-spring-boot-starter</artifactId>
+                <version>${z-cache.version}</version>
+            </dependency>
+            <!-- z-config -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-config-client</artifactId>
+                <version>${z-config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-config-core</artifactId>
+                <version>${z-config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-config-spring-boot-starter</artifactId>
+                <version>${z-config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-config-web</artifactId>
+                <version>${z-config.version}</version>
+            </dependency>
+            <!-- z-ctc -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ctc-core</artifactId>
+                <version>${z-ctc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ctc-sso</artifactId>
+                <version>${z-ctc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ctc-web</artifactId>
+                <version>${z-ctc.version}</version>
+            </dependency>
+            <!-- z-graph -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-api</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-bolt-server</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-core</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-graph-spring-boot-starter</artifactId>
+                <version>${z-graph.version}</version>
+            </dependency>
+            <!-- z-gw -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-gw-admin</artifactId>
+                <version>${z-gw.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-gw-spring-boot-starter</artifactId>
+                <version>${z-gw.version}</version>
+            </dependency>
+            <!-- z-kb -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-kb-api</artifactId>
+                <version>${z-kb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-kb-spring-boot-starter</artifactId>
+                <version>${z-kb.version}</version>
+            </dependency>
+            <!-- z-llm -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-llm-api</artifactId>
+                <version>${z-llm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-llm-config</artifactId>
+                <version>${z-llm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-llm-core</artifactId>
+                <version>${z-llm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-llm-starter</artifactId>
+                <version>${z-llm.version}</version>
+            </dependency>
+            <!-- z-mcp -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mcp-core</artifactId>
+                <version>${z-mcp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mcp-starter</artifactId>
+                <version>${z-mcp.version}</version>
+            </dependency>
+            <!-- z-mist -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mist-core</artifactId>
+                <version>${z-mist.version}</version>
+            </dependency>
+            <!-- z-mq -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mq-broker</artifactId>
+                <version>${z-mq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mq-nameserver</artifactId>
+                <version>${z-mq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mq-spring-boot-starter</artifactId>
+                <version>${z-mq.version}</version>
+            </dependency>
+            <!-- z-msg -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-msg-core</artifactId>
+                <version>${z-msg.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-msg-web</artifactId>
+                <version>${z-msg.version}</version>
+            </dependency>
+            <!-- z-oss -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-oss-api</artifactId>
+                <version>${z-oss.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-oss-common</artifactId>
+                <version>${z-oss.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-oss-core</artifactId>
+                <version>${z-oss.version}</version>
+            </dependency>
+            <!-- z-rpc -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-rpc-remoting</artifactId>
+                <version>${z-rpc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-rpc-spring-boot-starter</artifactId>
+                <version>${z-rpc.version}</version>
+            </dependency>
+            <!-- z-schedule -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-schedule-spring-boot-starter</artifactId>
+                <version>${z-schedule.version}</version>
+            </dependency>
+            <!-- z-script -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-script-engine</artifactId>
+                <version>${z-script.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-script-web</artifactId>
+                <version>${z-script.version}</version>
+            </dependency>
+            <!-- z-skill -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-skill-starter</artifactId>
+                <version>${z-skill.version}</version>
+            </dependency>
+            <!-- z-util -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-ch</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-core</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-el</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-groovy</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-js</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-lua</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-obj</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-sql</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-http</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-jdbc</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-math</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-ml</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-csv</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-json</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-cache</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-core</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-schema</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-wf-kernel</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <!-- z-vector -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-vector-api</artifactId>
+                <version>${z-vector.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-vector-core</artifactId>
+                <version>${z-vector.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-vector-grpc-server</artifactId>
+                <version>${z-vector.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-vector-spring-boot-starter</artifactId>
+                <version>${z-vector.version}</version>
             </dependency>
 
-            <!-- BEGIN z-boot-self (由 gen_fleet_bom.py 的 write-parent 维护，勿手改) -->
-            <!-- z-boot 1.0.25:清单取自 z-boot-starter + z-boot-integration-starters 的 <modules>,版本逐件核过 repo1 -->
+            <!-- BEGIN z-boot-self (gen_train_bom.py 维护，勿手改) -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-agent-proxy-starter</artifactId>
@@ -197,69 +1676,67 @@
     </dependencyManagement>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                    <configuration>
-                        <source>${maven.compiler.source}</source>
-                        <target>${maven.compiler.target}</target>
-                        <encoding>${project.build.sourceEncoding}</encoding>
-                        <!-- Spring 的构造器注入/@ConfigurationProperties 绑定靠参数名，
-                             各仓现在靠自己的 <compilerArgs> 各抄一遍，这里统一 -->
-                        <compilerArgs>
-                            <arg>-parameters</arg>
-                        </compilerArgs>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>${maven-surefire-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>${maven-failsafe-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>${maven-jar-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>${maven-resources-plugin.version}</version>
-                    <configuration>
-                        <encoding>${project.build.sourceEncoding}</encoding>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-maven-plugin</artifactId>
-                    <version>${spring-boot.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <plugins>
-            <!-- 覆盖父 pom 的 flatten 绑定：见头部注释 1，只解 CI-friendly 版本，
-                 保住 <build>/<pluginManagement>/<dependencyManagement> -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>flatten-maven-plugin</artifactId>
-                <version>${flatten-maven-plugin.version}</version>
-                <!-- 只为本 pom 自己服务：inherited=false 免得把一条 flatten 声明塞给全组织
-                     30 个仓（它们发的是非扁平 pom，凭空继承一条插件声明没有好处只有惊讶）。 -->
-                <inherited>false</inherited>
-                <configuration>
-                    <updatePomFile>true</updatePomFile>
-                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
-                </configuration>
-            </plugin>
-        </plugins>
+
+<pluginManagement>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>${maven-compiler-plugin.version}</version>
+            <configuration>
+                <source>${maven.compiler.source}</source>
+                <target>${maven.compiler.target}</target>
+                <encoding>${project.build.sourceEncoding}</encoding>
+                
+                <compilerArgs>
+                    <arg>-parameters</arg>
+                </compilerArgs>
+            </configuration>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${maven-surefire-plugin.version}</version>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>${maven-failsafe-plugin.version}</version>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>${maven-jar-plugin.version}</version>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>${maven-resources-plugin.version}</version>
+            <configuration>
+                <encoding>${project.build.sourceEncoding}</encoding>
+            </configuration>
+        </plugin>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <version>${spring-boot.version}</version>
+        </plugin>
+    </plugins>
+</pluginManagement>
+<plugins>
+    
+    <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>${flatten-maven-plugin.version}</version>
+        
+        <inherited>false</inherited>
+        <configuration>
+            <updatePomFile>true</updatePomFile>
+            <flattenMode>resolveCiFriendliesOnly</flattenMode>
+        </configuration>
+    </plugin>
+</plugins>
     </build>
 
 </project>

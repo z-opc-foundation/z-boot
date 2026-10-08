@@ -163,26 +163,24 @@ EOF
 # ---------- 子命令：publish ----------
 # 1.0.19 起 z-boot 根 pom 只是发布用 pom（没有 <modules>），发版按文件夹为单位：
 #   publish                 = 按依赖顺序全发
-#   publish fleet           = 只发 z-boot-fleet（根 pom 若 repo1 已有就跳过）
-#   publish parent          = 只发 z-boot-parent（消费入口；fleet 未发时自动前置）
-#   publish deps starter    = 发地板 + 3 个基础 starter
-#   publish --dry fleet     = 只 mvn verify 不 deploy（不签名不上传，验 flatten/受管项形状）
-# 抬一格兄弟仓版本 = gen_fleet_bom.py --write + publish fleet，其余文件夹不动。
+#   publish parent          = 只发 z-boot-parent（消费入口，parent 未发时自动前置 root）
+#   publish starter         = 发 3 个基础 starter
+#   publish integration     = 发 19 个集成 starter
+#   publish --dry parent    = 只 mvn verify 不 deploy（不签名不上传，验 flatten/受管项形状）
+# 火车制（2026-10-08）：z-boot-dependencies 与 z-boot-fleet 两文件夹已退役删除——
+# 地板内化进 parent，接入面版本由 gen_train_bom.py 写成 starter 字面 + parent pin。
+# 抬一格 = gen_train_bom.py --write + 整列火车按序发。
 #
-# 顺序不是审美问题，是硬依赖：fleet 1.0.0 被 20 个叶子 starter 的 <dependencyManagement>
-# 按字面版本 import（z-boot-integration-starters/*/pom.xml:64），而 z-boot-parent 也 import 它。
-# Central 上 fleet 一个版本都没有 ⇒ integration/parent 从干净机器发必然 "Non-resolvable import POM"
-# —— 1.0.19 那次 integration 整文件夹没落进 Central（repo1 只到 1.0.18），本机 ~/.m2 装过就看不出来。
-# 所以 fleet 一旦发出去就是 immutable：发之前必须 `gen_fleet_bom.py --write` 重算 + 逐件复核。
-FLEET_ORDER=( "." "z-boot-dependencies" "z-boot-fleet" "z-boot-parent" "z-boot-starter" "z-boot-integration-starters" )
+# 顺序不是审美问题，是硬依赖：22 个叶子 starter 的 <dependencyManagement> 按字面版本
+# import z-boot-parent（BOM），所以 parent 必须先于 starter 落地；
+# parent 的 <parent> 指根 z-boot:1.0.19（repo1 永久在架，root 恒可跳过）。
+FLEET_ORDER=( "." "z-boot-parent" "z-boot-starter" "z-boot-integration-starters" )
 alias_folder() {
     case "$1" in
         .|root)             echo "." ;;
         # "parent" 这里指 z-boot-parent 这个文件夹（消费入口），不是根 pom —— 根 pom 用 root 或 "."。
         # 1.0.19 之前短名 parent 是给根 pom 用的，文档里那几处已经一起改成 root。
         parent)             echo "z-boot-parent" ;;
-        deps|dependencies)  echo "z-boot-dependencies" ;;
-        fleet)              echo "z-boot-fleet" ;;
         starter|starters)   echo "z-boot-starter" ;;
         integration|it)     echo "z-boot-integration-starters" ;;
         *)                  echo "$1" ;;
@@ -355,7 +353,7 @@ cmd_publish() {
     log ""
     log "✅ 全部文件夹发布流程结束"
     log "Central Portal 控制台：https://central.sonatype.com/publishing/deployments"
-    log "逐坐标复核：bash _doc/003_script/deploy_maven_center.sh verify   或   python3 _doc/003_script/gen_fleet_bom.py"
+    log "逐坐标复核：bash _doc/003_script/deploy_maven_center.sh verify   或   python3 _doc/003_script/gen_train_bom.py"
 }
 
 # ---------- 子命令：verify ----------
@@ -394,7 +392,7 @@ cmd_readme() {
   五个文件夹 + 根都是独立工程，pom 里写的是字面版本：
     .                        z-boot 根 pom（只带 plugin/profile/flatten 配置，无 <modules>；短名 root）
     z-boot-dependencies      第三方地板 BOM
-    z-boot-fleet             兄弟仓 z-* 版本 BOM（gen_fleet_bom.py 生成，勿手改）
+    z-boot-fleet             兄弟仓 z-* 版本 BOM（gen_train_bom.py 生成，勿手改）
     z-boot-parent            消费入口 parent：继承地板 + import fleet + 下发 Java 8 构建口径（短名 parent）
     z-boot-starter           base / web / datasource
     z-boot-integration-starters   20 个 L3 聚合 starter
@@ -414,8 +412,8 @@ cmd_readme() {
 
 【抬一格兄弟仓版本（日常）】
 
-  python3 _doc/003_script/gen_fleet_bom.py            # 只看账：每个坐标 repo1 是 OK / PENDING / MISSING
-  python3 _doc/003_script/gen_fleet_bom.py --write    # 重算 z-boot-fleet/pom.xml
+  python3 _doc/003_script/gen_train_bom.py            # 只看账：每个坐标 repo1 是 OK / PENDING / MISSING
+  python3 _doc/003_script/publish=publish    # 重算 z-boot-fleet/pom.xml
   bash _doc/003_script/deploy_maven_center.sh publish --dry fleet && bash _doc/003_script/deploy_maven_center.sh publish fleet
 
 【判据】

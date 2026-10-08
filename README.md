@@ -1,12 +1,33 @@
 # z-boot
 
-> **Spring Boot Starter 聚合仓 + 第三方依赖版本权威 (BOM)**
-> 把所有 z-* L3 中间件 + 通用 starter 收成"开箱即用"系列, 业务模块一行 import 一个能力
+> **Spring Boot Starter 聚合仓 + 版本权威（火车制）**
+> 唯一消费入口 `z-boot-parent`（地板 + 接入面 + 自家 starter 全在内），一行 parent 一行依赖
 
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.21-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.1.0-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
 [![License](https://img.shields.io/license/MIT-green)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-8%2B-orange)](https://openjdk.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.x-6DB33F)](https://spring.io)
+
+---
+
+## 🔥 2026-10-08 火车制重构（当前拓扑，先读这节）
+
+CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent + 22 starter 四层字面」形状：
+
+| | 旧（≤1.0.26） | 新（火车制，1.1.0 起） |
+|---|---|---|
+| 第三方地板 | `z-boot-dependencies` 独立 BOM（155 条） | **内化进 parent** 的 DM（逐字搬运），文件夹退役 |
+| 兄弟仓版本 | `z-boot-fleet` 独立 BOM（25 格 / 193 条） | **删除**。接入面 76 条 pin 进 parent DM；client 字面由脚本写进 starter |
+| 消费者旋钮 | parent 号 +（fleet 经 parent） | **一个火车号**：`z-boot.version` == parent `<version>` |
+| starter 版本 | starter 群单独火车（1.0.25） | **跟 parent 同号**，client 字面版本挂 starter 里 |
+| server/部署件 | （不在链上） | 照旧不在链上——部署版本是部署侧自己的字面号 |
+| 版本抬号动线 | 五处字面同抬 + 22 件陪发 + fleet 单发 | `gen_train_bom.py --write` 一条命令；发布按整列火车 root→parent→starter→integration |
+
+- 消费者升级动线：常规 = 抬 `<parent>` 号一行；提前尝鲜 = 本仓 DM 写 client 直接条目覆盖，火车到了撤掉。
+- 真源 = `gen_train_bom.py` 的 **FAMILIES 表**（25 族）；接入面（76 pin）按「被跨仓真实声明」机械现算，
+  新跨仓声明无族 ⇒ 脚本报警。generator 从 `git HEAD` 读模板输入，重放幂等。
+- `z-boot-fleet:1.0.1-1.0.4` / `z-boot-dependencies:1.0.15-1.0.20` 在 Central **永久在架**，
+  迁移未完成的消费方照常解析；迁移完成 = 消费者 `<parent>` 抬到 1.1.0。
 
 ---
 
@@ -14,15 +35,14 @@
 
 | 字段 | 值（全部现测于磁盘 pom 与 repo1） |
 |------|-----|
-| **仓库** | `z-boot` — Spring Boot Starter 聚合仓 + 第三方/兄弟仓版本权威（BOM） |
-| **groupId** | `io.github.yuku123`（五个文件夹共用） |
-| **当前发行** | 根 `z-boot:1.0.19` · 地板 `z-boot-dependencies:1.0.20` · 兄弟权威 `z-boot-fleet:1.0.4` · 消费入口 `z-boot-parent:1.0.26` · 全部 starter/聚合器 `1.0.25`（盘上目录与 reactor 已一一对应，无例外件） |
-| **父项目（磁盘）** | deps / fleet / starter / integration-starters 的 `<parent>` = `io.github.yuku123:z-boot:1.0.19`（`relativePath ../pom.xml`）；`z-boot-parent` 的 `<parent>` = `z-boot-dependencies:1.0.20` |
-| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.0.21</parent>`，依赖零 `<version>` |
-| **Maven Central（maven-metadata 实测 2026-10-06）** | `z-boot:1.0.19` / `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.2` / `z-boot-parent:1.0.23` / 全部 starter/聚合器 `1.0.22`。根件 `z-boot` 仍只有 1.0.19（1.0.20+ = 404，且没有任何 pom 指它） |
+| **仓库** | `z-boot` — Spring Boot Starter 聚合仓 + 唯一版本权威（火车制） |
+| **groupId** | `io.github.yuku123` |
+| **当前发行** | 消费入口 `z-boot-parent:1.1.0`（内含地板 155 + 接入面 pin 76 + 自家 starter 22 格）· 火车 = 22 个 starter/聚合器全 `1.1.0` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
+| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.1.0`；starter 的 DM = 单条 `import z-boot-parent:1.1.0` |
+| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.1.0</parent>`，依赖零 `<version>` |
 | **默认端口** | 无 —— 本仓是版本权威 + 聚合层，不启进程、不设端口 |
-| **运行口径** | Java 8（全组织 1.8）· Spring Boot **2.7.18**（地板 `<spring-boot.version>`，2026-09-28 由 2.7.12 抬到 2.7.18；`z-boot-parent` 的 `pluginManagement` 也钉 2.7.18） |
-| **最近更新** | 2026-09-30 |
+| **运行口径** | Java 8（全组织 1.8）· Spring Boot **2.7.18** |
+| **最近更新** | 2026-10-08（火车制重构） |
 
 ---
 

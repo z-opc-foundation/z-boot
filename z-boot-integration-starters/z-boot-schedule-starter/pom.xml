@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.0.25</version>
+        <version>1.1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-schedule-starter</artifactId>
-    <version>1.0.25</version>
+    <version>1.1.0</version>
     <name>z-boot-schedule-starter</name>
     <description>
         z-boot Schedule 聚合 starter — 一行 import 集成 z-schedule 分布式任务调度系统
@@ -55,32 +55,13 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- 唯一版本供给：parent-as-BOM（第三方地板 + 接入面 + 自家火车全在这里） -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-boot-dependencies</artifactId>
-                <version>1.0.20</version>
+                <artifactId>z-boot-parent</artifactId>
+                <version>1.1.0</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <!-- 兄弟仓(z-* L3)版本权威:与地板坐标空间不相交,抬兄弟版只重发 fleet -->
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-boot-fleet</artifactId>
-                <version>1.0.4</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <!-- 经 z-z-msg/z-schedule/z-script 传递进来的 z-boot 自家件,在本叶子钉到当次 cut,
-                 免得同一坐标在 z-opc 全树上出现两个 z-boot-* 版本 -->
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-boot-datasource-starter</artifactId>
-                <version>1.0.25</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-boot-web-starter</artifactId>
-                <version>1.0.25</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -89,6 +70,7 @@
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-schedule-spring-boot-starter</artifactId>
+                <version>1.0.6</version>
             <exclusions>
                 <!-- 不替消费者把 log4j2 到 slf4j2 的绑定摊出去：z-util-core / z-gw-core 的发布 pom 里
                      log4j-slf4j2-impl 是 compile 直接依赖，用默认 logback 的 Boot 应用在
