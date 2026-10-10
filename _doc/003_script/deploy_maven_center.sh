@@ -268,14 +268,8 @@ cmd_publish() {
     if [[ " ${want[*]} " != *" . "* ]]; then
         already_live "." || { log "根 pom 未发布 → 前置 ."; want=( "." "${want[@]}" ); }
     fi
-    # fleet 是 integration / parent 的 import 目标：它不在清单里而当版没上线时，自动前置，
-    # 否则那 20 个 starter（或 parent）在 Central 上是一条解不开的 import。
-    if [[ " ${want[*]} " == *" z-boot-integration-starters "* || " ${want[*]} " == *" z-boot-parent "* ]]; then
-        if [[ " ${want[*]} " != *" z-boot-fleet "* ]] && ! already_live "z-boot-fleet"; then
-            log "z-boot-fleet 当版未发布 → 前置 fleet（integration/parent 的 <dependencyManagement> import 它）"
-            want=( "z-boot-fleet" "${want[@]}" )
-        fi
-    fi
+    # （fleet 前置检查已删：火车制 1.1.0 起 fleet / z-boot-dependencies 退役，
+    #  parent 不再 import fleet，DM 单条 import z-boot-parent-as-BOM。）
 
     local mode=deploy
     # 上面两个前置是在清单两头插队，顺序可能已经乱 ⇒ 按 FLEET_ORDER 重排一次

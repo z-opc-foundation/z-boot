@@ -22,7 +22,7 @@
     </parent>
 
     <artifactId>z-boot-parent</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <packaging>pom</packaging>
 
     <name>z-boot-parent (Consumer Parent)</name>
@@ -194,11 +194,11 @@
         <z-script.version>1.0.2</z-script.version>
         <!-- z-skill 0.2.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-skill.version>0.2.2</z-skill.version>
-        <!-- z-util 1.0.19（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-util.version>1.0.19</z-util.version>
+        <!-- z-util 1.0.22（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-util.version>1.0.22</z-util.version>
         <!-- z-vector 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-vector.version>1.0.5</z-vector.version>
-        <z-boot.version>1.1.0</z-boot.version>
+        <z-boot.version>1.1.1</z-boot.version>
     </properties>
 
     <dependencyManagement>
@@ -1538,6 +1538,21 @@
                 <artifactId>z-util-wf-kernel</artifactId>
                 <version>${z-util.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-http-core</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-http-proxy</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-http-server</artifactId>
+                <version>${z-util.version}</version>
+            </dependency>
             <!-- z-vector -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
@@ -1676,6 +1691,7 @@
     </dependencyManagement>
 
     <build>
+
 
 <pluginManagement>
     <plugins>

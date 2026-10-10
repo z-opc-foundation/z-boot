@@ -38,8 +38,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 FOUNDATION = os.path.abspath(os.path.join(REPO_ROOT, ".."))
 
-TRAIN = "1.1.0"
+TRAIN = "1.1.1"
+PREV_TRAIN = "1.1.0"
 ROOT_PARENT = ("io.github.yuku123", "z-boot", "1.0.19")
+# 地板 pom 的只读源：z-boot-dependencies 随 1.1.0 火车 git rm（3f3d8df），
+# 从其父提交固定读 —— 生成仍是纯函数（只依赖 git 历史，不吃工作树）。
+FLOOR_GIT_REV = "3f3d8df^"
+FLOOR_GIT_PATH = "z-boot-dependencies/pom.xml"
 FLOOR_DIR = os.path.join(REPO_ROOT, "z-boot-dependencies")
 PARENT_DIR = os.path.join(REPO_ROOT, "z-boot-parent")
 AGG_DIRS = [os.path.join(REPO_ROOT, "z-boot-starter"),
@@ -57,7 +62,7 @@ FAMILIES = {
     "z-vector": ("z-vector", "1.0.5"), "z-graph": ("z-graph", "1.0.8"),
     "z-rpc": ("z-rpc", "1.0.4"), "z-oss": ("z-oss", "1.0.4"),
     "z-schedule": ("z-schedule", "1.0.6"), "z-msg": ("z-msg", "1.2.2"),
-    "z-script": ("z-script", "1.0.2"), "z-util": ("z-util", "1.0.19"),
+    "z-script": ("z-script", "1.0.2"), "z-util": ("z-util", "1.0.22"),
     "z-agent-kernel": ("z-agent-kernel", "0.2.1"), "z-llm": ("z-llm", "0.1.7"),
     "z-mcp": ("z-mcp", "0.2.1"), "z-skill": ("z-skill", "0.2.2"),
     "z-agent": ("z-agent", "0.1.4"), "z-bot": ("z-bot", "0.2.1"),
@@ -67,6 +72,12 @@ FAMILIES = {
 }
 
 REPO1 = "https://repo1.maven.org/maven2/io/github/yuku123"
+
+# 无跨仓真实声明、但要求 parent 统一供版的坐标（值跟属主 FAMILIES 版本走）。
+# 1.1.1 收 z-util 三拆的新 http 坐标：FT 侧目前直书字面版本，parent 供版后才能回归无版本声明。
+EXTRA_PIN = {
+    "z-util": ["z-util-http-core", "z-util-http-proxy", "z-util-http-server"],
+}
 
 
 def strip_notes(x):
@@ -80,6 +91,14 @@ def pristine(relpath):
     if r.returncode == 0:
         return r.stdout
     return open(os.path.join(REPO_ROOT, relpath), encoding="utf-8").read()
+
+
+def pristine_floor():
+    r = subprocess.run(["git", "-C", REPO_ROOT, "show", "%s:%s" % (FLOOR_GIT_REV, FLOOR_GIT_PATH)],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        raise SystemExit("地板 pom 读不到：git show %s:%s 失败：%s" % (FLOOR_GIT_REV, FLOOR_GIT_PATH, r.stderr.strip()))
+    return r.stdout
 
 
 def parse_pom(path):
@@ -153,7 +172,7 @@ def dedent_block(block):
 
 
 def build_parent_pom(owner, surface, write_mode):
-    floor = pristine("z-boot-dependencies/pom.xml")
+    floor = pristine_floor()
     parent = pristine("z-boot-parent/pom.xml")
 
     # G1: 地板 DM 里不得有 yuku 坐标
@@ -166,7 +185,9 @@ def build_parent_pom(owner, surface, write_mode):
     parent_props = {p.tag.split("}")[-1]: (p.text or "") for p in ET.fromstring(strip_notes(parent)).find("m:properties", NS)}
     # 同名 property 值冲突：以 parent 现值为准（今天消费者生效的就是就近覆盖值，零漂移）
     shared = set(floor_props) & set(parent_props) - {"z-boot.version", "z-boot-fleet.version"}
-    conflict = sorted(k for k in shared if floor_props[k] != parent_props[k])
+    # 值比较 strip：floor 原文的跨行 property 值（如 flowable 6.6.0\n+缩进）经 dedent 落盘后
+    # 与 ET 原文不等，不 strip 会造出假冲突 → extra_lines 重复一份同名 property。
+    conflict = sorted(k for k in shared if floor_props[k].strip() != parent_props[k].strip())
     if conflict:
         print("  [info] property 冲突以 parent 现值赢: %s" %
               ", ".join("%s(%s>%s)" % (k, floor_props[k], parent_props[k]) for k in conflict))
@@ -190,6 +211,11 @@ def build_parent_pom(owner, surface, write_mode):
             if o in FAMILIES and p["client"] not in fam_artifacts.get(o, []):
                 fam_artifacts.setdefault(o, []).append(p["client"])
                 print("  [info] pin 并入 starter client: %s (%s)" % (p["client"], o))
+    for o, arts in sorted(EXTRA_PIN.items()):
+        for a in arts:
+            if a not in fam_artifacts.get(o, []):
+                fam_artifacts.setdefault(o, []).append(a)
+                print("  [info] pin 并入 EXTRA_PIN: %s (%s)" % (a, o))
     missing_fam = [f for f in FAMILIES if f not in fam_artifacts]
     missing_fam = [f for f in missing_fam if f not in ("z-qa",)]  # z-qa 无 starter 无跨仓声明，允许缺席
     if missing_fam:
@@ -300,7 +326,7 @@ def build_parent_pom(owner, surface, write_mode):
 
 </project>
 """ % dedent_block(build)
-    return pom, floor_props, fam_artifacts
+    return pom.rstrip() + "\n", floor_props, fam_artifacts
 
 
 def starter_plan(owner, surface):
@@ -325,8 +351,9 @@ def starter_plan(owner, surface):
 def rewrite_starter(p, owner, surface, fam_artifacts):
     text = p["text"]
     new = text
-    # 版本：parent 引用与自身版本 → 火车号
-    new = new.replace("<version>1.0.25</version>", "<version>%s</version>" % TRAIN)
+    # 版本：parent 引用 / 自身版本 / DM import → 火车号。
+    # 1.1.0 起文件已是生成态（上一班把 1.0.25 换成了 1.1.0），所以替换源 = PREV_TRAIN。
+    new = new.replace("<version>%s</version>" % PREV_TRAIN, "<version>%s</version>" % TRAIN)
     # DM：floor+fleet 两条 import → 单条 parent-as-BOM
     new_dm = """    <dependencyManagement>
         <dependencies>
@@ -346,14 +373,16 @@ def rewrite_starter(p, owner, surface, fam_artifacts):
         assert o in FAMILIES, "G4 红：%s 的 client %s 无族" % (p["own"], p["client"])
         assert p["client"] in fam_artifacts.get(o, []), "G4 红：%s 不在接入面 pin" % p["client"]
         ver = FAMILIES[o][1]
-        # version-less client 依赖 → 字面版本。插入点=</artifactId> 之后：
-        # 8 个 starter（config/gw/kb/msg/rpc/schedule/script/vector）的 client 块带 <exclusions>，
-        # 锚 </dependency> 会插到 exclusions 后面去（语义还对但形状歪），锚 artifactId 永远紧邻版本。
-        pat = re.compile(r"(<artifactId>%s</artifactId>)" % re.escape(p["client"]))
-        assert pat.search(new), "starter %s: 未找到 version-less 的 %s 依赖" % (p["own"], p["client"])
-        assert re.search(r"<artifactId>%s</artifactId>\s*<version>" % re.escape(p["client"]), new) is None, \
-            "starter %s: %s 已带版本？拒绝重复插入" % (p["own"], p["client"])
-        new = pat.sub(lambda m: m.group(1) + "\n                <version>%s</version>" % ver, new, count=1)
+        # client 版本：生成态里已带字面版本（上一班写入）→ 原位替换值；
+        # 若仍是 version-less（非生成态）→ 在 </artifactId> 后插入。
+        # 插入点锚 artifactId 永远紧邻版本（带 <exclusions> 的 client 块锚 </dependency> 会插歪）。
+        pat_ver = re.compile(r"(<artifactId>%s</artifactId>\s*)<version>[^<]+</version>" % re.escape(p["client"]))
+        if pat_ver.search(new):
+            new = pat_ver.sub(lambda m: m.group(1) + "<version>%s</version>" % ver, new, count=1)
+        else:
+            pat = re.compile(r"(<artifactId>%s</artifactId>)" % re.escape(p["client"]))
+            assert pat.search(new), "starter %s: 未找到 version-less 的 %s 依赖" % (p["own"], p["client"])
+            new = pat.sub(lambda m: m.group(1) + "\n                <version>%s</version>" % ver, new, count=1)
     return new
 
 
@@ -387,10 +416,10 @@ def main():
         for agg in AGG_DIRS:
             ap = os.path.join(agg, "pom.xml")
             t = pristine(os.path.relpath(ap, REPO_ROOT))
-            t = t.replace("<version>1.0.25</version>", "<version>%s</version>" % TRAIN)
+            t = t.replace("<version>%s</version>" % PREV_TRAIN, "<version>%s</version>" % TRAIN)
             with open(ap, "w", encoding="utf-8") as fh:
                 fh.write(t)
-        print("已落盘: parent 1.1.0 + %d starter + 2 聚合器。fleet/floor 文件夹由发布批次的 git rm 处理。" % len(plans))
+        print("已落盘: parent %s + %d starter + 2 聚合器。" % (TRAIN, len(plans)))
     else:
         print("（--check 模式，未写盘。守卫 G2 的 repo1 探活在 --write 时执行）")
 
