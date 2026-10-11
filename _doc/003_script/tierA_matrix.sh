@@ -27,7 +27,7 @@ mkdir -p "$LOG"
 SUM="$LOG/summary.txt"
 : > "$SUM"
 
-ALL="z-agent z-agent-kernel z-agent-proxy z-bot z-cache z-camuda z-config z-ctc z-ext z-graph z-gw z-indexer z-kb z-lc z-llm z-mcp z-meta z-mist z-mq z-msg z-opc z-opcs z-oss z-qa z-report z-rpc z-schedule z-script z-skill z-task z-util z-vector z-webide"
+ALL="z-agent z-agent-kernel z-agent-proxy z-bot z-cache z-camuda z-config z-ctc z-ext z-graph z-gw z-indexer z-kb z-lc z-llm z-mcp z-meta z-mist z-mq z-msg z-opc z-opcs z-oss z-qa z-rpc z-schedule z-script z-skill z-task z-util z-vector z-webide"
 REPOS="${*:-$ALL}"
 
 cd "$ROOT" || exit 2
