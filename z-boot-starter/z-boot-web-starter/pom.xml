@@ -14,7 +14,7 @@
     <artifactId>z-boot-web-starter</artifactId>
     <version>1.1.1</version>
     <name>z-boot-web-starter</name>
-    <description>z-boot Web starter — 装配 spring-boot-starter-web + log4j2 + knife4j OpenAPI 3。</description>
+    <description>z-boot Web starter — 装配 spring-boot-starter-web + log4j2 + knife4j OpenAPI 3 + actuator/micrometer 指标暴露。</description>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -138,6 +138,32 @@
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- 指标暴露口径 2026-10-14：全组织一次收口，装在这一层而不是让每个应用各装各的。
+             版本**刻意不写**——actuator 与 micrometer 都由上面 import 的 z-boot-parent
+             （进而 spring-boot-dependencies 2.7.18）唯一下发（micrometer 1.9.17）。
+             在这里钉一个字面量就是第二处分叉：z-gw 曾经把 micrometer 压到 1.12.13，
+             收口前必须先确认用到的 API 在地板版本上全都在（实测只用了
+             Counter/Timer/Tags/MeterRegistry，1.0 起就有），否则这次收口会变成降级事故。
+
+             默认实测只暴露 /actuator/health（DefaultExposureBoundaryTest 钉住这条，
+             顺带钉住 beans/env/prometheus 一律 404）。
+             本模块**不**去改 management.endpoints.web.exposure.include ——
+             那是每个应用自己的暴露面决定，starter 替应用开全量端点等于替应用做安全决定。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
