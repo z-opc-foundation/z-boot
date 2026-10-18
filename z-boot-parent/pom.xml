@@ -1335,22 +1335,22 @@
             <!-- z-llm -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-llm-api</artifactId>
+                <artifactId>z-llm-gateway-api</artifactId>
                 <version>${z-llm.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-llm-config</artifactId>
+                <artifactId>z-llm-gateway-config</artifactId>
                 <version>${z-llm.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-llm-core</artifactId>
+                <artifactId>z-llm-gateway-core</artifactId>
                 <version>${z-llm.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-llm-starter</artifactId>
+                <artifactId>z-llm-gateway-starter</artifactId>
                 <version>${z-llm.version}</version>
             </dependency>
             <!-- z-mcp -->
