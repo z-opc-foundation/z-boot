@@ -3,7 +3,7 @@
 > **Spring Boot Starter 聚合仓 + 版本权威（火车制）**
 > 唯一消费入口 `z-boot-parent`（地板 + 接入面 + 自家 starter 全在内），一行 parent 一行依赖
 
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.1.0-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.1.1-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
 [![License](https://img.shields.io/license/MIT-green)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-8%2B-orange)](https://openjdk.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.x-6DB33F)](https://spring.io)
@@ -27,7 +27,7 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 - 真源 = `gen_train_bom.py` 的 **FAMILIES 表**（25 族）；接入面（76 pin）按「被跨仓真实声明」机械现算，
   新跨仓声明无族 ⇒ 脚本报警。generator 从 `git HEAD` 读模板输入，重放幂等。
 - `z-boot-fleet:1.0.1-1.0.4` / `z-boot-dependencies:1.0.15-1.0.20` 在 Central **永久在架**，
-  迁移未完成的消费方照常解析；迁移完成 = 消费者 `<parent>` 抬到 1.1.0。
+  迁移未完成的消费方照常解析；迁移完成 = 消费者 `<parent>` 抬到 1.1.1。
 
 ---
 
@@ -37,9 +37,9 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 |------|-----|
 | **仓库** | `z-boot` — Spring Boot Starter 聚合仓 + 唯一版本权威（火车制） |
 | **groupId** | `io.github.yuku123` |
-| **当前发行** | 消费入口 `z-boot-parent:1.1.0`（内含地板 155 + 接入面 pin 76 + 自家 starter 22 格）· 火车 = 22 个 starter/聚合器全 `1.1.0` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
-| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.1.0`；starter 的 DM = 单条 `import z-boot-parent:1.1.0` |
-| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.1.0</parent>`，依赖零 `<version>` |
+| **当前发行** | 消费入口 `z-boot-parent:1.1.1`（内含地板 155 + 接入面 pin 76 + 自家 starter 22 格）· 火车 = 22 个 starter/聚合器全 `1.1.1` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
+| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.1.1`；starter 的 DM = 单条 `import z-boot-parent:1.1.1` |
+| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.1.1</parent>`，依赖零 `<version>` |
 | **默认端口** | 无 —— 本仓是版本权威 + 聚合层，不启进程、不设端口 |
 | **运行口径** | Java 8（全组织 1.8）· Spring Boot **2.7.18** |
 | **最近更新** | 2026-10-08（火车制重构） |
@@ -62,9 +62,10 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 <version>1.0.0</version>
 ```
 
-**这一行就是全部**。它继承了 `z-boot-dependencies:1.0.20`（155 条第三方地板）、import 了 `z-boot-fleet:1.0.1`
-（193 条兄弟仓 `z-*`），再加上自己 `<dependencyManagement>` 里的 22 条 `z-boot-*` 自家 starter/base（版本键
-`${z-boot.version}` = `1.0.21`，与本 parent 同一次发行），
+**这一行就是全部**。它**自带**第三方地板与兄弟仓权威表（2026-10-08 火车制拓扑：
+`z-boot-dependencies` / `z-boot-fleet` 两个文件夹随那班车退役，两段内容都并进了 parent 自身），
+再加上自己 `<dependencyManagement>` 里的 22 条 `z-boot-*` 自家 starter/base（版本键
+`${z-boot.version}` = `1.1.1`，与本 parent 同一次发行），
 还顺带下发 Java 8 的 `pluginManagement`（compiler `-parameters` / surefire / jar / resources /
 spring-boot 插件版本，surefire 钉 2.22.2）。于是依赖一律不写 `<version>`：
 
@@ -1032,8 +1033,8 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
 ```
 z-boot/
 ├── pom.xml                          # 发布用 parent (Central namespace) — 1.0.19 起无 <modules>，只管 plugin 版本 / central profile / flatten
-├── z-boot-dependencies/             # 第三方版本 BOM（仓内 1182 行 / 155 条受管项；发布件行数以 flatten 后为准，见下面 flatten 那节）
-├── z-boot-fleet/                    # 兄弟仓 z-* 版本 BOM（193 条受管项 / 25 个版本格，由 gen_fleet_bom.py 生成，不手写）
+├── （z-boot-dependencies/ 已退役）   # 第三方版本 BOM：1.0.19 起其职责并入 z-boot-parent 的地板，目录已从本仓移除
+├── （z-boot-fleet/ 已退役）          # 兄弟仓 z-* 版本 BOM：职责并入 z-boot-parent 的 import，目录已从本仓移除
 ├── z-boot-parent/                   # 消费入口 parent（270 行）：继承地板 + import fleet + 23 条 z-boot-* 自家件 + Java 8 pluginManagement
 ├── z-boot-starter/                  # 基础 starter 聚合
 │   ├── z-boot-base                  # Log4j2 门面
@@ -1611,17 +1612,19 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
 
 ## 文档目录
 
-本仓文档收口在 `_doc/` 下（`find _doc -mindepth 1 -type f` 现测：21 个文件 —— `001_arch/` 1 个 + `003_script/` 20 个；
+本仓文档收口在 `_doc/` 下（`find _doc -mindepth 1 -type f` 现测：29 个文件 —— `001_arch/` 2 个 + `003_script/` 27 个；
 `002_deploy/` 与 `004_skill/` **槽位不建**（`002_项目文档收口规范` 2026-09-30 版：桶按需建，未用不建目录）——
 本仓是版本权威 + starter 聚合层，不启进程、没有 Dockerfile / compose / k8s，所以部署与 skill 槽位是空的）。
 
 - [`_doc/001_arch/`](_doc/001_arch/) — 架构与协作约定：
+  - [`00-overview.md`](_doc/001_arch/00-overview.md) — 项目总览：火车制拓扑、三个 pom 聚合层与 19 个集成 starter 的真实形态、
+    `z-boot-parent` 256 条 dependencyManagement 的三段构成、发布判据脚本分工、源码包树
   - [`AGENTS.md`](_doc/001_arch/AGENTS.md) — AI 协作入口：两层版本权威（地板 / fleet）+ `z-boot-parent`
     消费入口的分工、新增 starter 步骤、抬版本三条路径、"不要做的事"（勿手改 fleet pom、勿在根 pom 放第三方 DM、
     flatten 模式为何不能是 `oss`）、发布口径。⚠ 它开头那两个受管项读数（156 / 163）已过期，现值以下面
     README「BOM」一节为准：**地板 155 条 / fleet 193 条**。
 
-- [`_doc/003_script/`](_doc/003_script/) — 发布与量具（本仓的"可执行判据"都在这里，共 21 个文件）：
+- [`_doc/003_script/`](_doc/003_script/) — 发布与量具（本仓的"可执行判据"都在这里，共 27 个文件）：
   - [`doc_audit.py`](_doc/003_script/doc_audit.py) — 全组织文档收口闸门：扫 35 个 z-* 仓的仓根散件（R1）、
     `_doc/` 根散件（R2）、非编号表目录（R3）、空桶（R4）、README 断链（R5）、脚本仓根定位（R6）、
     运行态件与 `.cache` 忽略（R7）。`python3 _doc/003_script/doc_audit.py` 有违规则退出 1；

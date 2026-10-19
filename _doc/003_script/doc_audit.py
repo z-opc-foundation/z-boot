@@ -16,12 +16,14 @@
     R7 运行态/临时件不进 git：一律写 <仓>/.cache/，且 .cache 必须被 ignore
     R8 桶内文件用 NN-slug.md 前缀（规范「三条硬规则」第 3 条：号段归桶所有）；
        不得用 -2 后缀绕重名，同一桶内 NN 不得重复
+    R9 _doc/001_arch/ 必须存在且含项目总览 00-overview.md（规范：001_arch 是唯一强制桶）
 退出码：有违规则为 1。
 """
 import os
 import re
 import subprocess
 import sys
+import urllib.parse
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(ROOT, "..", ".."))  # z-boot
@@ -196,6 +198,45 @@ def check(repo, ref=None):
             bad.append(("R5b", f"README「文档目录」列了不存在的桶 _doc/{d}/"))
     elif not real_buckets and has_section and not os.path.isdir(docdir):
         bad.append(("R5b", "README 有「## 文档目录」章节但仓内无 _doc  目录（规范：_doc 不存在则不得有该章节）"))
+
+    # R5c：_doc/ 下的 markdown 相对链接同样必须落地
+    #     R5 只看**仓根** README.md，而 _doc/ 里的文档互相引用同样会烂 ——
+    #     桶内改名（NN-slug 归一）之后，老文件里的旧名链接不会自动跟着改。
+    #     2026-10-19 补进尺子：实测 z-mq 的 08-design.md 仍指着改名前的
+    #     ./技术架构.md，z-cache / z-ctc / z-schedule / z-util / z-graph 各有 1 处。
+    for p in doc_files:
+        if not p.endswith(".md"):
+            continue
+        full = os.path.join(ORG, repo, p)
+        if not os.path.isfile(full):
+            continue
+        with open(full, encoding="utf-8", errors="replace") as fh:
+            body = fh.read()
+        base_dir = os.path.dirname(full)
+        for i, line in enumerate(body.splitlines(), 1):
+            for tgt in re.findall(r"\]\(([^)\s]+)", line):
+                if tgt.startswith(("#", "http://", "https://", "mailto:", "git@", "file://")):
+                    continue
+                if "<" in tgt or ">" in tgt:      # 文档里举例用的占位形状（如 `_doc/<d>/`）
+                    continue
+                path = urllib.parse.unquote(tgt.split("#")[0])
+                if not path:
+                    continue
+                if os.path.exists(os.path.join(base_dir, path)):
+                    continue
+                if os.path.exists(os.path.join(ORG, repo, path)):
+                    continue
+                bad.append(("R5c", f"{p} L{i} 断链 {tgt}"))
+
+    # R9 001_arch 是**唯一强制桶**，且必须含项目总览
+    #    规范依据：002 规范 §"三条硬规则"第 1 条「桶按需建 —— 没有内容就不建这个目录
+    #    （001_arch 除外）」+ §"audit 检查项"第 3 条「_doc/001_arch/ 存在且含项目总览」。
+    #    这条此前只写在规范正文、尺子没查（与 R5b / R8 同族），本轮补进尺子。
+    if "001_arch" not in buckets:
+        bad.append(("R9", "缺 _doc/001_arch/（规范：唯一强制桶，桶按需建但它除外）"))
+    elif "_doc/001_arch/00-overview.md" not in files:
+        bad.append(("R9", "_doc/001_arch/ 存在但缺项目总览 00-overview.md"
+                          "（规范 audit 检查项：001_arch 存在且含项目总览）"))
 
     for p in files:
         if not (p.startswith("_doc/003_script/") and p.endswith(".sh")):
