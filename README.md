@@ -1204,7 +1204,10 @@ z-boot/
 > 每道都做过**双向**反向验证（故意弄坏 → 必须退出码 3 且逐条列出；恢复一致 → 必须放行）。
 > 只验过"会触发"的守卫等于没验 —— 一道恒红的守卫比没有更坏。
 >
-> **`--write-parent` 的静默丢弃也已堵上**：`z-boot-parent` 里自家 starter 那一段是脚本维护的
+> ⚠️ **下面这段讲的是已退役的 `gen_fleet_bom.py`**（2026-10-08 火车制重构后由 `gen_train_bom.py` 接替）：
+> 现役写手只有 `--write` 一个落盘开关，没有 `--parent` / `--write-parent` / `--allow-drop`。
+>
+> **`--write-parent` 的静默丢弃当年也已堵上**（历史）：`z-boot-parent` 里自家 starter 那一段是脚本维护的
 > （`<!-- BEGIN z-boot-self ... -->`，勿手改），它按"repo1 上取得到就收、取不到就丢"来算。
 > 问题是**丢得毫无声响** —— `z-boot-base` 当年就是这样从这段里消失的，至今没回来，
 > 于是消费者引用 `z-boot-base` 时没有版本可用（与 `z-boot-jackson-starter` 同一类洞，
@@ -1631,9 +1634,11 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
   - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 一键发布主尺：`publish [folder...]`
     按文件夹发（短名 root / deps / fleet / parent / starter / integration，当版 parent 未上线时自动前置）、
     `--dry` 只到 verify、`--bundle` 打包照打但掐死上传、`bundle <zip>` 逐坐标点四件齐、`gpg-init`、`readme` 摘要
-  - [`gen_fleet_bom.py`](_doc/003_script/gen_fleet_bom.py) — `z-boot-fleet/pom.xml` 的生成器 + 对账尺：
-    坐标清单从兄弟仓盘上 pom 现取、版本逐件 HEAD repo1 复核，取不到的一律不进 BOM；`--write` 有 PENDING 即
-    拒绝落盘（防"烧格子"）；`--parent` / `--write-parent` 另管 `z-boot-parent` 里那段 z-boot 自家 starter 清单
+  - [`gen_train_bom.py`](_doc/003_script/gen_train_bom.py) — 火车制拓扑的唯一写手（2026-10-08 重构，接手已退役的
+    `gen_fleet_bom.py` 的产物面）：坐标清单从兄弟仓盘上 pom 现取，接入面按「被跨仓真实声明」机械现算，
+    版本逐件 HEAD repo1 复核 —— **写盘前**探不到就直接退出码 2 拒绝落盘（防"烧格子"）。
+    落盘面 = `z-boot-parent/pom.xml` + 全部 starter pom + 2 个聚合器 pom；
+    唯一开关是 `--write`（不带即只算不写）。**旧脚本的 `--parent` / `--write-parent` / `--allow-drop` 已随退役不存在。**
   - [`repo1_census.py`](_doc/003_script/repo1_census.py) — 数一个仓在 Central 上到底发成功没有：坐标机械取自
     磁盘 pom 的 active `<module>`，逐坐标点 pom/jar/sources/javadoc 4 件套（+ `.asc`）；只认 repo1、不回退 `~/.m2`；
     `--repo ../z-xxx` 可点任意仓

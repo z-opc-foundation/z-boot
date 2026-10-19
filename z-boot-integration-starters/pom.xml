@@ -66,7 +66,7 @@
     </modules>
 
     <!-- 兄弟仓(z-* L3)的版本格不在这里 —— 1.0.18 之前这里是 36 行受管项,于是"抬一格兄弟仓
-         版本"必须重发整个 z-boot。现在权威搬进 z-boot-fleet(由 _doc/003_script/gen_fleet_bom.py
+         版本"必须重发整个 z-boot。现在权威搬进 z-boot-fleet(由 _doc/003_script/gen_train_bom.py
          生成、逐件对 repo1 复核),叶子 pom 各自 import 地板 + fleet 两个字面版本,聚合 pom 不再管版本。 -->
 
     <properties>

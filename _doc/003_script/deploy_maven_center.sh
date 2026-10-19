@@ -407,7 +407,7 @@ cmd_readme() {
 【抬一格兄弟仓版本（日常）】
 
   python3 _doc/003_script/gen_train_bom.py            # 只看账：每个坐标 repo1 是 OK / PENDING / MISSING
-  python3 _doc/003_script/publish=publish    # 重算 z-boot-fleet/pom.xml
+  python3 _doc/003_script/gen_train_bom.py --write    # 落盘：z-boot-parent/pom.xml + 全部 starter pom + 2 个聚合器 pom
   bash _doc/003_script/deploy_maven_center.sh publish --dry fleet && bash _doc/003_script/deploy_maven_center.sh publish fleet
 
 【判据】

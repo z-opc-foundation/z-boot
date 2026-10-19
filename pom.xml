@@ -70,7 +70,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- 兄弟仓 (z-* L3) 的版本格不在这里 —— 见 z-boot-fleet/pom.xml(由
-             _doc/003_script/gen_fleet_bom.py 生成并逐件对 repo1 复核)。 -->
+             _doc/003_script/gen_train_bom.py 生成并逐件对 repo1 复核)。 -->
 
         <!-- Maven 插件版本 -->
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
