@@ -8,12 +8,14 @@
         z-boot 是 z-opc-foundation 的版本权威 (BOM) 自给自足, 不依赖任何 z-opc 业务模块。
 
         2026-09-28 改造(照 ../idea_workplace/c2f-boot 的形状):本 pom 只做**已发布的 parent**,
-        不再有 <modules>。每个文件夹都是一个独立可发的 Maven 工程,发版只发需要发的那个文件夹:
+        不再有 <modules>。每个文件夹都是一个独立可发的 Maven 工程,发版只发需要发的那个文件夹。
 
-            z-boot-dependencies          第三方地板 BOM(spring-boot / netty / jackson / log4j2 ...)
-            z-boot-fleet                 兄弟仓(z-* L3)版本权威 —— 抬一格只重发这一份 pom
+        ⚠ 2026-10-08「火车制」重构后,上面那套四文件夹形状已被取代 —— 现在盘上只有三个:
+            z-boot-parent               唯一消费入口(地板 + 接入面 + 自家 starter 全在它 DM 里)
             z-boot-starter               z-boot-base / -web-starter / -datasource-starter
-            z-boot-integration-starters  19 个 L3 聚合 starter,叶子各自 import 地板+fleet 两个字面版本
+            z-boot-integration-starters  19 个 L3 聚合 starter,叶子各自 import parent 一条
+        z-boot-dependencies / z-boot-fleet 两个文件夹已随 1.1.0 火车退役(Central 旧件永久在架,
+        未迁移的消费方照常解析),其内容逐字并进 z-boot-parent。见 README「火车制重构」一节。
 
         版本不再是全局一个 ${revision}:每个工程自带字面 <version>,parent 版本只在 parent 内容
         真的变了才抬。于是「z-ctc 发了 1.0.2」不再牵动地板 BOM、不再牵动其余 18 个 starter。
