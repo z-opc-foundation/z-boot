@@ -17,6 +17,8 @@
     R8 桶内文件用 NN-slug.md 前缀（规范「三条硬规则」第 3 条：号段归桶所有）；
        不得用 -2 后缀绕重名，同一桶内 NN 不得重复
     R9 _doc/001_arch/ 必须存在且含项目总览 00-overview.md（规范：001_arch 是唯一强制桶）
+    R13 仓根 README.md 体量下限：≥60 行且 ≥6 个二级章节
+       （lead README「项目仓 README 口径」第 6 条；此前只写在口径正文、尺子没查）
 退出码：有违规则为 1。
 """
 import os
@@ -63,6 +65,12 @@ ROOT_DEP = re.compile(r'(pom\.xml|\.env|\.gnupg|settings\.xml)')
 RUNTIME_SHAPE = re.compile(
     r'(^|/)__pycache__/|\.pyc$|(^|/)state\.db$|\.lock$|(^|/)checkpoints/'
     r'|(^|/)logs?/[^/]*\.log$|/out/profile-[^/]+/|(^|/)\.DS_Store$')
+
+# R13：README 体量下限（lead README「项目仓 README 口径」第 6 条）
+#   「≥ 60 行且 ≥ 6 个二级章节，防止再次退化成模板空壳。」
+#   这条此前只写在口径正文、尺子没查 —— 与 R5b / R8 / R9 同族，本轮补进尺子。
+MIN_README_LINES = 60
+MIN_README_H2 = 6
 
 
 def tracked(repo, ref=None):
@@ -131,6 +139,43 @@ def readme_doc_buckets(repo):
     nxt = re.search(r"^##\s", rest, re.M)
     sec = rest[:nxt.start()] if nxt else rest
     return set(re.findall(r"\]\(_doc/(\d{3}_[a-z]+)/", sec)), True
+
+
+def strip_fences(txt):
+    """剔除围栏代码块（``` / ~~~）。
+
+    R13 数二级章节时必须先剔围栏 —— 否则文件里贴一段带 '## ' 的目录树/日志
+    就会被误计成章节数，尺子会「虚高通过」。
+    """
+    out, fence = [], None
+    for line in txt.splitlines():
+        m = re.match(r"^\s*(```+|~~~+)", line)
+        if fence is not None:
+            if m and line.strip().startswith(fence):
+                fence = None
+            continue
+        if m:
+            fence = m.group(1)[:3]
+            continue
+        out.append(line)
+    return out
+
+
+def readme_bulk(repo):
+    """仓根 README 的体量读数：(总行数, 二级章节数)。
+
+    行数 = 文件全部行（splitlines 计数，代码块计入 —— 口径要的是「体量」）。
+    章节数 = 剔除围栏代码块后以 `## ` 开头的标题行数（`### ` 不算二级章节）。
+    无 README 时返回 None。
+    """
+    path = os.path.join(ORG, repo, "README.md")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        txt = fh.read()
+    lines = txt.splitlines()
+    h2 = [l for l in strip_fences(txt) if re.match(r"^##\s+\S", l)]
+    return len(lines), len(h2)
 
 
 def check(repo, ref=None):
@@ -237,6 +282,19 @@ def check(repo, ref=None):
     elif "_doc/001_arch/00-overview.md" not in files:
         bad.append(("R9", "_doc/001_arch/ 存在但缺项目总览 00-overview.md"
                           "（规范 audit 检查项：001_arch 存在且含项目总览）"))
+
+    # R13 README 体量下限 —— 口径第 6 条
+    #    「≥ 60 行且 ≥ 6 个二级章节，防止再次退化成模板空壳。」
+    #    此前只写在 lead README 的口径正文里、尺子没查，所以 4 个仓退化成短壳都没人拦。
+    bulk = readme_bulk(repo)
+    if bulk is not None:
+        n_lines, n_h2 = bulk
+        if n_lines < MIN_README_LINES:
+            bad.append(("R13", f"README.md 体量不足：{n_lines} 行 < {MIN_README_LINES} 行"
+                              f"（口径第 6 条，防模板空壳）"))
+        if n_h2 < MIN_README_H2:
+            bad.append(("R13", f"README.md 二级章节不足：{n_h2} 个 < {MIN_README_H2} 个"
+                              f"（口径第 6 条，防模板空壳）"))
 
     for p in files:
         if not (p.startswith("_doc/003_script/") and p.endswith(".sh")):
