@@ -156,9 +156,18 @@
                                 强制 batch + loopback，让插件签任何文件都无声交付。
                                 ⚠ 路径：不能用 ${maven.multiModuleProjectDirectory} —— 它指向**被发模块目录**
                                 （本仓按文件夹发版 ⇒ 它是 z-boot-parent/），脚本在**仓根** _doc/003_script/ 下。
-                                ⇒ 用 ${project.basedir}/../ 定位仓根（本仓每个可发文件夹都在仓根下一层）。
+                                ⚠ 2026-10-22 23:30 实测修正：原来用 ${project.basedir}/../ 定位仓根，
+                                但 ${project.basedir} 是**当前模块**目录 —— 对聚合器子模块
+                                （z-boot-base / z-boot-datasource-starter / z-boot-web-starter …）
+                                它解析成 <发版文件夹>/<子模块>/../_doc = <发版文件夹>/_doc ⇒ **不存在**
+                                ⇒ 首次 1.1.2 实发就死在 gpg:sign：「Cannot run program .../z-boot-base/../_doc/...:
+                                error=2, No such file or directory」。
+                                ⇒ 改用**会话级** ${session.executionRootDirectory}（= 本次 mvn 启动所在目录，
+                                本仓按文件夹发版 ⇒ 它就是 z-boot-starter/ 或 z-boot-integration-starters/）
+                                ⇒ 再 ../ 定位仓根，对**聚合器与它的每一个子模块**同时成立。
+                                ⚠ 前提：发版必须在**发版文件夹根目录**执行（cd <文件夹> && mvn deploy -Pcentral）。
                             -->
-                            <executable>${project.basedir}/../_doc/003_script/gpg-with-passphrase.sh</executable>
+                            <executable>${session.executionRootDirectory}/../_doc/003_script/gpg-with-passphrase.sh</executable>
                         </configuration>
                         <executions>
                             <execution>
