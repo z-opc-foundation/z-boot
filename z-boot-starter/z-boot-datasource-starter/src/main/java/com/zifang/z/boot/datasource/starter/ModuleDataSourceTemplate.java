@@ -20,8 +20,24 @@ public class ModuleDataSourceTemplate {
         String password = getOrDefault(binder, modulePrefix + ".password", defaultPrefix + ".password", "");
         String database = getOrDefault(binder, modulePrefix + ".database", defaultPrefix + ".database", "");
 
+        // ===== JDBC 超时上限（2026-10-22 · TASK-20261021-026）=====
+        // 现象（卡内铁证）：阿里云 RDS 抖动时，Druid 建连接线程卡在 Socket.connect 上，
+        //   健康端点日志出现 "DataSourceHealthIndicator took 952809ms to respond"（15.9 分钟）
+        //   ⇒ 探针被判死 ⇒ 容器被 liveness 重启。
+        // 根因：Connector/J 的 connectTimeout / socketTimeout **默认都是 0 = 无限等待**，
+        //   连接一旦半开/卡住，等待时间由 TCP 层决定（可达分钟级）。
+        // 修法：URL 显式带上毫秒级上限 —— 连不上 3s 内失败，连上但读不动 10s 内失败。
+        //   ⇒ 一次改动覆盖所有走本模板拼 URL 的模块（z-ops-admin / z-oss-api / z-config-web /
+        //      z-meta-* / z-script-web / z-surl-starter / z-llm-gateway-config /
+        //      z-schedule-spring-boot-starter / z-team-starter 的 dataSourceSubscribe+dataSourceProject …）。
+        // 可配置（缺省回退 z.base.db.default.*，再缺省 3000 / 10000）：
+        //   z.base.db.{module}.connect-timeout / z.base.db.{module}.socket-timeout
+        Integer connectTimeout = getOrDefault(binder, modulePrefix + ".connect-timeout", defaultPrefix + ".connect-timeout", 3000);
+        Integer socketTimeout = getOrDefault(binder, modulePrefix + ".socket-timeout", defaultPrefix + ".socket-timeout", 10000);
+
         DruidDataSource ds = new DruidDataSource();
-        ds.setUrl(String.format("jdbc:mysql://%s:%d/%s?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8", host, port, database));
+        ds.setUrl(String.format("jdbc:mysql://%s:%d/%s?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&connectTimeout=%d&socketTimeout=%d",
+                host, port, database, connectTimeout, socketTimeout));
         ds.setUsername(username);
         ds.setPassword(password);
         ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
