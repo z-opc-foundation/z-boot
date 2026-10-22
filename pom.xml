@@ -144,11 +144,21 @@
                         <version>${maven-gpg-plugin.version}</version>
                         <configuration>
                             <skip>${central.gpg.skip}</skip>
-                            <gpgArguments>
-                                <arg>--pinentry-mode</arg>
-                                <arg>loopback</arg>
-                                <arg>--no-tty</arg>
-                            </gpgArguments>
+                            <!--
+                                2026-10-22：改走仓内 wrapper 喂 passphrase（org 统一做法，从 z-util/z-team 照搬）。
+                                为什么必须换：maven-gpg-plugin 3.2.7 的 gpgArguments 里那个
+                                「pinentry-mode loopback」只解决「gpg 要问口令」，**口令本身仍无处可取** ——
+                                它不读 -Dgpg.passphrase / -Dgpg.passphraseFile（注释见 z-team 根 pom 同处），
+                                headless macOS 上走 gpg-agent 一律撞「No pinentry」，
+                                而本仓 settings.xml 里**没有** gpg.passphrase（central server 只有用户名/口令）。
+                                ⇒ 旧配置在本机根本签不出来（1.1.2 就是这么只进了本地 m2、没进中央）。
+                                wrapper 自加载仓根 .env 的 CENTRAL_GPG_PASSPHRASE / GPG_PASSPHRASE，
+                                强制 batch + loopback，让插件签任何文件都无声交付。
+                                ⚠ 路径：不能用 ${maven.multiModuleProjectDirectory} —— 它指向**被发模块目录**
+                                （本仓按文件夹发版 ⇒ 它是 z-boot-parent/），脚本在**仓根** _doc/003_script/ 下。
+                                ⇒ 用 ${project.basedir}/../ 定位仓根（本仓每个可发文件夹都在仓根下一层）。
+                            -->
+                            <executable>${project.basedir}/../_doc/003_script/gpg-with-passphrase.sh</executable>
                         </configuration>
                         <executions>
                             <execution>
