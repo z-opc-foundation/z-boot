@@ -38,8 +38,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 FOUNDATION = os.path.abspath(os.path.join(REPO_ROOT, ".."))
 
-TRAIN = "1.1.1"
-PREV_TRAIN = "1.1.0"
+TRAIN = "1.1.2"
+PREV_TRAIN = "1.1.1"
 ROOT_PARENT = ("io.github.yuku123", "z-boot", "1.0.19")
 # 地板 pom 的只读源：z-boot-dependencies 随 1.1.0 火车 git rm（3f3d8df），
 # 从其父提交固定读 —— 生成仍是纯函数（只依赖 git 历史，不吃工作树）。

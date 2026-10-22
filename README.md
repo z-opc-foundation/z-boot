@@ -3,7 +3,7 @@
 > **Spring Boot Starter 聚合仓 + 版本权威（火车制）**
 > 唯一消费入口 `z-boot-parent`（地板 + 接入面 + 自家 starter 全在内），一行 parent 一行依赖
 
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.1.1-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.1.2-blue?logo=apache-maven)](https://central.sonatype.com/search?q=g:io.github.yuku123+a:z-boot*)
 [![License](https://img.shields.io/license/MIT-green)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-8%2B-orange)](https://openjdk.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.x-6DB33F)](https://spring.io)
@@ -27,7 +27,7 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 - 真源 = `gen_train_bom.py` 的 **FAMILIES 表**（25 族）；接入面按「被跨仓真实声明」机械现算 —— 跨仓声明会随兄弟仓变动漂，故
   **本 README 只钉 parent DM 的现读条数**、不冻结跨仓侧数字；新跨仓声明无族 ⇒ 脚本报警。generator 从 `git HEAD` 读模板输入，重放幂等。
 - `z-boot-fleet:1.0.1-1.0.4` / `z-boot-dependencies:1.0.15-1.0.20` 在 Central **永久在架**，
-  迁移未完成的消费方照常解析；迁移完成 = 消费者 `<parent>` 抬到 1.1.1。
+  迁移未完成的消费方照常解析；迁移完成 = 消费者 `<parent>` 抬到 1.1.2。
 
 ---
 
@@ -37,9 +37,9 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 |------|-----|
 | **仓库** | `z-boot` — Spring Boot Starter 聚合仓 + 唯一版本权威（火车制） |
 | **groupId** | `io.github.yuku123` |
-| **当前发行** | 消费入口 `z-boot-parent:1.1.1`（内含地板 155 + 接入面 pin 79 + 自家 starter 22 格）· 火车 = 22 个 starter/聚合器全 `1.1.1` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
-| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.1.1`；starter 的 DM = 单条 `import z-boot-parent:1.1.1` |
-| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.1.1</parent>`，依赖零 `<version>` |
+| **当前发行** | 消费入口 `z-boot-parent:1.1.2`（内含地板 155 + 接入面 pin 79 + 自家 starter 22 格）· 火车 = 22 个 starter/聚合器全 `1.1.2` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
+| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.1.2`；starter 的 DM = 单条 `import z-boot-parent:1.1.2` |
+| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.1.2</parent>`，依赖零 `<version>` |
 | **默认端口** | 无 —— 本仓是版本权威 + 聚合层，不启进程、不设端口 |
 | **运行口径** | Java 8（全组织 1.8）· Spring Boot **2.7.18** |
 | **最近更新** | 2026-10-08（火车制重构） |
@@ -48,13 +48,13 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 
 ## 🚀 5 分钟接入
 
-### 方式零：把 z-boot-parent 当 `<parent>`（1.0.19 引入、现统一继承当前火车号 `1.1.1`，各仓这么做）
+### 方式零：把 z-boot-parent 当 `<parent>`（1.0.19 引入、现统一继承当前火车号 `1.1.2`，各仓这么做）
 
 ```xml
 <parent>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-parent</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
 </parent>
 
 <groupId>com.example</groupId>
@@ -65,7 +65,7 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 **这一行就是全部**。它**自带**第三方地板与兄弟仓权威表（2026-10-08 火车制拓扑：
 `z-boot-dependencies` / `z-boot-fleet` 两个文件夹随那班车退役，两段内容都并进了 parent 自身），
 再加上自己 `<dependencyManagement>` 里的 22 条 `z-boot-*` 自家 starter/base（版本键
-`${z-boot.version}` = `1.1.1`，与本 parent 同一次发行），
+`${z-boot.version}` = `1.1.2`，与本 parent 同一次发行），
 还顺带下发 Java 8 的 `pluginManagement`（compiler `-parameters` / surefire / jar / resources /
 spring-boot 插件版本，surefire 钉 2.22.2）。于是依赖一律不写 `<version>`：
 
@@ -128,29 +128,29 @@ spring-boot 插件版本，surefire 钉 2.22.2）。于是依赖一律不写 `<v
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-web-starter</artifactId>
-        <version>1.1.1</version>
+        <version>1.1.2</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-datasource-starter</artifactId>
-        <version>1.1.1</version>
+        <version>1.1.2</version>
     </dependency>
 
     <!-- L3 中间件 (一行 import 一个) -->
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-cache-starter</artifactId>
-        <version>1.1.1</version>
+        <version>1.1.2</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-mq-starter</artifactId>
-        <version>1.1.1</version>
+        <version>1.1.2</version>
     </dependency>
     <dependency>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-rpc-starter</artifactId>
-        <version>1.1.1</version>
+        <version>1.1.2</version>
     </dependency>
 </dependencies>
 ```
@@ -199,7 +199,7 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
 </dependency>
 ```
 
@@ -994,7 +994,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
 </dependency>
 ```
 
@@ -1019,10 +1019,10 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
 
 ```xml
 <dependencies>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.1.1</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-kb-starter</artifactId><version>1.1.1</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-vector-starter</artifactId><version>1.1.1</version></dependency>
-    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.1.1</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-web-starter</artifactId><version>1.1.2</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-kb-starter</artifactId><version>1.1.2</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-vector-starter</artifactId><version>1.1.2</version></dependency>
+    <dependency><groupId>io.github.yuku123</groupId><artifactId>z-boot-cache-starter</artifactId><version>1.1.2</version></dependency>
 </dependencies>
 ```
 
@@ -1493,7 +1493,7 @@ bash deploy_maven_center.sh publish   # 发到 Maven Central
 <dependency>
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-boot-cache-starter</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
 </dependency>
 ```
 

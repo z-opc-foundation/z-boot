@@ -2,7 +2,7 @@
 """z-boot README 定量主张自守卫 —— 口径 §5「能力可追溯」在本仓的落地形态。
 
 为什么要有这一层：本仓 README 把「当前发行 / 根版本 / parent 版本 / 地板 155 /
-接入面 79 / 自家 22 格 / 火车 22 个全 1.1.1 / 19 个聚合 starter / Spring Boot
+接入面 79 / 自家 22 格 / 火车 22 个全 1.1.2 / 19 个聚合 starter / Spring Boot
 2.7.18 / FAMILIES 25 族」写成了硬数字。每次抬号、每加一个 starter、每调一次
 gen_train_bom.py 的 FAMILIES 都会让这些数字漂一次。没有任何尺子去问盘面
 「现在还是吗」，那这些数字的保质期就是上一次编辑的时刻。
@@ -198,7 +198,7 @@ def verify_claims(readme, f):
     if not f["dm_own_all_property"]:
         problems.append("自家 starter/base 的版本键不是统一的 ${z-boot.version}（盘面不符）")
 
-    # 5. 火车：22 个 starter/聚合器全 1.1.1
+    # 5. 火车：22 个 starter/聚合器全 1.1.2
     train = claim(r"火车 = (\d+) 个 starter/聚合器全 `([0-9]+\.[0-9]+\.[0-9]+)`", "火车 starter 数与版本")
     if train:
         check("火车 starter 数", train[0], f["starter_count"])
@@ -277,7 +277,7 @@ class ReadmeClaimsTest(unittest.TestCase):
         f = facts()
         mutations = [
             ("根版本", lambda s: s.replace("根 `z-boot:1.0.19`", "根 `z-boot:9.9.9`")),
-            ("parent 版本", lambda s: s.replace("消费入口 `z-boot-parent:1.1.1`",
+            ("parent 版本", lambda s: s.replace("消费入口 `z-boot-parent:1.1.2`",
                                                 "消费入口 `z-boot-parent:0.0.1`")),
             ("地板条数", lambda s: s.replace("内含地板 155", "内含地板 150")),
             ("接入面条数", lambda s: s.replace("接入面 pin 79", "接入面 pin 70")),
