@@ -66,7 +66,7 @@ FAMILIES = {
     "z-agent-kernel": ("z-agent-kernel", "0.2.1"), "z-llm-gateway": ("z-llm-gateway", "0.1.9"),
     "z-mcp": ("z-mcp", "0.2.1"), "z-skill": ("z-skill", "0.2.2"),
     "z-agent": ("z-agent", "0.1.4"), "z-bot": ("z-bot", "0.2.1"),
-    "z-llm-agent": ("z-llm-agent", "1.0.47"), "z-mist": ("z-mist", "1.0.4"),
+    "z-llm-agent": ("z-llm-agent", "1.0.47"), "z-llm-msghub": ("z-llm-msghub", "1.0.47"), "z-mist": ("z-mist", "1.0.4"),
     "z-qa": ("z-qa", "1.0.1"), "z-camuda": ("z-camuda", "1.0.6"),
     "z-indexer": ("z-indexer", "1.0.0"),
 }
