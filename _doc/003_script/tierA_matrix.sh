@@ -8,7 +8,7 @@
 #
 # 口径：`clean package -DskipTests`，串行（每仓一次 mvn_gate 取锁），远端只认 repo1
 # （-s repo1-settings.xml，绕开 mvn.seenew.info 那个会缓存 404 的滞后镜像）。
-# 本地仓用默认 ~/.m2 —— z-ext/z-meta/z-task/z-lc/z-webide/z-llm 还靠本机 1.0.0-SNAPSHOT
+# 本地仓用默认 ~/.m2 —— z-ext/z-meta/z-task/z-lc/z-webide/z-llm-gateway 还靠本机 1.0.0-SNAPSHOT
 # 的 phantom 件编得过（见记忆 internal-repos-phantom-deps），净室跑它们必红且是假红。
 # 净室那一遍单独跑（tierA_cleanroom.sh / dependency:tree）。
 #
@@ -27,7 +27,7 @@ mkdir -p "$LOG"
 SUM="$LOG/summary.txt"
 : > "$SUM"
 
-ALL="z-agent z-agent-kernel z-agent-proxy z-bot z-cache z-camuda z-config z-ctc z-ext z-graph z-gw z-indexer z-kb z-lc z-llm z-mcp z-meta z-mist z-mq z-msg z-opc z-opcs z-oss z-qa z-rpc z-schedule z-script z-skill z-task z-util z-vector z-webide"
+ALL="z-agent z-agent-kernel z-agent-proxy z-bot z-cache z-camuda z-config z-ctc z-ext z-graph z-gw z-indexer z-kb z-lc z-llm-gateway z-mcp z-meta z-mist z-mq z-msg z-opc z-opcs z-oss z-qa z-rpc z-schedule z-script z-skill z-task z-util z-vector z-webide"
 REPOS="${*:-$ALL}"
 
 cd "$ROOT" || exit 2
