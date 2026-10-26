@@ -63,10 +63,10 @@ FAMILIES = {
     "z-rpc": ("z-rpc", "1.0.4"), "z-oss": ("z-oss", "1.0.4"),
     "z-schedule": ("z-schedule", "1.0.6"), "z-msg": ("z-msg", "1.2.2"),
     "z-script": ("z-script", "1.0.2"), "z-util": ("z-util", "1.0.22"),
-    "z-agent-kernel": ("z-agent-kernel", "0.2.1"), "z-llm": ("z-llm", "0.1.7"),
+    "z-agent-kernel": ("z-agent-kernel", "0.2.1"), "z-llm-gateway": ("z-llm-gateway", "0.1.9"),
     "z-mcp": ("z-mcp", "0.2.1"), "z-skill": ("z-skill", "0.2.2"),
     "z-agent": ("z-agent", "0.1.4"), "z-bot": ("z-bot", "0.2.1"),
-    "z-agent-proxy": ("z-agent-proxy", "0.1.1"), "z-mist": ("z-mist", "1.0.4"),
+    "z-llm-agent": ("z-llm-agent", "1.0.47"), "z-mist": ("z-mist", "1.0.4"),
     "z-qa": ("z-qa", "1.0.1"), "z-camuda": ("z-camuda", "1.0.6"),
     "z-indexer": ("z-indexer", "1.0.0"),
 }
