@@ -5,7 +5,7 @@
     本 pom 由 gen_train_bom.py 维护两段：接入面 pin（被跨仓真实声明的 z-* 坐标，
     机械口径现算）与自家 starter（${z-boot.version}，与 parent 同火车同号）。
     第三方地板自 2026-10-30 SB3/Java 17 迁移起手改住在本 pom 内（原 z-boot-dependencies
-    已随火车退役）—— 改地板直接改本文件，先提交再跑生成（--write 有脏检查兜底）。
+    已随火车退役）—— 改地板直接改本文件，先提交再跑生成（gen 写盘有脏检查兜底）。
 
     消费者世界：一行 <parent> + 若干条无版本依赖。真要提前尝鲜某个 client 新版：
     本仓 dependencyManagement 写直接条目覆盖（DM 就近优先），等下一班火车再回归。

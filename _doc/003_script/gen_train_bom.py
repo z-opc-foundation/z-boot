@@ -31,6 +31,8 @@
   G4 每个 starter 的 client 依赖必须落在接入面 pin 里；属主不在 FAMILIES 的手管族
      （如 z-agent-proxy）保留字面版本并告警，不判红
   G5 parent 自身 <version> == <z-boot.version>（同火车不变式）
+  G6 产出物自检：生成的 parent pom 必须能被严格 XML 解析，且注释内不得含 "--"
+     （XML 注释禁双连字符；2026-10-30 header 里写过 "--write" 被 Maven 拒收的教训）
   脏检查（写盘前置）：目标 pom 有未提交改动 ⇒ 拒绝落盘（生成读 HEAD，会覆盖手改）
 
 用法：
@@ -321,7 +323,7 @@ def build_parent_pom(owner, surface, write_mode):
     本 pom 由 gen_train_bom.py 维护两段：接入面 pin（被跨仓真实声明的 z-* 坐标，
     机械口径现算）与自家 starter（${z-boot.version}，与 parent 同火车同号）。
     第三方地板自 2026-10-30 SB3/Java 17 迁移起手改住在本 pom 内（原 z-boot-dependencies
-    已随火车退役）—— 改地板直接改本文件，先提交再跑生成（--write 有脏检查兜底）。
+    已随火车退役）—— 改地板直接改本文件，先提交再跑生成（gen 写盘有脏检查兜底）。
 
     消费者世界：一行 <parent> + 若干条无版本依赖。真要提前尝鲜某个 client 新版：
     本仓 dependencyManagement 写直接条目覆盖（DM 就近优先），等下一班火车再回归。
@@ -456,7 +458,16 @@ def main():
     plans = starter_plan(owner, surface)
     g5_ok = re.search(r"<z-boot\.version>%s</z-boot\.version>" % TRAIN, pom) and \
         ("<version>%s</version>" % TRAIN) in pom.split("<artifactId>z-boot-parent</artifactId>")[1][:200]
-    print("G1 地板 yuku=0 ✓  G3 property 合并无冲突 ✓  G4 starter client 全落 pin ✓  G5 同火车 ✓"
+    # G6: 产出物自检 —— 严格 XML 解析 + 注释内禁 "--"（XML 规范；被 Maven 拒收前先在这里拦）
+    try:
+        ET.fromstring(pom)
+        g6_bad = [c for c in re.findall(r"<!--(.*?)-->", pom, flags=re.S) if "--" in c]
+        assert not g6_bad, "G6 红：注释内含 --: %r" % g6_bad[0][:80]
+    except ET.ParseError as e:
+        print("G6 红：生成的 parent pom 不是合法 XML: %s" % e)
+        sys.exit(4)
+    print("G1 地板 yuku=0 ✓  G3 property 合并无冲突 ✓  G4 starter client 全落 pin ✓  "
+          "G5 同火车 ✓  G6 XML 自检 ✓"
           if g5_ok else "守卫有红，见上")
     print("starter 计划: %d 个（client 字面 %d 个 / 无 client %d 个）" % (
         len(plans), len([p for p in plans if p["client"]]), len([p for p in plans if not p["client"]])))
