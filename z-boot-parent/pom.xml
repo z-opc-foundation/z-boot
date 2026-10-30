@@ -34,6 +34,21 @@
 <java.version>17</java.version>
 <maven.compiler.source>17</maven.compiler.source>
 <maven.compiler.target>17</maven.compiler.target>
+<!--
+    ⚠ -parameters 必须开（2026-10-30 SB3 迁移回归）。
+    无名的 @PathVariable（如 `@PathVariable Long id`）靠 class 文件里的 MethodParameters
+    才能把 URL 段绑到形参名上；Spring 6（Boot 3）在参数名缺失时直接抛
+    "Name for argument of type [java.lang.String] not specified" ⇒ 400。
+
+    这里用**属性**而不是 <compilerArgs>：属性是全局生效的，不会被子模块
+    pluginManagement 里的同名 <configuration> 覆盖掉。
+    （<compilerArgs> 只写在父链 pluginManagement 里时，只有子模块**自己声明了**
+    maven-compiler-plugin 才生效 —— 全仓绝大多数子模块没声明 ⇒ 该参数从未传到 javac，
+    症状是编译期完全无声、运行期才炸。）
+
+    maven-compiler-plugin 3.6+ 原生支持 maven.compiler.parameters ⇒ 等价于 -parameters。
+-->
+<maven.compiler.parameters>true</maven.compiler.parameters>
 <zifang-boot.version>1.0.0</zifang-boot.version>
 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -1668,6 +1683,43 @@
         <configuration>
             <updatePomFile>true</updatePomFile>
             <flattenMode>resolveCiFriendliesOnly</flattenMode>
+        </configuration>
+    </plugin>
+
+    <!--
+        ⚠ maven-compiler-plugin 必须声明在**生效的** <plugins> 段，不能只放 <pluginManagement>。
+        （2026-10-30 SB3 迁移回归，见 z-ops/z-ops-web 的 @PathVariable 400 事故）
+
+        为什么：`-parameters` 让 class 文件带上 MethodParameters，Spring 才能把 URL 段
+        绑到**无名** @PathVariable（如 `@PathVariable Long id`）的形参名上。
+        Spring 6（Boot 3）在参数名缺失时直接抛
+        "Name for argument of type [java.lang.String] not specified" ⇒ 400。
+
+        而 <pluginManagement> 只在子模块**自己声明了该 plugin** 时才生效 ——
+        全仓绝大多数子模块的 build/plugins 段并没有声明 maven-compiler-plugin
+        （它们只从 pluginManagement 取版本号），于是 -parameters 从未真正传给 javac。
+        症状是**编译期完全无声、运行期才炸**，且炸的是所有无名 @PathVariable 端点。
+
+        放在生效段 ⇒ 全部子模块自动继承，无需逐仓补声明。
+        子模块若自己声明了 maven-compiler-plugin，其 <configuration> 仍会与本段合并
+        （子模块同名 configuration 元素覆盖，compilerArgs 需自行带上）。
+
+        ★ 但真正保证「全模块无条件生效」的是 properties 段的
+          **maven.compiler.parameters=true**（maven-compiler-plugin 3.6+ 原生支持）。
+          属性不会被子模块的 pluginManagement 覆盖 ⇒ 无需依赖本段是否被合并。
+          本段保留是为让显式声明了 compiler plugin 的子模块拿到同一套 source/target/encoding。
+    -->
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+            <encoding>${project.build.sourceEncoding}</encoding>
+            <compilerArgs>
+                <arg>-parameters</arg>
+            </compilerArgs>
         </configuration>
     </plugin>
 </plugins>
