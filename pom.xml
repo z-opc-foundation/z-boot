@@ -27,8 +27,8 @@
     <version>1.0.19</version>
     <packaging>pom</packaging>
 
-    <name>z-boot (Starter Parent + BOM Authority)</name>
-    <description>z-opc-foundation 的 Spring Boot Starter 聚合 + 第三方依赖版本权威 (BOM)</description>
+    <name>z-boot :: root</name>
+    <description>z-opc-foundation 的 Spring Boot Starter 聚合 + 第三方依赖版本权威 (BOM) / Starter Parent + BOM Authority</description>
     <url>https://github.com/z-opc-foundation/z-boot</url>
 
     <licenses>

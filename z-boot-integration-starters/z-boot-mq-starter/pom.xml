@@ -13,7 +13,7 @@
 
     <artifactId>z-boot-mq-starter</artifactId>
     <version>1.2.0</version>
-    <name>z-boot-mq-starter</name>
+    <name>z-boot :: mq-starter</name>
     <description>z-boot MQ 聚合 starter — 一行 import 集成 z-mq 分布式消息队列 producer/consumer。</description>
     <licenses>
         <license>

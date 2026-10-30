@@ -13,9 +13,10 @@
 
     <artifactId>z-boot-script-starter</artifactId>
     <version>1.2.0</version>
-    <name>z-boot :: script-starter (z-script 脚本/Mock 引擎内嵌)</name>
+    <name>z-boot :: script-starter</name>
     <description>z-boot z-script 聚合 starter — 一行 import 把 z-script 的脚本引擎、HTTP 暴露、
-        Mock 分发与 app+AK 鉴权内嵌进业务应用（进程内运行，无需独立部署 z-script-admin）.</description>
+        Mock 分发与 app+AK 鉴权内嵌进业务应用（进程内运行，无需独立部署 z-script-admin）.
+        z-script 脚本/Mock 引擎内嵌</description>
     <url>https://github.com/yuku123/z-boot</url>
 
     <licenses>

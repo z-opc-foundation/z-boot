@@ -25,8 +25,8 @@
     <version>1.2.0</version>
     <packaging>pom</packaging>
 
-    <name>z-boot-parent (Consumer Parent)</name>
-    <description>z-opc-foundation 各仓统一 parent：第三方地板 + 接入面版本 + 自家 starter 火车 + Java 17 / Spring Boot 3 构建口径</description>
+    <name>z-boot :: parent</name>
+    <description>z-opc-foundation 各仓统一 parent：第三方地板 + 接入面版本 + 自家 starter 火车 + Java 17 / Spring Boot 3 构建口径 / Consumer Parent</description>
 
     <properties>
 

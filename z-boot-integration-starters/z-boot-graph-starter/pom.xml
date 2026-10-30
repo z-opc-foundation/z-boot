@@ -13,7 +13,7 @@
 
     <artifactId>z-boot-graph-starter</artifactId>
     <version>1.2.0</version>
-    <name>z-boot-graph-starter</name>
+    <name>z-boot :: graph-starter</name>
     <description>z-boot Graph 聚合 starter — 一行 import 集成 z-graph 图数据库客户端。</description>
     <licenses>
         <license>

@@ -13,7 +13,7 @@
 
     <artifactId>z-boot-kb-starter</artifactId>
     <version>1.2.0</version>
-    <name>z-boot-kb-starter</name>
+    <name>z-boot :: kb-starter</name>
     <description>z-boot KB 聚合 starter — 一行 import 集成 z-kb 知识库 (LLM + 向量 + 图) 全套能力。</description>
     <licenses>
         <license>

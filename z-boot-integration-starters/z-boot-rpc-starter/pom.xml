@@ -13,7 +13,7 @@
 
     <artifactId>z-boot-rpc-starter</artifactId>
     <version>1.2.0</version>
-    <name>z-boot-rpc-starter</name>
+    <name>z-boot :: rpc-starter</name>
     <description>z-boot RPC 聚合 starter — 一行 import 集成 z-rpc 分布式 RPC 框架 (服务端 + 客户端)。</description>
     <licenses>
         <license>

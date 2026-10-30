@@ -12,7 +12,7 @@
 
     <artifactId>z-boot-skill-starter</artifactId>
     <version>1.2.0</version>
-    <name>z-boot-skill-starter</name>
+    <name>z-boot :: skill-starter</name>
     <description>z-boot Skill 平台聚合 starter — 一行 import 集成 z-skill (Skill 注册中心 + Marketplace + frontmatter 解析)。</description>
 
     <licenses>

@@ -13,7 +13,7 @@
 
     <artifactId>z-boot-cache-starter</artifactId>
     <version>1.2.0</version>
-    <name>z-boot-cache-starter</name>
+    <name>z-boot :: cache-starter</name>
     <description>z-boot Cache 聚合 starter — 一行 import 集成 z-cache 分布式缓存客户端。</description>
     <licenses>
         <license>
