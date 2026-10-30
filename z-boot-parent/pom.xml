@@ -2,9 +2,10 @@
 <!--
     z-boot-parent —— 唯一消费入口 + 唯一慢层权威（2026-10-08 火车制拓扑）。
 
-    本 pom 自 gen_train_bom.py 生成三段：第三方地板（自 z-boot-dependencies 逐字搬运，
-    那个文件夹随本火车退役）、接入面 pin（被跨仓真实声明的 z-* 坐标，机械口径现算）、
-    自家 22 格 starter（${z-boot.version}，与 parent 同火车同号）。
+    本 pom 由 gen_train_bom.py 维护两段：接入面 pin（被跨仓真实声明的 z-* 坐标，
+    机械口径现算）与自家 starter（${z-boot.version}，与 parent 同火车同号）。
+    第三方地板自 2026-10-30 SB3/Java 17 迁移起手改住在本 pom 内（原 z-boot-dependencies
+    已随火车退役）—— 改地板直接改本文件，先提交再跑生成（--write 有脏检查兜底）。
 
     消费者世界：一行 <parent> + 若干条无版本依赖。真要提前尝鲜某个 client 新版：
     本仓 dependencyManagement 写直接条目覆盖（DM 就近优先），等下一班火车再回归。
@@ -169,6 +170,8 @@
         <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- z-llm 0.1.7（手管属性：z-lc 三模块按旧名 ${z-llm.version} 引用 z-llm-gateway-core，族已随 b1fae5b 移出 FAMILIES，此键由地板段保留，勿删） -->
+        <z-llm.version>0.1.7</z-llm.version>
         <!-- z-agent 0.1.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-agent.version>0.1.4</z-agent.version>
         <!-- z-agent-kernel 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
@@ -187,8 +190,8 @@
         <z-gw.version>1.0.6</z-gw.version>
         <!-- z-kb 1.0.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-kb.version>1.0.7</z-kb.version>
-        <!-- z-llm 0.1.7（手管属性：z-lc 三模块按旧名 ${z-llm.version} 引用 z-llm-gateway-core，族已随 b1fae5b 移出 FAMILIES，此键由地板段保留，勿删） -->
-        <z-llm.version>0.1.7</z-llm.version>
+        <!-- z-llm-gateway 0.1.9（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-llm-gateway.version>0.1.9</z-llm-gateway.version>
         <!-- z-mcp 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-mcp.version>0.2.1</z-mcp.version>
         <!-- z-mist 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
@@ -199,6 +202,8 @@
         <z-msg.version>1.2.2</z-msg.version>
         <!-- z-oss 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-oss.version>1.0.4</z-oss.version>
+        <!-- z-qa 1.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-qa.version>1.1.1</z-qa.version>
         <!-- z-rpc 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-rpc.version>1.0.4</z-rpc.version>
         <!-- z-schedule 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
@@ -216,9 +221,6 @@
 
     <dependencyManagement>
         <dependencies>
-
-
-    
     <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
@@ -1083,10 +1085,6 @@
         <version>1.5.2-5</version>
     </dependency>
 
-    
-
-
-
             <!-- ==== 接入面 pin：被跨仓真实声明的坐标（gen_train_bom.py 现算，勿手改） ==== -->
             <!-- z-agent -->
             <dependency>
@@ -1142,12 +1140,22 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-realtime</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-agent-kernel-skill</artifactId>
                 <version>${z-agent-kernel.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-agent-kernel-tool</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-tts</artifactId>
                 <version>${z-agent-kernel.version}</version>
             </dependency>
             <dependency>
@@ -1159,12 +1167,6 @@
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-agent-kernel-workspace</artifactId>
                 <version>${z-agent-kernel.version}</version>
-            </dependency>
-            <!-- z-agent-proxy -->
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-agent-proxy</artifactId>
-                <version>${z-agent-proxy.version}</version>
             </dependency>
             <!-- z-bot -->
             <dependency>
@@ -1207,7 +1209,7 @@
             <!-- z-ctc -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-ctc-core</artifactId>
+                <artifactId>z-ctc-common</artifactId>
                 <version>${z-ctc.version}</version>
             </dependency>
             <dependency>
@@ -1260,29 +1262,34 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-kb-web</artifactId>
+                <version>${z-kb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-kb-spring-boot-starter</artifactId>
                 <version>${z-kb.version}</version>
             </dependency>
-            <!-- z-llm -->
+            <!-- z-llm-gateway -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-llm-gateway-api</artifactId>
-                <version>${z-llm.version}</version>
+                <version>${z-llm-gateway.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-llm-gateway-config</artifactId>
-                <version>${z-llm.version}</version>
+                <version>${z-llm-gateway.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-llm-gateway-core</artifactId>
-                <version>${z-llm.version}</version>
+                <version>${z-llm-gateway.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-llm-gateway-starter</artifactId>
-                <version>${z-llm.version}</version>
+                <version>${z-llm-gateway.version}</version>
             </dependency>
             <!-- z-mcp -->
             <dependency>
@@ -1298,7 +1305,17 @@
             <!-- z-mist -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mist-client</artifactId>
+                <version>${z-mist.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-mist-core</artifactId>
+                <version>${z-mist.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-mist-web</artifactId>
                 <version>${z-mist.version}</version>
             </dependency>
             <!-- z-mq -->
@@ -1343,6 +1360,12 @@
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-oss-core</artifactId>
                 <version>${z-oss.version}</version>
+            </dependency>
+            <!-- z-qa -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-qa-web</artifactId>
+                <version>${z-qa.version}</version>
             </dependency>
             <!-- z-rpc -->
             <dependency>
@@ -1505,6 +1528,11 @@
                 <artifactId>z-vector-spring-boot-starter</artifactId>
                 <version>${z-vector.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-vector-storage</artifactId>
+                <version>${z-vector.version}</version>
+            </dependency>
 
             <!-- BEGIN z-boot-self (gen_train_bom.py 维护，勿手改) -->
             <dependency>
@@ -1622,6 +1650,7 @@
     </dependencyManagement>
 
     <build>
+
 
 
 <pluginManagement>

@@ -24,7 +24,8 @@
 
 守卫（沿袭 gen_fleet_bom.py 的教训，全部双向验证过才许落盘）：
   G1 地板 DM 里 io.github.yuku123 坐标必须 0 条（搬运的是纯第三方）
-  G2 接入面每一格的 (坐标,版本) 对 repo1 发 ranged GET，取不到即拒绝落盘（防烧格子）
+  G2 接入面每一格的 (坐标,版本) 对 repo1 发 ranged GET，取不到即拒绝落盘（防烧格子）；
+     族 pin 版本未发布的坐标用 PIN_EXCLUDE 显式排除（下趟火车收族版时解除）
   G3 地板与 parent 同名 property 值必须相等才允许合并（不许静默改值；地板即 parent
      ⇒ 现天然无冲突，保留是防将来再拆源）
   G4 每个 starter 的 client 依赖必须落在接入面 pin 里；属主不在 FAMILIES 的手管族
@@ -87,6 +88,18 @@ REPO1 = "https://repo1.maven.org/maven2/io/github/yuku123"
 # 1.1.1 收 z-util 三拆的新 http 坐标：FT 侧目前直书字面版本，parent 供版后才能回归无版本声明。
 EXTRA_PIN = {
     "z-util": ["z-util-http-core", "z-util-http-proxy", "z-util-http-server"],
+}
+
+# 显式排除出 pin 的坐标（2026-10-30）：FAMILIES 的族 pin 版本尚未在 repo1 发布这些坐标
+# （G2 实测 404 —— 族 pin 滞后于属主仓工作版本：z-agent 0.1.4 vs 仓 1.0.6、
+# z-agent-kernel 0.2.1 vs 0.2.4、z-ctc 1.0.2 vs 1.0.6）。排除 = 不进 pin、不进 properties，
+# 与今日（未重生成）行为零差异 —— 这些坐标全部是本轮新进 surface 的，现 pin 本就没有它们；
+# 消费方均有就近 DM 覆盖（z-agent-proxy 自有 DM、z-team/z-opc 本地 property 等），不靠 parent 供版。
+# ⚠ 下趟火车收族版（抬 FAMILIES 到已发布版）时逐个解除排除，并对消费方做回归。
+PIN_EXCLUDE = {
+    "z-agent-center-core", "z-agent-center-web", "z-agent-common", "z-agent-engine",  # z-agent 0.1.4 未含（仓已 1.0.6）
+    "z-agent-kernel-asr",        # z-agent-kernel 0.2.1 未含（仓已 0.2.4）
+    "z-ctc-client", "z-ctc-spring-boot-starter",  # z-ctc 1.0.2 未含（仓已 1.0.6）
 }
 
 
@@ -209,6 +222,9 @@ def build_parent_pom(owner, surface, write_mode):
     fam_artifacts = {}
     skipped = {}
     for a, o in sorted(surface.items()):
+        if a in PIN_EXCLUDE:
+            print("  [warn] pin 排除（族 pin 版本未在 repo1 发布，消费方就近 DM 覆盖）: %s (%s)" % (a, o))
+            continue
         if o not in FAMILIES:
             skipped.setdefault(o, []).append(a)
             continue
