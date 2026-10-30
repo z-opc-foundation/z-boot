@@ -66,6 +66,17 @@ RUNTIME_SHAPE = re.compile(
     r'(^|/)__pycache__/|\.pyc$|(^|/)state\.db$|\.lock$|(^|/)checkpoints/'
     r'|(^|/)logs?/[^/]*\.log$|/out/profile-[^/]+/|(^|/)\.DS_Store$')
 
+# 依赖锁定文件是包管理器产物，必须入仓（口径第 3 条白名单里的「lock」）；
+# 与运行期锁 state.lock / index.lock 形状相同，只能按文件名区分。
+DEP_LOCK = re.compile(
+    r'(^|/)(Cargo\.lock|pubspec\.lock|package-lock\.json|pnpm-lock\.yaml|yarn\.lock'
+    r'|npm-shrinkwrap\.json|poetry\.lock|Pipfile\.lock|uv\.lock|composer\.lock'
+    r'|Gemfile\.lock|mix\.lock|flake\.lock|bun\.lockb)$')
+
+
+def is_runtime_artifact(path):
+    return bool(RUNTIME_SHAPE.search(path)) and not DEP_LOCK.search(path)
+
 # R13：README 体量下限（lead README「项目仓 README 口径」第 6 条）
 #   「≥ 60 行且 ≥ 6 个二级章节，防止再次退化成模板空壳。」
 #   这条此前只写在口径正文、尺子没查 —— 与 R5b / R8 / R9 同族，本轮补进尺子。
@@ -308,7 +319,7 @@ def check(repo, ref=None):
 
     # R7 运行态件不进 git
     for p in files:
-        if RUNTIME_SHAPE.search(p):
+        if is_runtime_artifact(p):
             bad.append(("R7", f"运行态件进了 git：{p}（该写 <仓>/.cache/）"))
     cache_tracked = [p for p in files if p.split("/")[0] == ".cache"]
     ignores = ignore_blob(repo, ref)
