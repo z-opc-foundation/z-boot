@@ -4,7 +4,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.autoconfigure.actuate.metrics.AutoConfigureMetrics;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 不是 starter 写死的：写死一个应用名会让别的应用继承到别人的名字，
  * 那比没有标签更坏（指标会安静地归到错误的应用名下）。
  */
-@AutoConfigureMetrics
+@AutoConfigureObservability
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = MetricsCommonTagsTest.TestApp.class,
         properties = {

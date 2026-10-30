@@ -43,7 +43,7 @@ on:
       - '_doc/003_script/central_pom_scan.py'
 
 env:
-  JAVA_VERSION: '8'
+  JAVA_VERSION: '17'
 
 permissions:
   contents: read

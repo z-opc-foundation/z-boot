@@ -35,6 +35,9 @@ public class GlobalJacksonConfig {
         };
     }
 
+    /** JS Number.MAX_SAFE_INTEGER */
+    private static final long JS_SAFE_MAX = 9_007_199_254_740_991L;
+
     static final class LongToStringSerializer extends JsonSerializer<Long> {
         private final boolean primitive;
 
@@ -49,7 +52,13 @@ public class GlobalJacksonConfig {
                 gen.writeNull();
                 return;
             }
-            gen.writeString(value.toString());
+            // 2026-10-30 SB3 火车：|v| ≤ 2^53-1（JS 安全整数）时保持数字——
+            // latencyMs 之类的小数值字段消费方按 number 消费；雪花 ID 大数才转字符串。
+            if (Math.abs(value) <= JS_SAFE_MAX) {
+                gen.writeNumber(value);
+            } else {
+                gen.writeString(value.toString());
+            }
         }
 
         @SuppressWarnings("unchecked")
@@ -69,7 +78,11 @@ public class GlobalJacksonConfig {
             }
             gen.writeStartArray();
             for (long l : value) {
-                gen.writeString(Long.toString(l));
+                if (Math.abs(l) <= JS_SAFE_MAX) {
+                    gen.writeNumber(l);
+                } else {
+                    gen.writeString(Long.toString(l));
+                }
             }
             gen.writeEndArray();
         }

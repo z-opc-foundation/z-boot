@@ -6,13 +6,13 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-starter</artifactId>
-        <version>1.1.2</version>
+        <version>1.2.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
 
     <artifactId>z-boot-datasource-starter</artifactId>
-    <version>1.1.2</version>
+    <version>1.2.0</version>
     <name>z-boot-datasource-starter</name>
     <description>z-boot 数据源 starter — 一键装配 druid 连接池 + mybatis-plus + mysql 驱动。</description>
     <licenses>
@@ -44,12 +44,12 @@
     <url>https://github.com/yuku123/z-boot</url>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     
         <log4j2.version>2.25.4</log4j2.version>
-        <druid.version>1.2.20</druid.version>
+        <druid.version>1.2.23</druid.version>
         <mysql.version>8.0.33</mysql.version>
     </properties>
 
@@ -60,7 +60,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-parent</artifactId>
-                <version>1.1.2</version>
+                <version>1.2.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -71,13 +71,13 @@
 
         <dependency>
             <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
             <version>${druid.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         </dependency>
 
         <dependency>

@@ -3,7 +3,7 @@ package com.zifang.boot.web.starter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.autoconfigure.actuate.metrics.AutoConfigureMetrics;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -20,11 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 这类启动期属性 —— 硬凑成一条用 try-with-resources 假装"切回去"的写法，
  * 断言的其实是构造出来的假象。
  *
- * <p>@AutoConfigureMetrics 不能省：少了它，PrometheusMeterRegistry 根本不装配，
+ * <p>@AutoConfigureObservability 不能省：少了它，PrometheusMeterRegistry 根本不装配，
  * prometheus 端点也就不会注册 —— 那是测试脚手架关的门，不是产品行为
  * （见 MetricExposureTest 的注释）。
  */
-@AutoConfigureMetrics
+@AutoConfigureObservability
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = DefaultExposureBoundaryTest.TestApp.class)
 class DefaultExposureBoundaryTest {

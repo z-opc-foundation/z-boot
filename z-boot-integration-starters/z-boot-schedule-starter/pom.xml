@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.1.2</version>
+        <version>1.2.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-schedule-starter</artifactId>
-    <version>1.1.2</version>
+    <version>1.2.0</version>
     <name>z-boot-schedule-starter</name>
     <description>
         z-boot Schedule 聚合 starter — 一行 import 集成 z-schedule 分布式任务调度系统
@@ -46,8 +46,8 @@
     <url>https://github.com/yuku123/z-boot</url>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- z-schedule 版本用顶层 pom 的 <z-schedule.version>。这里原有份副本，注释自己写着
              "须与根 pom 同步"——手抄两份正是漂移的成因，且删掉不改变产物：2026-09-26 两侧实测同为 1.0.4。 -->
@@ -59,7 +59,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-parent</artifactId>
-                <version>1.1.2</version>
+                <version>1.2.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

@@ -1,5 +1,2 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.zifang.boot.web.starter.GlobalJacksonConfig,\
-com.zifang.boot.web.starter.metrics.MetricsCommonTagsAutoConfiguration
 org.springframework.boot.env.EnvironmentPostProcessor=\
 com.zifang.boot.web.starter.metrics.MetricsExposureEnvironmentPostProcessor

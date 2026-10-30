@@ -6,12 +6,12 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-integration-starters</artifactId>
-        <version>1.1.2</version>
+        <version>1.2.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>z-boot-msg-starter</artifactId>
-    <version>1.1.2</version>
+    <version>1.2.0</version>
     <name>z-boot-msg-starter</name>
     <description>
         z-boot MSG 聚合 starter — 一行 import 集成 z-msg 多通道消息下发系统
@@ -46,8 +46,8 @@
     </scm>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- z-msg 版本一律用顶层 pom 的 <z-msg.version>，这里不再重复声明：
              2026-09-26 实测顶层抬到 1.1.0 后 dependency:tree 仍解析出 1.0.0，
@@ -61,7 +61,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-parent</artifactId>
-                <version>1.1.2</version>
+                <version>1.2.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

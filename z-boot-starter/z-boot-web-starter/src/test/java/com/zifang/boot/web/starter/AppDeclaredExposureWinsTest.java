@@ -3,7 +3,7 @@ package com.zifang.boot.web.starter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.autoconfigure.actuate.metrics.AutoConfigureMetrics;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 应用要窄化，走统一开关键 {@code z.boot.metrics.exposure.include}（见
  * MetricsExposureEnvironmentPostProcessor 的注释）。
  */
-@AutoConfigureMetrics
+@AutoConfigureObservability
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = AppDeclaredExposureWinsTest.TestApp.class,
         properties = {

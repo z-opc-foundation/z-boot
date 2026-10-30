@@ -37,9 +37,9 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 |------|-----|
 | **仓库** | `z-boot` — Spring Boot Starter 聚合仓 + 唯一版本权威（火车制） |
 | **groupId** | `io.github.yuku123` |
-| **当前发行** | 消费入口 `z-boot-parent:1.1.2`（内含地板 155 + 接入面 pin 79 + 自家 starter 22 格）· 火车 = 22 个 starter/聚合器全 `1.1.2` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
-| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.1.2`；starter 的 DM = 单条 `import z-boot-parent:1.1.2` |
-| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.1.2</parent>`，依赖零 `<version>` |
+| **当前发行** | 消费入口 `z-boot-parent:1.2.0`（内含地板 155 + 接入面 pin 79 + 自家 starter 22 格）· 火车 = 22 个 starter/聚合器全 `1.1.2` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
+| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.1.2`；starter 的 DM = 单条 `import z-boot-parent:1.2.0` |
+| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.2.0</parent>`，依赖零 `<version>` |
 | **默认端口** | 无 —— 本仓是版本权威 + 聚合层，不启进程、不设端口 |
 | **运行口径** | Java 8（全组织 1.8）· Spring Boot **2.7.18** |
 | **最近更新** | 2026-10-08（火车制重构） |

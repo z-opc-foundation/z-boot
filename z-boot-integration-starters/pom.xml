@@ -13,7 +13,7 @@
 
 
     <artifactId>z-boot-integration-starters</artifactId>
-    <version>1.1.2</version>
+    <version>1.2.0</version>
     <packaging>pom</packaging>
     <name>z-boot-integration-starters (Aggregator)</name>
     <description>
@@ -70,8 +70,8 @@
          生成、逐件对 repo1 复核),叶子 pom 各自 import 地板 + fleet 两个字面版本,聚合 pom 不再管版本。 -->
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
