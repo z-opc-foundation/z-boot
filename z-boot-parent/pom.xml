@@ -173,8 +173,6 @@
         <z-agent.version>0.1.4</z-agent.version>
         <!-- z-agent-kernel 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-agent-kernel.version>0.2.1</z-agent-kernel.version>
-        <!-- z-agent-proxy 0.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-agent-proxy.version>0.1.1</z-agent-proxy.version>
         <!-- z-bot 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-bot.version>0.2.1</z-bot.version>
         <!-- z-cache 1.3.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
@@ -189,7 +187,7 @@
         <z-gw.version>1.0.6</z-gw.version>
         <!-- z-kb 1.0.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-kb.version>1.0.7</z-kb.version>
-        <!-- z-llm 0.1.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <!-- z-llm 0.1.7（手管属性：z-lc 三模块按旧名 ${z-llm.version} 引用 z-llm-gateway-core，族已随 b1fae5b 移出 FAMILIES，此键由地板段保留，勿删） -->
         <z-llm.version>0.1.7</z-llm.version>
         <!-- z-mcp 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-mcp.version>0.2.1</z-mcp.version>
