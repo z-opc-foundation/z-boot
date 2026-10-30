@@ -165,9 +165,18 @@
                                 ⇒ 改用**会话级** ${session.executionRootDirectory}（= 本次 mvn 启动所在目录，
                                 本仓按文件夹发版 ⇒ 它就是 z-boot-starter/ 或 z-boot-integration-starters/）
                                 ⇒ 再 ../ 定位仓根，对**聚合器与它的每一个子模块**同时成立。
-                                ⚠ 前提：发版必须在**发版文件夹根目录**执行（cd <文件夹> && mvn deploy -Pcentral）。
+                                ⚠ 但 ${session.executionRootDirectory} 是**本次 mvn 启动所在目录**：
+                                  按文件夹发版时它是 z-boot-parent/ 或 z-boot-starter/ 等，
+                                  `../_doc` 恰好能命中；可**根 pom 自己**（folder = "."）
+                                  的 executionRootDirectory 就是**仓根**，`../_doc` 会指到**仓外**
+                                  ⇒ 「Cannot run program .../z-boot/../_doc/...: error=2,
+                                  No such file or directory」。
+                                ⇒ 改用 Maven 注入的 **${maven.multiModuleProjectDirectory}**
+                                  （= 本次 mvn 的**仓根**，与启动目录无关）：
+                                  聚合器与它的每一个子模块、父 pom 与根 pom **同时成立**。
+                                  （2026-10-30 实测：root 与 parent 同批发布，root 挂、parent 过。）
                             -->
-                            <executable>${session.executionRootDirectory}/../_doc/003_script/gpg-with-passphrase.sh</executable>
+                            <executable>${maven.multiModuleProjectDirectory}/_doc/003_script/gpg-with-passphrase.sh</executable>
                         </configuration>
                         <executions>
                             <execution>
