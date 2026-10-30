@@ -372,6 +372,11 @@ def build_parent_pom(owner, surface, write_mode):
     # pluginManagement + flatten 覆盖块自现 parent 原样搬运（raw：段内手改注释不许剥）
     build = raw_block(parent, "build")
     assert build is not None, "parent pom 缺 <build>（结构变了？）"
+    # 前导空行归一：raw 把 <build> 后的空行算进块内、模板又自带换行 ⇒ 不剥则每次重跑 +N 行（非幂等）
+    build_lines = dedent_block(build).split("\n")
+    while build_lines and not build_lines[0].strip():
+        build_lines.pop(0)
+    build = "\n".join(build_lines)
     pom += """
     <build>
 %s
