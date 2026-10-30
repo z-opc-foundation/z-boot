@@ -54,6 +54,8 @@ STRAY_EXT = (".md", ".MD", ".txt", ".sql", ".sh", ".py", ".rst", ".adoc")
 # R8：桶内文件的 NN-slug 命名
 NN_NAME = re.compile(r"^\d{2,3}[-_]")
 DASH2 = re.compile(r"-\d+\.md$")
+# 日期后缀（-2026-10-31.md）会被 DASH2 误判成「-2 后缀绕重名」，先排除
+DATE_SUFFIX = re.compile(r"\d{4}-\d{2}-\d{2}\.md$")
 # 平台约定文件不参与 NN 编号（GitHub / AI 工具按固定名找它们）
 NAME_EXEMPT = {"README.md", "AGENTS.md", "SKILL.md", "CLAUDE.md"}
 
@@ -341,7 +343,7 @@ def check(repo, ref=None):
             name = p.rsplit("/", 1)[-1]
             if not name.endswith(".md") or name in NAME_EXEMPT:
                 continue
-            if DASH2.search(name):
+            if DASH2.search(name) and not DATE_SUFFIX.search(name):
                 bad.append(("R8", f"{p} 用 -2 后缀绕重名（规范：该合并成一份，或换号）"))
                 continue
             m = NN_NAME.match(name)
