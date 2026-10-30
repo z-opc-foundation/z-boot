@@ -66,15 +66,9 @@
     -->
 
     <properties>
-        <!-- JDK / 编译 -->
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!-- 兄弟仓 (z-* L3) 的版本格不在这里 —— 见 z-boot-fleet/pom.xml(由
-             _doc/003_script/gen_train_bom.py 生成并逐件对 repo1 复核)。 -->
-
-        <!-- Maven 插件版本 -->
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
         <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
@@ -82,7 +76,6 @@
         <central-publishing-plugin.version>0.8.0</central-publishing-plugin.version>
         <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
     </properties>
-
 
     <profiles>
         <profile>
