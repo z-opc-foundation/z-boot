@@ -52,8 +52,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 FOUNDATION = os.path.abspath(os.path.join(REPO_ROOT, ".."))
 
-TRAIN = "1.2.0"
-PREV_TRAIN = "1.1.2"
+TRAIN = "1.2.1"
+PREV_TRAIN = "1.2.0"
 ROOT_PARENT = ("io.github.yuku123", "z-boot", "1.0.19")
 # 地板源（2026-10-30 起）：z-boot-parent 自身 —— SB3 迁移把地板手改搬进了本 pom，
 # 原 z-boot-dependencies 已随 1.1.0 火车 git rm。生成仍读 git HEAD（纯函数），
@@ -69,17 +69,17 @@ EXCLUDE_DIR_PARTS = {"_code_temp", ".cache", "target", "node_modules", ".git", "
 # z-llm → z-llm-gateway 0.1.9、z-agent-proxy → z-llm-agent 等）。⚠ 值与属主仓工作
 # 版本不一致属正常（仓在途、pin 未收版）；抬族版本 = 改这里 → --write 的 G2 逐格探 repo1。
 FAMILIES = {
-    "z-config": ("z-config", "1.0.10"), "z-ctc": ("z-ctc", "1.0.2"),
-    "z-cache": ("z-cache", "1.3.6"), "z-mq": ("z-mq", "1.3.1"),
-    "z-gw": ("z-gw", "1.0.6"), "z-kb": ("z-kb", "1.0.7"),
+    "z-config": ("z-config", "1.0.10"), "z-ctc": ("z-ctc", "1.0.6"),
+    "z-cache": ("z-cache", "1.3.6"), "z-mq": ("z-mq", "1.3.2"),
+    "z-gw": ("z-gw", "1.0.6"), "z-kb": ("z-kb", "1.1.0"),
     "z-vector": ("z-vector", "1.0.5"), "z-graph": ("z-graph", "1.0.8"),
-    "z-rpc": ("z-rpc", "1.0.4"), "z-oss": ("z-oss", "1.0.4"),
-    "z-schedule": ("z-schedule", "1.0.6"), "z-msg": ("z-msg", "1.2.2"),
-    "z-script": ("z-script", "1.0.2"), "z-util": ("z-util", "1.0.22"),
-    "z-agent-kernel": ("z-agent-kernel", "0.2.1"), "z-llm-gateway": ("z-llm-gateway", "0.1.9"),
-    "z-mcp": ("z-mcp", "0.2.1"), "z-skill": ("z-skill", "0.2.2"),
-    "z-agent": ("z-agent", "0.1.4"), "z-bot": ("z-bot", "0.2.1"),
-    "z-llm-agent": ("z-llm-agent", "1.0.47"), "z-llm-msghub": ("z-llm-msghub", "1.0.47"), "z-mist": ("z-mist", "1.0.4"),
+    "z-rpc": ("z-rpc", "1.0.4"), "z-oss": ("z-oss", "1.0.5"),
+    "z-schedule": ("z-schedule", "1.0.6"), "z-msg": ("z-msg", "1.2.4"),
+    "z-script": ("z-script", "1.0.2"), "z-util": ("z-util", "1.2.12"),
+    "z-agent-kernel": ("z-agent-kernel", "0.2.4"), "z-llm-gateway": ("z-llm-gateway", "0.1.9"),
+    "z-mcp": ("z-mcp", "1.1.1"), "z-skill": ("z-skill", "0.2.5"),
+    "z-agent": ("z-agent", "1.0.6"), "z-bot": ("z-bot", "0.2.1"),
+    "z-llm-agent": ("z-llm-agent", "1.0.47"), "z-llm-msghub": ("z-llm-msghub", "1.0.47"), "z-mist": ("z-mist", "1.0.5"),
     "z-qa": ("z-qa", "1.1.1"), "z-camuda": ("z-camuda", "1.0.6"),
     "z-indexer": ("z-indexer", "1.0.0"),
 }
@@ -92,17 +92,10 @@ EXTRA_PIN = {
     "z-util": ["z-util-http-core", "z-util-http-proxy", "z-util-http-server"],
 }
 
-# 显式排除出 pin 的坐标（2026-10-30）：FAMILIES 的族 pin 版本尚未在 repo1 发布这些坐标
-# （G2 实测 404 —— 族 pin 滞后于属主仓工作版本：z-agent 0.1.4 vs 仓 1.0.6、
-# z-agent-kernel 0.2.1 vs 0.2.4、z-ctc 1.0.2 vs 1.0.6）。排除 = 不进 pin、不进 properties，
-# 与今日（未重生成）行为零差异 —— 这些坐标全部是本轮新进 surface 的，现 pin 本就没有它们；
-# 消费方均有就近 DM 覆盖（z-agent-proxy 自有 DM、z-team/z-opc 本地 property 等），不靠 parent 供版。
-# ⚠ 下趟火车收族版（抬 FAMILIES 到已发布版）时逐个解除排除，并对消费方做回归。
-PIN_EXCLUDE = {
-    "z-agent-center-core", "z-agent-center-web", "z-agent-common", "z-agent-engine",  # z-agent 0.1.4 未含（仓已 1.0.6）
-    "z-agent-kernel-asr",        # z-agent-kernel 0.2.1 未含（仓已 0.2.4）
-    "z-ctc-client", "z-ctc-spring-boot-starter",  # z-ctc 1.0.2 未含（仓已 1.0.6）
-}
+# 显式排除出 pin 的坐标：族 pin 版本未在 repo1 发布这些坐标时（G2 实测 404）才排除。
+# 2026-10-31 收族版：z-agent 1.0.6 / z-agent-kernel 0.2.4 / z-ctc 1.0.6 已含原排除的
+# 7 个坐标（repo1 逐格 200），排除集清空。
+PIN_EXCLUDE = set()
 
 
 def strip_notes(x):
