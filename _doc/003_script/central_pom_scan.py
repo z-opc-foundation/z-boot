@@ -34,6 +34,9 @@ import xml.etree.ElementTree as ET
 
 NS = '{http://maven.apache.org/POM/4.0.0}'
 
+# 权威可读性模块的缓存句柄（懒加载，_readability() 负责填）。
+_READABILITY = None
+
 
 def txt(e):
     return None if e is None else (e.text or '').strip()
@@ -48,18 +51,75 @@ def fcs(e, name):
 
 
 def parse(p):
+    """解析一个 pom。读不了返回 None（调用方各自处理，这是本模块的既有契约）。
+
+    用 lead 仓的权威判据 pom_readability 而不是裸 ET：ET 放行但 Maven 拒收的三类
+    （XML 1.1 声明 / 根元素缺 POM 命名空间 / 根元素非 project）只有那里能抓住。
+    找不到该模块时退回裸 ET —— 判据退化成"ET 说了算"，但不会崩。
+    """
     try:
-        return ET.parse(p).getroot()
-    except Exception as ex:
-        sys.stderr.write('PARSE-FAIL %s: %s\n' % (p, ex))
+        mod = _readability()
+    except ImportError:
+        mod = None
+    if mod is None:
+        try:
+            return ET.parse(p).getroot()
+        except Exception:
+            return None
+    try:
+        return mod.check_file(p)
+    except Exception:
         return None
+
+
+def parse_reason(p):
+    """读不了的原因（给缺陷报告用）。读得了返回 None。"""
+    try:
+        mod = _readability()
+    except ImportError:
+        mod = None
+    if mod is None:
+        try:
+            ET.parse(p)
+            return None
+        except Exception as ex:
+            return str(ex)
+    try:
+        mod.check_file(p)
+        return None
+    except Exception as ex:
+        return str(ex)
+
+
+def _readability():
+    """按需加载 lead 仓的 pom_readability 模块（单仓 CI 里可能没有 lead 仓）。"""
+    global _READABILITY
+    if _READABILITY is None:
+        import importlib.util
+        here = os.path.dirname(os.path.abspath(__file__))
+        # 候选路径：从本仓 _doc/003_script/ 往上找 lead 仓。
+        cands = []
+        up = here
+        for _ in range(6):
+            up = os.path.dirname(up)
+            cands.append(os.path.join(up, 'z-opc-foundation-lead', '003_辅助能力',
+                                      'maven-inventory', 'script', 'pom_readability.py'))
+        for c in cands:
+            if os.path.isfile(c):
+                spec = importlib.util.spec_from_file_location('pom_readability', c)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                _READABILITY = mod
+                return mod
+        raise ImportError('找不到 pom_readability.py')
+    return _READABILITY
 
 
 def child_artifacts(pom_path):
     """直接子 pom（parent.artifactId == 本 pom artifactId）—— z-boot 按文件夹独立成工程靠这个识别。"""
     r = parse(pom_path)
     if r is None:
-        raise ValueError('解析失败 ' + pom_path)
+        raise ValueError('解析失败 %s：%s' % (pom_path, parse_reason(pom_path) or '未知原因'))
     me = txt(fc(r, 'artifactId'))
     out = []
     for cand in sorted(glob.glob(os.path.join(os.path.dirname(pom_path), '*', 'pom.xml'))):
@@ -74,13 +134,13 @@ def reactor(pom_path):
     """pom_path 及其 <modules> 下游（含自身）。注释掉的 module 因 XML 解析天然不在。"""
     r = parse(pom_path)
     if r is None:
-        raise ValueError('解析失败 ' + pom_path)
+        raise ValueError('解析失败 %s：%s' % (pom_path, parse_reason(pom_path) or '未知原因'))
     out, seen = [], {os.path.normpath(pom_path)}
 
     def walk(cur):
         rr = parse(cur)
         if rr is None:
-            raise ValueError('解析失败 ' + cur)
+            raise ValueError('解析失败 %s：%s' % (cur, parse_reason(cur) or '未知原因'))
         out.append(cur)
         m = fc(rr, 'modules')
         if m is None:
@@ -209,7 +269,11 @@ def scan_repo(rp, verbose, workspace=None):
     root_pom = os.path.join(rp, 'pom.xml')
     root = parse(root_pom)
     if root is None:
-        return None
+        # 根 pom 读不了 ⇒ 整个仓的 pom 树都判不了。原写法在这里 return None，
+        # CLI 会说"该仓没有 central profile"——那是**假绿**：仓有 central 配置，
+        # 只是根 pom 坏了，于是所有 Central 缺陷都静默跳过。改成抛，让 CLI 转 exit 2
+        # （扫描本身失败），并带上原因。
+        raise ValueError('根 pom 读不了（Maven 读不了）：%s' % (parse_reason(root_pom) or '未知原因'))
     if 'central-publishing-maven-plugin' not in open(root_pom, encoding='utf-8').read():
         return None
     prof = next((p for p in fcs(fc(root, 'profiles'), 'profile')
@@ -258,7 +322,11 @@ def scan_repo(rp, verbose, workspace=None):
     for p in poms:
         r = parse(p)
         if r is None:
-            problems.append('! %s 解析失败' % os.path.relpath(p, rp))
+            # 解析失败 = Maven 自己都读不了这个 pom（不是"我们读不出来"）。
+            # 把原因带上，别只写"解析失败"三个字 —— 排查的人需要知道是注释里写了
+            # `--`，还是缺命名空间，还是 XML 1.1。
+            reason = parse_reason(p) or '未知原因'
+            problems.append('! %s 解析失败（Maven 读不了）：%s' % (os.path.relpath(p, rp), reason))
             continue
         a = txt(fc(r, 'artifactId'))
         if a in excludes:
