@@ -23,7 +23,7 @@
     </parent>
 
     <artifactId>z-boot-parent</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <packaging>pom</packaging>
 
     <name>z-boot :: parent</name>
@@ -172,36 +172,36 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- z-llm 0.1.7（手管属性：z-lc 三模块按旧名 ${z-llm.version} 引用 z-llm-gateway-core，族已随 b1fae5b 移出 FAMILIES，此键由地板段保留，勿删） -->
         <z-llm.version>0.1.7</z-llm.version>
-        <!-- z-agent 0.1.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-agent.version>0.1.4</z-agent.version>
-        <!-- z-agent-kernel 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-agent-kernel.version>0.2.1</z-agent-kernel.version>
+        <!-- z-agent 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-agent.version>1.0.6</z-agent.version>
+        <!-- z-agent-kernel 0.2.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-agent-kernel.version>0.2.4</z-agent-kernel.version>
         <!-- z-bot 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-bot.version>0.2.1</z-bot.version>
         <!-- z-cache 1.3.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-cache.version>1.3.6</z-cache.version>
         <!-- z-config 1.0.10（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-config.version>1.0.10</z-config.version>
-        <!-- z-ctc 1.0.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-ctc.version>1.0.2</z-ctc.version>
+        <!-- z-ctc 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-ctc.version>1.0.6</z-ctc.version>
         <!-- z-graph 1.0.8（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-graph.version>1.0.8</z-graph.version>
         <!-- z-gw 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-gw.version>1.0.6</z-gw.version>
-        <!-- z-kb 1.0.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-kb.version>1.0.7</z-kb.version>
+        <!-- z-kb 1.1.0（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-kb.version>1.1.0</z-kb.version>
         <!-- z-llm-gateway 0.1.9（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-llm-gateway.version>0.1.9</z-llm-gateway.version>
-        <!-- z-mcp 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-mcp.version>0.2.1</z-mcp.version>
-        <!-- z-mist 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-mist.version>1.0.4</z-mist.version>
-        <!-- z-mq 1.3.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-mq.version>1.3.1</z-mq.version>
-        <!-- z-msg 1.2.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-msg.version>1.2.2</z-msg.version>
-        <!-- z-oss 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-oss.version>1.0.4</z-oss.version>
+        <!-- z-mcp 1.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-mcp.version>1.1.1</z-mcp.version>
+        <!-- z-mist 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-mist.version>1.0.5</z-mist.version>
+        <!-- z-mq 1.3.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-mq.version>1.3.2</z-mq.version>
+        <!-- z-msg 1.2.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-msg.version>1.2.4</z-msg.version>
+        <!-- z-oss 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-oss.version>1.0.5</z-oss.version>
         <!-- z-qa 1.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-qa.version>1.1.1</z-qa.version>
         <!-- z-rpc 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
@@ -210,13 +210,13 @@
         <z-schedule.version>1.0.6</z-schedule.version>
         <!-- z-script 1.0.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-script.version>1.0.2</z-script.version>
-        <!-- z-skill 0.2.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-skill.version>0.2.2</z-skill.version>
-        <!-- z-util 1.0.22（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-util.version>1.0.22</z-util.version>
+        <!-- z-skill 0.2.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-skill.version>0.2.5</z-skill.version>
+        <!-- z-util 1.2.12（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-util.version>1.2.12</z-util.version>
         <!-- z-vector 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-vector.version>1.0.5</z-vector.version>
-        <z-boot.version>1.2.0</z-boot.version>
+        <z-boot.version>1.2.1</z-boot.version>
     </properties>
 
     <dependencyManagement>
@@ -1089,6 +1089,26 @@
             <!-- z-agent -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-center-core</artifactId>
+                <version>${z-agent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-center-web</artifactId>
+                <version>${z-agent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-common</artifactId>
+                <version>${z-agent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-engine</artifactId>
+                <version>${z-agent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-agent-starter</artifactId>
                 <version>${z-agent.version}</version>
             </dependency>
@@ -1096,6 +1116,11 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-agent-kernel-agent</artifactId>
+                <version>${z-agent-kernel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-agent-kernel-asr</artifactId>
                 <version>${z-agent-kernel.version}</version>
             </dependency>
             <dependency>
@@ -1209,7 +1234,17 @@
             <!-- z-ctc -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ctc-client</artifactId>
+                <version>${z-ctc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-ctc-common</artifactId>
+                <version>${z-ctc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-ctc-spring-boot-starter</artifactId>
                 <version>${z-ctc.version}</version>
             </dependency>
             <dependency>

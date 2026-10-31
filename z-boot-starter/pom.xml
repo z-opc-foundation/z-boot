@@ -12,7 +12,7 @@
     
 
     <artifactId>z-boot-starter</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <name>z-boot :: starter</name>
     <description>Aggregator</description>
     <packaging>pom</packaging>
