@@ -120,7 +120,92 @@ def plugin_pins(*roots):
     return have
 
 
-def scan_repo(rp, verbose):
+def parent_chain(pom_path, base):
+    """沿 <parent> 往上走，收集**真实可达**的父 pom 文件（含仓内的）。
+
+    为什么必须追这条链：E 类的判据是"插件无 version 且父链无兜底"。而插件版本的兜底
+    往往在 z-boot-parent 1.2.0 的 pluginManagement 里（surefire 2.22.2 /
+    spring-boot-maven-plugin ${spring-boot.version}）。z-config / z-mq / z-oss / z-team /
+    z-wf 这些仓根 pom 的 <parent> 都写了 z-boot-parent 且 <relativePath></relativePath>（空），
+    **解析时该父来自本地仓**，不在当前仓目录里 —— 只看"本仓内的 pom"会全线误判 E。
+
+    相对路径解析规则照 Maven 的来：
+      · relativePath 缺省 = ../pom.xml
+      · relativePath 为空串 = 不从文件系统找，直接用仓库坐标（但 z-boot-parent 是同工作区里的
+        独立工程，坐标能对上 ⇒ 仍要按坐标在工作区内找到它，否则兜底判断就是假的）
+      · relativePath 显式给路径 = 按它找
+    坐标兜底：在**工作区根**（foundation 根）下按 artifactId 找同名工程（z-boot-parent 就在
+    <workspace>/z-boot/z-boot-parent）。注意传的必须是 foundation 根而不是仓根 —— 仓根下找不到
+    兄弟仓里的独立工程，兜底就断在这里，E 类全线误报。
+    """
+    chain, seen = [], set()
+    cur = os.path.abspath(pom_path)
+    while cur and cur not in seen:
+        seen.add(cur)
+        r = parse(cur)
+        if r is None:
+            break
+        chain.append(cur)
+        par = fc(r, 'parent')
+        if par is None:
+            break
+        pa = txt(fc(par, 'artifactId'))
+        rp = txt(fc(par, 'relativePath'))
+        if rp is None:
+            rp = '../pom.xml'
+        nxt = None
+        if rp.strip():
+            cand = os.path.normpath(os.path.join(os.path.dirname(cur), rp))
+            if os.path.isdir(cand):
+                cand = os.path.join(cand, 'pom.xml')
+            if os.path.isfile(cand):
+                nxt = cand
+        if nxt is None and pa:
+            # 坐标兜底：在**工作区根**下按 artifactId 找同名工程（z-boot-parent 这类独立工程）。
+            # 索引是全局懒建的，避免每个 pom 都全盘 glob + parse。
+            nxt = coord_index(base).get(pa)
+        if nxt is None:
+            break
+        cur = nxt
+    return chain
+
+
+_COORD_INDEX = {}
+
+
+def coord_index(workspace):
+    """{artifactId: pom 绝对路径} —— 工作区内所有独立工程的坐标索引（懒建一次）。
+
+    为什么需要它：z-boot-parent 是**独立工程**（foundation/z-boot/z-boot-parent），不在任何
+    消费仓的目录里，而 z-config / z-mq / z-oss / z-team / z-wf 的 <parent> 都写了
+    `<relativePath></relativePath>`（空 ⇒ Maven 不从文件系统找）。不按坐标回工作区找它，
+    父链就断在这儿，pluginManagement 的兜底版本看不到 ⇒ E 类全线误报。
+    """
+    key = os.path.abspath(workspace)
+    if key in _COORD_INDEX:
+        return _COORD_INDEX[key]
+    idx = {}
+    pats = [
+        os.path.join(key, 'pom.xml'),
+        os.path.join(key, '*', 'pom.xml'),
+        os.path.join(key, '*', '*', 'pom.xml'),
+    ]
+    for pat in pats:
+        for guess in glob.glob(pat):
+            if 'node_modules' in guess:
+                continue
+            try:
+                gr = ET.parse(guess).getroot()
+            except Exception:
+                continue  # 静默：坏 pom 由调用方自己的 parse 报，避免索引时刷屏
+            a = txt(fc(gr, 'artifactId'))
+            if a:
+                idx.setdefault(a, os.path.abspath(guess))
+    _COORD_INDEX[key] = idx
+    return idx
+
+
+def scan_repo(rp, verbose, workspace=None):
     root_pom = os.path.join(rp, 'pom.xml')
     root = parse(root_pom)
     if root is None:
@@ -131,6 +216,10 @@ def scan_repo(rp, verbose):
                  if txt(fc(p, 'id')) == 'central'), None)
     if prof is None:
         return None
+
+    # 父链搜索的工作区根：默认取仓根的上一级（foundation 根），这样 z-boot-parent 这类
+    # 兄弟仓里的独立工程才找得到。调用方可显式传。
+    ws = os.path.abspath(workspace or os.path.dirname(os.path.abspath(rp)))
 
     excludes = {txt(x) for x in prof.iter(NS + 'excludeArtifact')}
     me = txt(fc(root, 'artifactId'))
@@ -158,14 +247,12 @@ def scan_repo(rp, verbose):
             uniq.append(p)
     poms = uniq
 
-    # 插件版本兜底：父 pom 链 + 各 reactor 根（子模块可继承父的 pluginManagement）
-    parent_chain = [root_pom]
+    # 插件版本兜底：走**真实父链**（含仓内相对路径父 pom 与工作区内的坐标父 pom），
+    # 再并上本仓 reactor 里那些"是别人父"的 pom（子模块可继承父的 pluginManagement）。
+    chain_poms = list(parent_chain(root_pom, ws))
     for p in poms:
-        r = parse(p)
-        par = fc(r, 'parent') if r is not None else None
-        if par is not None and txt(fc(par, 'artifactId')) == me:
-            parent_chain.append(p)
-    pins = plugin_pins(*parent_chain)
+        chain_poms += parent_chain(p, ws)
+    pins = plugin_pins(*chain_poms)
 
     problems = []
     for p in poms:
@@ -217,7 +304,7 @@ def main():
             print('找不到仓根 pom：%s' % os.path.join(args.path, 'pom.xml'), file=sys.stderr)
             return 2
         try:
-            res = scan_repo(args.path, args.verbose)
+            res = scan_repo(args.path, args.verbose, workspace=args.base)
         except Exception as ex:
             print('扫描失败: %s' % ex, file=sys.stderr)
             return 2
@@ -239,7 +326,7 @@ def main():
         if name.startswith('.') or not os.path.isfile(os.path.join(rp, 'pom.xml')):
             continue
         try:
-            res = scan_repo(rp, args.verbose)
+            res = scan_repo(rp, args.verbose, workspace=args.base)
         except Exception as ex:
             print('%-14s ! 扫描失败: %s' % (name, ex), file=sys.stderr)
             n_bad += 1
