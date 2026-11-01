@@ -27,8 +27,14 @@ import subprocess
 import sys
 import urllib.parse
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(ROOT, "..", ".."))  # z-boot
+HERE = os.path.dirname(os.path.abspath(__file__))
+# 仓根 = 向上第一个含 .git 的目录（R6 精神：不用固定层数上溯，脚本住几层都不怕搬家）
+ROOT = HERE
+while not os.path.isdir(os.path.join(ROOT, ".git")):
+    _parent = os.path.dirname(ROOT)
+    if _parent == ROOT:
+        raise SystemExit("doc_audit.py: 向上找不到 .git，无法定位仓根（fail-closed）")
+    ROOT = _parent
 ORG = os.path.dirname(ROOT)
 
 ALLOWED_ROOT = {
@@ -374,10 +380,18 @@ def main():
             if os.path.isdir(os.path.join(ORG, d, ".git")) and d not in EXCLUDED]
     for r in repos:
         if not os.path.isdir(os.path.join(ORG, r, ".git")):
+            # 指名要扫的仓（单仓模式，CI 里）不存在 ⇒ fail-closed，不许静默跳过。
+            # 否则 git 环境坏掉时守门人恒绿 —— 与 arch-gate 假绿同类（2026-11-01 教训）。
+            if len(sys.argv) > 1 and r in sys.argv[1:]:
+                print(f"✗ 仓目录不存在或缺 .git：{os.path.join(ORG, r)}", file=sys.stderr)
+                return 2
             continue
         try:
             bad = check(r, ref)
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
+            # git 执行失败（环境坏/非 git 目录）在守门语义下必须挡合入，不能当「合规」放过。
+            print(f"✗ {r}: git 调用失败，无法审计（fail-closed）：{e}", file=sys.stderr)
+            total += 1
             continue
         total += len(bad)
         if bad:

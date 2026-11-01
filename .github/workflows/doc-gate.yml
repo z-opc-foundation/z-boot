@@ -1,0 +1,38 @@
+# 文档收口守门（doc gate）：按 lead《002_项目文档收口规范》查本仓。
+#
+# 权威尺子 vendored 在本仓 _doc/003_script/doc_audit.py（从 z-boot 复制，更新走 PR 同步）。
+# 规范正文：z-opc-foundation-lead/008_组织规范/002_项目文档收口规范.md
+#
+# 用法（其他仓接入，两条路）：
+#   A. reusable 调用：jobs.doc-gate.uses: z-opc-foundation/z-boot/.github/workflows/doc-gate.yml@main
+#   B. 直接复制本文件到 <仓>/.github/workflows/doc-gate.yml（尺子一并复制）
+#
+# ⚠ 尺子默认扫整个组织目录（ORG = 仓根的父目录）。单仓 CI 里仓库被检出到
+#   $GITHUB_WORKSPACE 且没有兄弟仓 ⇒ 必须显式传仓目录名。此处 checkout 时
+#   把仓放到 <ws>/z-boot 同级形状下，再传 `z-boot`（与本仓名一致），尺子即只扫本仓。
+name: doc-gate
+
+on:
+  push:
+    branches: [main]
+    paths: ['**/*.md', '**/*.py', '**/*.sh', '**/*.sql', 'README.md', '.gitignore', '_doc/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: doc audit (lead 002 规范)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: z-boot
+
+      - name: Run doc_audit (single repo)
+        run: |
+          python3 z-boot/_doc/003_script/doc_audit.py z-boot

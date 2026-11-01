@@ -105,7 +105,15 @@ def check(org, repo):
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     argv = sys.argv[1:]
-    org = os.path.dirname(os.path.dirname(os.path.dirname(here)))  # 003_script → _doc → z-boot → 组织根
+    # 仓根 = 向上第一个含 .git 的目录（与 doc_audit 同款：不用固定层数上溯，搬家不怕断链）
+    root = here
+    while not os.path.isdir(os.path.join(root, ".git")):
+        parent = os.path.dirname(root)
+        if parent == root:
+            print("depth_check.py: 向上找不到 .git，无法定位仓根（fail-closed）", file=sys.stderr)
+            return 2
+        root = parent
+    org = os.path.dirname(root)
     if "--root" in argv:
         org = os.path.abspath(argv[argv.index("--root") + 1])
         argv = argv[:argv.index("--root")] + argv[argv.index("--root") + 2:]
