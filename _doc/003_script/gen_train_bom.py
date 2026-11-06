@@ -69,14 +69,14 @@ EXCLUDE_DIR_PARTS = {"_code_temp", ".cache", "target", "node_modules", ".git", "
 # z-llm → z-llm-gateway 0.1.9、z-agent-proxy → z-llm-agent 等）。⚠ 值与属主仓工作
 # 版本不一致属正常（仓在途、pin 未收版）；抬族版本 = 改这里 → --write 的 G2 逐格探 repo1。
 FAMILIES = {
-    "z-config": ("z-config", "1.0.10"), "z-ctc": ("z-ctc", "1.0.6"),
-    "z-cache": ("z-cache", "1.3.6"), "z-mq": ("z-mq", "1.3.2"),
+    "z-config": ("z-config", "1.0.12"), "z-ctc": ("z-ctc", "1.0.6"),
+    "z-cache": ("z-cache", "1.3.7"), "z-mq": ("z-mq", "1.3.3"),
     "z-gw": ("z-gw", "1.0.6"), "z-kb": ("z-kb", "1.1.0"),
     "z-vector": ("z-vector", "1.0.5"), "z-graph": ("z-graph", "1.0.8"),
-    "z-rpc": ("z-rpc", "1.0.4"), "z-oss": ("z-oss", "1.0.5"),
-    "z-schedule": ("z-schedule", "1.0.6"), "z-msg": ("z-msg", "1.2.4"),
-    "z-script": ("z-script", "1.0.2"), "z-util": ("z-util", "1.2.12"),
-    "z-agent-kernel": ("z-agent-kernel", "0.2.4"), "z-llm-gateway": ("z-llm-gateway", "0.1.9"),
+    "z-rpc": ("z-rpc", "1.0.4"), "z-oss": ("z-oss", "1.0.6"),
+    "z-schedule": ("z-schedule", "1.0.7"), "z-msg": ("z-msg", "1.2.4"),
+    "z-script": ("z-script", "1.0.3"), "z-util": ("z-util", "1.2.12"),
+    "z-agent-kernel": ("z-agent-kernel", "0.2.4"), "z-llm-gateway": ("z-llm-gateway", "0.1.10"),
     "z-mcp": ("z-mcp", "1.1.1"), "z-skill": ("z-skill", "0.2.5"),
     "z-agent": ("z-agent", "1.0.6"), "z-bot": ("z-bot", "0.2.1"),
     "z-llm-agent": ("z-llm-agent", "1.0.47"), "z-llm-msghub": ("z-llm-msghub", "1.0.47"), "z-mist": ("z-mist", "1.0.5"),
