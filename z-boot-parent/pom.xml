@@ -178,10 +178,10 @@
         <z-agent-kernel.version>0.2.4</z-agent-kernel.version>
         <!-- z-bot 0.2.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-bot.version>0.2.1</z-bot.version>
-        <!-- z-cache 1.3.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-cache.version>1.3.6</z-cache.version>
-        <!-- z-config 1.0.10（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-config.version>1.0.10</z-config.version>
+        <!-- z-cache 1.3.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-cache.version>1.3.7</z-cache.version>
+        <!-- z-config 1.0.12（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-config.version>1.0.12</z-config.version>
         <!-- z-ctc 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-ctc.version>1.0.6</z-ctc.version>
         <!-- z-graph 1.0.8（接入面 pin，值与gen脚本 FAMILIES 同源） -->
@@ -190,26 +190,26 @@
         <z-gw.version>1.0.6</z-gw.version>
         <!-- z-kb 1.1.0（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-kb.version>1.1.0</z-kb.version>
-        <!-- z-llm-gateway 0.1.9（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-llm-gateway.version>0.1.9</z-llm-gateway.version>
+        <!-- z-llm-gateway 0.1.10（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-llm-gateway.version>0.1.10</z-llm-gateway.version>
         <!-- z-mcp 1.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-mcp.version>1.1.1</z-mcp.version>
         <!-- z-mist 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-mist.version>1.0.5</z-mist.version>
-        <!-- z-mq 1.3.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-mq.version>1.3.2</z-mq.version>
+        <!-- z-mq 1.3.3（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-mq.version>1.3.3</z-mq.version>
         <!-- z-msg 1.2.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-msg.version>1.2.4</z-msg.version>
-        <!-- z-oss 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-oss.version>1.0.5</z-oss.version>
+        <!-- z-oss 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-oss.version>1.0.6</z-oss.version>
         <!-- z-qa 1.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-qa.version>1.1.1</z-qa.version>
         <!-- z-rpc 1.0.4（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-rpc.version>1.0.4</z-rpc.version>
-        <!-- z-schedule 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-schedule.version>1.0.6</z-schedule.version>
-        <!-- z-script 1.0.2（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-script.version>1.0.2</z-script.version>
+        <!-- z-schedule 1.0.7（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-schedule.version>1.0.7</z-schedule.version>
+        <!-- z-script 1.0.3（接入面 pin，值与gen脚本 FAMILIES 同源） -->
+        <z-script.version>1.0.3</z-script.version>
         <!-- z-skill 0.2.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-skill.version>0.2.5</z-skill.version>
         <!-- z-util 1.2.12（接入面 pin，值与gen脚本 FAMILIES 同源） -->
