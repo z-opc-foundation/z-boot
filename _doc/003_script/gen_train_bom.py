@@ -52,8 +52,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 FOUNDATION = os.path.abspath(os.path.join(REPO_ROOT, ".."))
 
-TRAIN = "1.2.1"
-PREV_TRAIN = "1.2.0"
+TRAIN = "1.2.2"
+PREV_TRAIN = "1.2.1"
 ROOT_PARENT = ("io.github.yuku123", "z-boot", "1.0.19")
 # 地板源（2026-10-30 起）：z-boot-parent 自身 —— SB3 迁移把地板手改搬进了本 pom，
 # 原 z-boot-dependencies 已随 1.1.0 火车 git rm。生成仍读 git HEAD（纯函数），

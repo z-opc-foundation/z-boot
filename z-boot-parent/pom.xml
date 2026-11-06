@@ -23,7 +23,7 @@
     </parent>
 
     <artifactId>z-boot-parent</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
     <packaging>pom</packaging>
 
     <name>z-boot :: parent</name>
@@ -216,7 +216,7 @@
         <z-util.version>1.2.12</z-util.version>
         <!-- z-vector 1.0.5（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-vector.version>1.0.5</z-vector.version>
-        <z-boot.version>1.2.1</z-boot.version>
+        <z-boot.version>1.2.2</z-boot.version>
     </properties>
 
     <dependencyManagement>
