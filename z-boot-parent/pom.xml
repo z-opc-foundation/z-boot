@@ -1292,17 +1292,17 @@
             <!-- z-kb -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>kb-api</artifactId>
+                <artifactId>z-kb-api</artifactId>
                 <version>${z-kb.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>kb-web</artifactId>
+                <artifactId>z-kb-web</artifactId>
                 <version>${z-kb.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>kb-spring-boot-starter</artifactId>
+                <artifactId>z-kb-spring-boot-starter</artifactId>
                 <version>${z-kb.version}</version>
             </dependency>
             <!-- z-llm-gateway -->
