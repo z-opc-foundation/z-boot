@@ -189,7 +189,7 @@
         <!-- z-gw 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-gw.version>1.0.6</z-gw.version>
         <!-- z-kb 1.1.0（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-kb.version>1.0.2</z-kb.version>
+        <z-kb.version>1.1.0-SNAPSHOT</z-kb.version>
         <!-- z-llm-gateway 0.1.10（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-llm-gateway.version>0.1.10</z-llm-gateway.version>
         <!-- z-mcp 1.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
