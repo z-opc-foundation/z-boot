@@ -1,5 +1,7 @@
 # z-boot
 
+> **2026-11-17 注意**：`z-camuda` 已退役归档（GitHub archived=true，流程引擎功能由 z-wf-admin 兼容层承接）。本文及 `_doc/` 中残留的 z-camuda 引用（fleet 说明/撤钉记录/坐标清单等）均为当时状态；`gen_train_bom.py` 的 FAMILIES 表等机器数据未动。
+
 > **Spring Boot Starter 聚合仓 + 版本权威（火车制）**
 > 唯一消费入口 `z-boot-parent`（地板 + 接入面 + 自家 starter 全在内），一行 parent 一行依赖
 

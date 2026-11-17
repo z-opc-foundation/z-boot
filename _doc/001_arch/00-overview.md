@@ -1,5 +1,7 @@
 # 项目总览
 
+> **2026-11-17 注意**：`z-camuda` 已退役归档（GitHub archived=true，流程引擎功能由 z-wf-admin 兼容层承接）。本文家族清单中 z-camuda 为当时成员，保留原文。
+
 ## 1. 项目简介
 
 z-boot 是 z-opc-foundation 的 **Spring Boot Starter 聚合仓 + 唯一版本权威**。它自己不是一个可运行的应用，而是给组织内所有 Java 仓提供一条统一消费入口 `io.github.yuku123:z-boot-parent`：消费方写一行 `<parent>`，后面所有依赖都不再写 `<version>`。
