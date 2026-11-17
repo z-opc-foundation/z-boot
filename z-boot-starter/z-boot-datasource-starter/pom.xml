@@ -48,9 +48,9 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     
-        <log4j2.version>2.25.4</log4j2.version>
+        <log4j2.version>2.26.1</log4j2.version>
         <druid.version>1.2.23</druid.version>
-        <mysql.version>8.0.33</mysql.version>
+        <mysql.version>8.4.0</mysql.version>
     </properties>
 
 
@@ -60,7 +60,7 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-boot-parent</artifactId>
-                <version>1.2.2</version>
+                <version>1.2.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

@@ -23,7 +23,7 @@
     </parent>
 
     <artifactId>z-boot-parent</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
     <packaging>pom</packaging>
 
     <name>z-boot :: parent</name>
@@ -86,12 +86,34 @@
 <commons-collections.version>3.2.2</commons-collections.version>
 <commons-collections4.version>4.4</commons-collections4.version>
 <commons-logging.version>1.2</commons-logging.version>
-<log4j2.version>2.25.4</log4j2.version>
+<log4j2.version>2.26.1</log4j2.version>
+        <!-- 2026-11-17：log4j2 2.25.4 → 2.26.1（安全升级，随 z-boot-parent 1.2.3 火车走）。
+             为什么是 2.26.1：Dependabot 告警要求 log4j-core ≥ 2.25.4（CVE-2026-34479 /
+             34477 / 34480）与 log4j-api ≥ 2.25.5（CVE-2026-49844）—— 2.25.4 恰好卡在
+             api 的门槛下（api 的修复要到 2.25.5），2.26.1 是当前最新稳定版且同时满足两条。
+             告警里写的 "first_patched_version=2.25.4" 是 core 的口径，别照抄成 2.25.4。
+             抬版不破绑定形态（两种都实测过）：
+               · slf4j-api 2.x + log4j-slf4j2-impl 2.26.1 → 正常走 Log4jLoggerFactory；
+               · slf4j-api 1.7 + log4j-slf4j-impl  2.26.1 → 也正常（1.7 那一支仍是
+                 StaticLoggerBinder，2.26.1 保留了它）。
+             ⚠ 反过来的组合会炸：slf4j-api 2.x 配 log4j-slf4j-impl（1.7 绑定）时 SLF4J
+               会打印 "Class path contains SLF4J bindings targeting slf4j-api versions 1.7.x
+               or earlier / Ignoring binding found" 并退回 NOPLoggerFactory —— 这正是
+               z-lc-admin/pom.xml 里记的那次 NoSuchMethodError 的同一个坑，别换错分支。
+             依据：CVE-2026-34479 / 34477 / 34480 / 49844。 -->
+
 <log4j2-ttl-thread-context-map.version>1.3.3</log4j2-ttl-thread-context-map.version>
 <commons-pool2.version>2.10.0</commons-pool2.version>
 <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
 <nacos-client.version>2.4.3</nacos-client.version>
 <mysql.version>8.4.0</mysql.version>
+        <!-- 2026-11-17：mysql-connector-j 的 CVE-2023-22102（"MySQL Connectors takeover",
+             high）要求 ≥ 8.2.0；地板本来就给 8.4.0（已安全），但 z-lc / z-mist / z-meta /
+             z-schedule / z-kb / z-cognition-z-kb 这几仓为"零漂移"各自钉了 8.0.33，
+             本轮一并抬到 8.4.0（**保留那条 protobuf-java exclusion**）：
+             exclusion 不是装饰 —— 照抄 Boot 自己那条受管项，少了它 protobuf-java:3.25.5
+             会从 mysql 底下冒进 core/web/sdk 三棵树并被打进 shade 包。 -->
+
 <druid.version>1.2.23</druid.version>
 
 <mybatis.version>3.5.16</mybatis.version>
@@ -468,23 +490,23 @@
     <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-core</artifactId>
-        <version>2.25.4</version>
+        <version>2.26.1</version>
     </dependency>
     <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-jul</artifactId>
-        <version>2.25.4</version>
+        <version>2.26.1</version>
     </dependency>
     
     <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-slf4j2-impl</artifactId>
-        <version>2.25.4</version>
+        <version>2.26.1</version>
     </dependency>
     <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-api</artifactId>
-        <version>2.25.4</version>
+        <version>2.26.1</version>
     </dependency>
 
     <dependency>
