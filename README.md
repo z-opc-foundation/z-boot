@@ -39,9 +39,9 @@ CEO 裁定的拓扑重构，取代 1.0.19～1.0.26 的「floor + fleet + parent 
 |------|-----|
 | **仓库** | `z-boot` — Spring Boot Starter 聚合仓 + 唯一版本权威（火车制） |
 | **groupId** | `io.github.yuku123` |
-| **当前发行** | 消费入口 `z-boot-parent:1.2.2`（内含地板 139 + 接入面 pin 114 + 自家 starter 22 格；2026-10-31 收族版：z-agent/z-agent-kernel/z-ctc/z-kb/z-mcp/z-mist/z-mq/z-msg/z-oss/z-skill/z-util 11 族抬到已发布版）· 火车 = 22 个 starter/聚合器全 `1.2.1` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
-| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.2.1`；starter 的 DM = 单条 `import z-boot-parent:1.2.2` |
-| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.2.2</parent>`，依赖零 `<version>` |
+| **当前发行** | 消费入口 `z-boot-parent:1.2.4`（内含地板 139 + 接入面 pin 114 + 自家 starter 22 格；2026-10-31 收族版：z-agent/z-agent-kernel/z-ctc/z-kb/z-mcp/z-mist/z-mq/z-msg/z-oss/z-skill/z-util 11 族抬到已发布版）· 火车 = 22 个 starter/聚合器全 `1.2.1` · 根 `z-boot:1.0.19`（发布用 parent，恒不重发）。退役件 `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.4`（Central 在架，无消费者应再指它们） |
+| **父项目（磁盘）** | `z-boot-parent` 的 `<parent>` = 根 `z-boot:1.0.19`；聚合器与 starter 的 `<parent>` = 各自聚合器 `1.2.1`；starter 的 DM = 单条 `import z-boot-parent:1.2.4` |
+| **消费入口（对外）** | 使用方一行 `<parent>io.github.yuku123:z-boot-parent:1.2.4</parent>`，依赖零 `<version>` |
 | **默认端口** | 无 —— 本仓是版本权威 + 聚合层，不启进程、不设端口 |
 | **运行口径** | Java 8（全组织 1.8）· Spring Boot **2.7.18** |
 | **最近更新** | 2026-10-08（火车制重构） |
@@ -246,12 +246,12 @@ public class App { public static void main(String[] args) { SpringApplication.ru
 > `z-boot-{msg,schedule,agent-proxy,llm,web}-1.0.21` 与 `z-boot-base-1.0.21` 的
 > jar/sources/javadoc 三件套也全 206。
 > 另跑一次**干净消费者**验证：全新 localRepository、单一仓库源（日志里 534 次 Downloading 全部来自
-> `repo1-direct`，零本机件），pom 里只写 `<parent>io.github.yuku123:z-boot-parent:1.0.19</parent>`
+> `repo1-direct`，零本机件），pom 里只写 `<parent>io.github.yuku123:z-boot-parent:1.2.4</parent>`
 > 加三条**不带 version** 的依赖 ⇒ `BUILD SUCCESS`（13:16 min），读到 `z-util-core 1.0.13`、
 > `z-cache-client 1.3.5`、`z-boot-web-starter 1.0.19`、`z-boot-cache-starter 1.0.19`、
 > `commons-lang3 3.18.0`、`netty 4.1.138.Final`，产物 `demo.Hello` 的 class-file **major 52**
 > （Java 8 口径是从 repo1 那份 parent 的 `pluginManagement` 下发的）。
-> ⚠ 上面那串面值是 **1.0.19 那一刻**父链下发的读数；继承抬到 `z-boot-parent:1.0.21` 之后同一组
+> ⚠ 上面那串面值是 **1.0.19 那一刻**父链下发的读数；继承抬到 `z-boot-parent:1.2.4` 之后同一组
 > 坐标的现值是 `z-util-core 1.0.14` / `z-cache-client 1.3.6` / `z-boot-web-starter 1.0.21`
 > （逐个按 repo1 发布件回读，不是跑出来的；`commons-lang3 3.18.0`、`netty 4.1.138.Final` 两格没动）。
 > repo1 上那份 parent pom 实测还带着 `<build><pluginManagement>` 6 个插件和 14 条 `<properties>`
@@ -469,7 +469,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
 1. **先留底**：`mvn -B -DskipTests clean package dependency:tree`，把 tree 里的
    `groupId:artifactId:jar:version` 去重排序存成基线。这一步不能省：迁移的判据不是"能构建"，
    而是"**除了我明确要改的，一件版本都没漂**"。
-2. `<parent>` 换成 `io.github.yuku123:z-boot-parent:1.0.19` + **`<relativePath/>` 留空**
+2. `<parent>` 换成 `io.github.yuku123:z-boot-parent:1.2.4` + **`<relativePath/>` 留空**
    （parent 不在磁盘上，在 repo1）。原来是 `com.zifang:z-opc:1.0.0-SNAPSHOT` 这类
    **只在作者 `~/.m2` 里存在**的本地 parent 的仓，这一步顺带把"换台机器连 pom 都读不动"修掉
    —— z-cache 那句 `<relativePath>../pom.xml</relativePath>` 指向的是一个**不存在的路径**。
@@ -664,7 +664,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       零增长、`lsof` 里 6 条到 `127.0.0.1:7896` 的连接全在 `CLOSE_WAIT`（本机代理掉了，不是仓库损坏），
       所以那一仓只有 warm 级别。
     - ✅ **撤钉之后，中央已发布件里的旧面值会不会咬消费者 —— 对认 parent 的消费者：不会**。探针
-      只继承 `z-boot-parent:1.0.21`、只引中央已发布的 `z-config-core:1.0.9`（那份发布 pom 里
+      只继承 `z-boot-parent:1.2.4`、只引中央已发布的 `z-config-core:1.0.9`（那份发布 pom 里
       `z-boot-web-starter` / `z-boot-datasource-starter` 都**写死 1.0.19**），`dependency:tree` 实测
       两支都落 **1.0.21**、整棵树 `1.0.19` **0 命中**（父链直接 DM 管得住传递件的面值）。
       ⇒ 消费者"吃到地板那一刀"的条件**只有 `<parent>` 抬到 1.0.21 这一条**；已发布 pom 里那批 1.0.19
@@ -714,7 +714,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       而"聚合件指向一个中央没有的 starter 版本"这种形状两边都不报，消费者却当场炸。
       三处口径必须先做对，否则全是假报警（第一版就踩了前两条）：① 版本 `${...}` 与本仓 DM 的
       **无版本依赖**要沿中央回读的父链补值（fleet/地板/自家根 pom 的 DM 都是合法供值处，
-      现测 z-ctc-core:1.0.2 那 9 条无版本依赖全由 `z-ctc:1.0.2 → z-boot-parent:1.0.19` 供上 ⇒ 不是缺陷），
+      现测 z-ctc-core:1.0.2 那 9 条无版本依赖全由 `z-ctc:1.0.2 → z-boot-parent:1.2.4` 供上 ⇒ 不是缺陷），
       链上也补不出才算 `NO_VERSION_UNMANAGED`；② `packaging=pom` 的聚合件**没有 jar 是正常形状**
       （`z-util-all` / `z-util-serialize` 各被误报过一次）；③ repo1 有秒级超时（同一 jar 先 `JAR_0`
       后 206）⇒ `code=0` 一律重试 3 次并单列，不判断链。
@@ -732,7 +732,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
       逐格比各仓仓根 `revision` 或 `</parent>` 后第一个 `version` ⇒ **25/25 同值，落后 0 格**；
       这 25 格展开成的 **175 条依赖格逐件 ranged GET 全 206，404 零、超时零**；键名也只剩 `z-util.version`
       一种。父链自身在中央可读（`z-boot:1.0.19` / `z-boot-dependencies:1.0.20` / `z-boot-fleet:1.0.2` /
-      `z-boot-parent:1.0.21` 全 206）—— 根聚合件 `z-boot` 的 1.0.20/1.0.21 是 404，但**没有任何 pom 指它**
+      `z-boot-parent:1.2.4` 全 206）—— 根聚合件 `z-boot` 的 1.0.20/1.0.21 是 404，但**没有任何 pom 指它**
       （子件都显式写 version、父链钉 1.0.19 那一格）⇒ 那不是缺陷，别去"补发根件"。
       ⚠ 量具口径又修过一次：属性名要连 `.version` 一起捕获再比（fleet 里键是 `z-cache.version`、
       引用是 `${z-cache.version}`，一边截一边不截就会每条都比成 no-op，"0 格落后"是这么假出来的）。
@@ -972,7 +972,7 @@ z-opc-foundation 下每个仓的根 pom 从此只写一次 `<parent>`，不再�
   `z-webide/z-tool-webide-web` 自带 `META-INF/spring.factories`。将来要挂 webide starter，
   按 `_doc/001_arch/AGENTS.md`「新增 starter」从头开一个，别复活那份旧 pom
 - ✅ **可独立发布到 Maven Central**——现发行 train（2026-09-29）：根 `z-boot:1.0.19` +
-  `z-boot-dependencies:1.0.20` + `z-boot-fleet:1.0.4` + `z-boot-parent:1.0.26` +
+  `z-boot-dependencies:1.0.20` + `z-boot-fleet:1.0.4` + `z-boot-parent:1.2.4` +
   两个聚合器与 22 个 starter/base 全 `1.0.25`；29 个坐标的 `.pom` 逐件对 repo1 发 ranged GET 全 206
   （判据脚本、注入对照与历史口径见上面「已发布到 Maven Central 的所有模块」那段）
 
@@ -1680,7 +1680,7 @@ curl -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
     `${env.CENTRAL_TOKEN}` **占位**形式写进 `~/.m2/settings.xml` 的 `<server id="central">`（已存在则备份后注入，
     不落明文口令）
   - [`tierA_parent21.py`](_doc/003_script/tierA_parent21.py) — 消费者轮工具：33 仓 `<parent>` 抬到
-    `z-boot-parent:1.0.21`，并撤掉三处过渡性 simpleclient 压法；两阶段（先在内存算完、逐文件硬点命中数，
+    `z-boot-parent:1.2.4`，并撤掉三处过渡性 simpleclient 压法；两阶段（先在内存算完、逐文件硬点命中数，
     不符即退出 2 零写入）
   - [`tierA_comments.py`](_doc/003_script/tierA_comments.py) — 同一轮的第二刀：删格之后把仍会误导人的解释注释
     一并改口（纯历史账保留，只改"现在不再成立"的结论）

@@ -23,7 +23,7 @@
     </parent>
 
     <artifactId>z-boot-parent</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.4</version>
     <packaging>pom</packaging>
 
     <name>z-boot :: parent</name>
@@ -58,10 +58,26 @@
 <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
 
-<spring-boot.version>3.3.13</spring-boot.version>
+<spring-boot.version>3.5.16</spring-boot.version>
 
-<spring-framework.version>6.1.21</spring-framework.version>
+<spring-framework.version>6.2.19</spring-framework.version>
 <spring-cloud.version>2023.0.3</spring-cloud.version>
+
+<!-- 2026-11-18：reactor-netty 显式钉 1.2.18。
+     CVE-2026-41715（HTTP Client 在协议降级重定向时泄漏凭据）的受影响区间实测是：
+       1.0.0–1.0.48 / 1.1.0–1.1.31（**整条 1.1.x 命中**）/ 1.2.0–1.2.17 / 1.3.0–1.3.5
+     ⇒ 干净线：1.2.18+ 与 1.3.6+。
+     这里取 **1.2.18**（不是 1.3.8）：Boot 3.5.16 的 reactor-bom 2024.0.18 自带
+     reactor-netty 1.2.18 + reactor-core 3.7.19，1.2.18 与它同代配套；
+     而 reactor-netty 1.3.8 要求 reactor-core 3.8.8（属于 reactor 2025.x 那条线），
+     跟 Boot 3.5 不配套 —— 别为了"看起来更新"就抬到 1.3.x。
+     ⚠ 这条覆盖必须排在 spring-boot-dependencies 之前（DM 就近优先）。 -->
+<reactor-netty.version>1.2.18</reactor-netty.version>
+
+<!-- 2026-11-18：spring-security 6.5.4 命中 CVE-2026-47838 / 22732 / 41706；
+     6.5.11 干净。Boot 3.5.16 BOM 自带 6.5.11，这里显式钉住，
+     防止个别仓把 spring-security 单独拽低。 -->
+<spring-security.version>6.5.11</spring-security.version>
 
 <netty.version>4.1.138.Final</netty.version>
 
@@ -128,11 +144,20 @@
 <sharding-jdbc.version>4.1.1</sharding-jdbc.version>
 <mapstruct.version>1.5.5.Final</mapstruct.version>
 
-<guava.version>32.0.0-jre</guava.version>
+<guava.version>33.7.2-jre</guava.version>
 <spring-cloud-starter-alibaba-nacos-config.version>2023.0.3.3
 </spring-cloud-starter-alibaba-nacos-config.version>
 <spring-context-support.version>1.0.11</spring-context-support.version>
 <freemarker.version>2.3.31</freemarker.version>
+<!-- 2026-11-18 安全升级批次（第 2 版）新增属性：
+     · spring-retry 2.0.13 —— 1.3.4 / 2.0.9~2.0.12 命中 CVE-2026-41710
+     · jsoup 1.23.2       —— 1.23.1 及以下命中 CVE-2026-75140 / 71497
+     · testng 7.5.1       —— 6.14.3 命中 GHSA-rc2q-x9mf-w3vf（high），7.5.1 起干净
+     三个包原在各消费仓自己钉（z-util 1.23.1 / z-team 1.3.4 + 6.14.3 / z-cognition 继承），
+     本次统一收到 parent 地板，消费仓的零散钉版本随后删除。 -->
+<spring-retry.version>2.0.13</spring-retry.version>
+<jsoup.version>1.23.2</jsoup.version>
+<testng.version>7.5.1</testng.version>
 <xxl-job.version>3.2.0</xxl-job.version>
 <schedulerx2-spring-boot-starter.version>1.6.0</schedulerx2-spring-boot-starter.version>
 <aliyun-java-sdk-schedulerx2.version>1.1.2</aliyun-java-sdk-schedulerx2.version>
@@ -153,7 +178,16 @@
 <javassist.version>3.30.2-GA</javassist.version>
 <jetcache.version>2.7.7</jetcache.version>
 <fastjson.version>1.2.83</fastjson.version>
-<jackson.version>2.18.6</jackson.version>
+<!-- 2026-11-18：jackson 2.18.6 命中一串 CVE（GHSA-5gvw-p9qm-jgwh / 7hhh-6rmp-j9qf
+     / cxp5-3px4-pw24 / wv8q-qhhj-9h54 等，共 15 条 Dependabot 告警）。
+     干净线实测：2.22.1 仍命中，**2.22.3 起干净**。
+     ⚠ Boot 3.5.16 的 BOM 自带 jackson 2.21.4 —— 但 2.21.4 同样命中
+       （CVE-2026-59889 / 54515 / 91777 / 83557 / 68497 / 77310 / 19032 / 91776），
+       也就是"直接用 BOM 的版本"并不安全，必须显式抬到 2.22.3+。
+     ⚠ 注意 jackson 是 BOM 整包管（jackson-bom），改这一格会同时动
+       core / databind / annotations / datatype-* / dataformat-* 全家，
+       2.18 → 2.22 有行为差异（见下方版本策略说明）。 -->
+<jackson.version>2.22.3</jackson.version>
 <transmittable-thread-local.version>2.12.2</transmittable-thread-local.version>
 <objenesis.version>2.6</objenesis.version>
 <checker-qual.version>3.7.0</checker-qual.version>
@@ -210,8 +244,19 @@
         <z-graph.version>1.0.8</z-graph.version>
         <!-- z-gw 1.0.6（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-gw.version>1.0.6</z-gw.version>
-        <!-- z-kb 1.1.0（接入面 pin，值与gen脚本 FAMILIES 同源） -->
-        <z-kb.version>1.1.0-SNAPSHOT</z-kb.version>
+        <!-- z-kb 1.1.0（接入面 pin，值与gen脚本 FAMILIES 同源）
+             2026-11-18 修：1.1.0-SNAPSHOT → 1.1.0（release）。
+             起因：Maven Central **拒绝含 SNAPSHOT 依赖的构件**（"Dependency management
+             dependencies to SNAPSHOT versions not allowed"），而本仓 dependencyManagement
+             里有三条 z-kb-* 引用 ${z-kb.version} ⇒ z-boot-parent **1.2.3 的发布是 FAILED**
+             （Central Portal deployment 状态实测确认，不是"发成功只是慢"），
+             于是中央上 z-boot-parent 最高只有 1.2.2，而各仓 pom 却已指向 1.2.3
+             ⇒ 干净环境 clone 必然解析不到 parent，编译必失败。
+             z-kb-api / z-kb-web / z-kb-spring-boot-starter 的 **1.1.0 release 版在中央真实存在**
+             （repo1 实测 HTTP 200），改用 release 即可满足中央校验。
+             ⚠ z-kb 独立 git 仓已 2026-11-18 归档失效，但 z-kb-* 这三个**构件坐标**由
+               z-cognition 仓的 z-kb 板块继续产出，坐标与版本都还有效 —— 别把这两件事混为一谈。 -->
+        <z-kb.version>1.1.0</z-kb.version>
         <!-- z-llm-gateway 0.1.10（接入面 pin，值与gen脚本 FAMILIES 同源） -->
         <z-llm-gateway.version>0.1.10</z-llm-gateway.version>
         <!-- z-mcp 1.1.1（接入面 pin，值与gen脚本 FAMILIES 同源） -->
@@ -265,7 +310,63 @@
         <type>pom</type>
         <scope>import</scope>
     </dependency>
-    
+
+    <!-- 2026-11-18 安全升级：reactor-netty 覆盖到 1.3.8（修 CVE-2026-41715）。
+         必须放在 spring-boot-dependencies **之前** —— Boot 3.5.16 的 BOM 经
+         reactor-bom 2024.0.18 传递进来 reactor-netty 1.2.18（命中漏洞），
+         而本段在 Boot BOM 之前 ⇒ 直接条目优先（Maven DM 就近优先）。 -->
+    <dependency>
+        <groupId>io.projectreactor.netty</groupId>
+        <artifactId>reactor-netty</artifactId>
+        <version>${reactor-netty.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.projectreactor.netty</groupId>
+        <artifactId>reactor-netty-http</artifactId>
+        <version>${reactor-netty.version}</version>
+    </dependency>
+
+    <!-- 2026-11-18 安全升级：spring-security 6.5.11（修 CVE-2026-47838 / 22732 / 41706）。
+         同样必须排在 Boot BOM 之前，否则被 Boot BOM 的 6.5.x 传递版本盖掉。 -->
+    <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-core</artifactId>
+        <version>${spring-security.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-web</artifactId>
+        <version>${spring-security.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-config</artifactId>
+        <version>${spring-security.version}</version>
+    </dependency>
+
+    <!-- 2026-11-18 安全升级：spring-retry 2.0.13（修 CVE-2026-41710）。
+         1.3.4 / 2.0.9~2.0.12 全部命中。 -->
+    <dependency>
+        <groupId>org.springframework.retry</groupId>
+        <artifactId>spring-retry</artifactId>
+        <version>${spring-retry.version}</version>
+    </dependency>
+
+    <!-- 2026-11-18 安全升级：jsoup 1.23.2（修 CVE-2026-75140 / 71497）。 -->
+    <dependency>
+        <groupId>org.jsoup</groupId>
+        <artifactId>jsoup</artifactId>
+        <version>${jsoup.version}</version>
+    </dependency>
+
+    <!-- 2026-11-18 安全升级：testng 7.5.1（修 GHSA-rc2q-x9mf-w3vf，high）。
+         6.14.3 命中；7.x 干净线从 7.5.1 起。 -->
+    <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>${testng.version}</version>
+    </dependency>
+
     <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-framework-bom</artifactId>
@@ -698,7 +799,7 @@
     <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>32.0.0-jre</version>
+        <version>${guava.version}</version>
     </dependency>
 
     <dependency>

@@ -20,7 +20,7 @@ z-boot 是 z-opc-foundation 的 **Spring Boot Starter 聚合仓 + 唯一版本�
 ```
 z-boot/
 ├── pom.xml                       # 根：z-boot:1.0.19，packaging=pom，1.0.19 起不再有 <modules>，只管 plugin 版本 / central profile / flatten
-├── z-boot-parent/                # 唯一消费入口：z-boot-parent:1.1.1，第三方地板 + 接入面 pin + 自家 22 格 starter
+├── z-boot-parent/                # 唯一消费入口：z-boot-parent:1.2.4，第三方地板 + 接入面 pin + 自家 22 格 starter
 ├── z-boot-starter/               # 基础 starter 聚合器：z-boot-starter:1.1.1
 │   ├── z-boot-base/              # 应用名 / 根包名两个 SPI 接口（ApplicationModuleDescription）
 │   ├── z-boot-web-starter/       # Web + Log4j2 + Knife4j + Actuator/Prometheus + Long→String 序列化
@@ -99,7 +99,7 @@ z-boot/
 
 **上游：** 兄弟仓 `z-*` 的已发布坐标（z-cache / z-mq / z-gw / z-kb / z-vector / z-graph / z-rpc / z-oss / z-schedule / z-msg / z-ctc / z-script / z-llm / z-mcp / z-skill / z-agent / z-bot / z-agent-proxy / z-agent-kernel / z-util / z-mist / z-qa / z-camuda / z-indexer / z-config），由 19 个集成 starter 做传递依赖包装。
 
-**下游（消费方）：** 组织内所有 Java 仓以一行 `<parent>io.github.yuku123:z-boot-parent:1.1.1</parent>` 接入，依赖一律不写 `<version>`。外部开发者也可只 import 单个 starter。
+**下游（消费方）：** 组织内所有 Java 仓以一行 `<parent>io.github.yuku123:z-boot-parent:1.2.4</parent>` 接入，依赖一律不写 `<version>`。外部开发者也可只 import 单个 starter。
 
 **对外 HTTP 边界：无。** 本仓不启进程、不监听端口、不出网。唯一的外部交互是发布动作 —— `deploy_maven_center.sh` 与 `verify_central.sh` 直连 `repo1.maven.org` / `central.sonatype.com`，凭证走仓根 `.env` 与 `./.gnupg`（两者被 `.gitignore` 排除）。
 

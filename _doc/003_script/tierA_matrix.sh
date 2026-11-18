@@ -14,7 +14,7 @@
 #
 # 用法：
 #   LOG=/tmp/f21-matrix z-boot/_doc/003_script/tierA_matrix.sh [仓名 ...]
-# 不传仓名 = 全部 33 个带 z-boot-parent:1.0.21 的仓根。
+# 不传仓名 = 全部 33 个带 z-boot-parent:1.2.4 的仓根。
 set -u
 
 ROOT=/Users/zifang/workplace/ceo_workplace/z-opc-foundation
